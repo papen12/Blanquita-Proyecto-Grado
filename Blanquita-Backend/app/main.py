@@ -19,5 +19,6 @@ app.add_middleware(
 @app.get("/")
 def Servidor():
     return{
-        "Servidor":"El servidor dice hola"
+        "Servidor":"El servidor dice hola",
+        "Documentación en:":" http://127.0.0.1:8000/documentacion"
     }
