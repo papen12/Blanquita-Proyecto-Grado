@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.Routes.UsuarioRouter import UsuarioRouter
 app=FastAPI(debug=True
             ,title="Backend Blanquita"
             ,version="1.0.0"
@@ -22,3 +22,5 @@ def Servidor():
         "Servidor":"El servidor dice hola",
         "Documentación en:":" http://127.0.0.1:8000/documentacion"
     }
+    
+app.include_router(UsuarioRouter)
