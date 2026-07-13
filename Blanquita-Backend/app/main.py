@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.Routes.UsuarioRouter import UsuarioRouter
+from app.Routes.PapelBobinaRouter import PapelBobinaRouter
 app=FastAPI(debug=True
             ,title="Backend Blanquita"
             ,version="1.0.0"
@@ -24,3 +25,4 @@ def Servidor():
     }
     
 app.include_router(UsuarioRouter)
+app.include_router(PapelBobinaRouter)

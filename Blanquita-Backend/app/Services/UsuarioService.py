@@ -87,6 +87,7 @@ class UsuarioService:
 
         token = crear_token_acceso({
             "sub": str(usuario["IdUsuario"]),
+            "rol_id": usuario["IdRol"],
             "rol": usuario["NombreRol"],
         })
 
@@ -98,4 +99,3 @@ class UsuarioService:
             PrimerNombre=usuario["PrimerNombre"],
             ApellidoPaterno=usuario["ApellidoPaterno"],
         )
-    

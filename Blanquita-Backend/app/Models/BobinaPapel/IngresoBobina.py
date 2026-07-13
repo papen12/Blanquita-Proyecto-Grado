@@ -1,0 +1,39 @@
+from datetime import date
+from decimal import Decimal
+from typing import List, Optional
+
+from pydantic import BaseModel
+
+
+class BobinaPapel(BaseModel):
+    IdBobinaPapel: Optional[int] = None
+    CodigoBobina: str
+    IdTipoBobina: int
+    IdLoteBobina: int
+    IdEstadoMateriaPrima: int
+    PesoBrutoKg: Optional[Decimal] = None
+    Gramaje: Optional[Decimal] = None
+    PesoNetoKg: Optional[Decimal] = None
+
+
+class ListaBobinasPapel(BaseModel):
+    Bobinas: List[BobinaPapel]
+
+
+class BobinaPapelIngresoItem(BaseModel):
+    CodigoBobina: str
+    PesoBrutoKg: Optional[Decimal] = None
+    Gramaje: Optional[Decimal] = None
+    PesoNetoKg: Optional[Decimal] = None
+
+
+class IngresoModelo(BaseModel):
+    IdProveedor: int
+    IdTipoBobina: int
+    IdUsuario: int
+    Bobinas: List[BobinaPapelIngresoItem]
+
+
+class IngresoLoteBobinaPapelResponse(BaseModel):
+    FechaRecepcion: date
+    CantidadBobinas: int

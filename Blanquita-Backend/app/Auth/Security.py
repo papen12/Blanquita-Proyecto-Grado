@@ -32,4 +32,3 @@ def VerificarClave(clave_hash, clave_plana):
         return False
     
     
-print(ph.hash("PapelBlanquita2026SistemaProduccionInventarioHash"))
