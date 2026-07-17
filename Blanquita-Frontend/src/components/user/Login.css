@@ -1,0 +1,237 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.pb-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  background: linear-gradient(160deg, #e3f4fb 0%, #f4f9fc 45%, #fff 100%);
+  font-family: 'Montserrat', sans-serif;
+  color: #123a4c;
+}
+
+.pb-wrapper {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  animation: fadeUp .35s ease both;
+}
+
+.pb-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.pb-logo-outer {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1C96C5, #20A7DB);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(28, 150, 197, .3);
+}
+
+.pb-logo-inner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  border: 7px solid #A0D9EF;
+  box-sizing: border-box;
+}
+
+.pb-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pb-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1C96C5;
+}
+
+.pb-subtitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5d8299;
+}
+
+.pb-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 28px 24px;
+  box-shadow: 0 4px 24px rgba(18, 58, 76, .1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+.pb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pb-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #33566b;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
+
+.pb-input {
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #cfe2ee;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #123a4c;
+  min-height: 48px;
+  box-sizing: border-box;
+  width: 100%;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.pb-input:focus {
+  outline: none;
+  border-color: #20A7DB;
+  box-shadow: 0 0 0 3px rgba(32, 167, 219, .2);
+}
+
+.pb-remembered {
+  font-size: 12px;
+  color: #5d8299;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pb-remembered-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2BB39A;
+  flex: none;
+}
+
+.pb-remembered-link {
+  color: #1C96C5;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pb-otp-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.pb-otp-row.pb-shake {
+  animation: shake .35s ease;
+}
+
+.pb-otp-dash {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+  background: #A0D9EF;
+  flex: none;
+}
+
+.pb-otp-input {
+  width: 100%;
+  max-width: 48px;
+  height: 54px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: #123a4c;
+  border: 1.5px solid #cfe2ee;
+  border-radius: 12px;
+  font-family: 'Montserrat', sans-serif;
+  box-sizing: border-box;
+  padding: 0;
+  background: #fff;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.pb-otp-input.pb-otp-filled {
+  border-color: #A0D9EF;
+  background: #f0f9fd;
+}
+
+.pb-otp-input.pb-otp-focused {
+  border-color: #20A7DB;
+}
+
+.pb-otp-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(32, 167, 219, .2);
+}
+
+.pb-error {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c0392b;
+  background: #fdecea;
+  border-radius: 8px;
+  padding: 9px 12px;
+  text-align: center;
+}
+
+.pb-btn {
+  background: linear-gradient(90deg, #1C96C5, #20A7DB);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  min-height: 50px;
+  box-shadow: 0 4px 14px rgba(28, 150, 197, .35);
+}
+
+.pb-btn:hover {
+  filter: brightness(1.06);
+}
+
+.pb-footer {
+  text-align: center;
+  font-size: 12px;
+  color: #8aa7b8;
+}
+
+.pb-footer a {
+  color: #1C96C5;
+  font-weight: 700;
+  text-decoration: none;
+}
