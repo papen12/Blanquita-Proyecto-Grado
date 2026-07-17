@@ -1,11 +1,17 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
+
+
 from app.Services.BobinaPapel.LoteBobinaPapelService import LoteBobinaService
+from app.Services.BobinaPapel.ProduccionBobinaPapelService import ProduccionBobinaTuboService
+from app.Services.BobinaPapel.InventarioBobinaPapelService import InventarioBobinaPapelService
+
 from app.Auth.Dependencies import require_role
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR
+
+
 from app.Models.BobinaPapel.IngresoBobina import IngresoModelo,IngresoLoteBobinaPapelResponse
-from app.Services.BobinaPapel.ProduccionBobinaPapelService import ProduccionBobinaTuboService
 from app.Models.BobinaPapel.IniciarProduccion import IniciarProduccionBobinaTuboRequest, IniciarProduccionBobinaTuboResponse
 from app.Models.BobinaPapel.FinalizarProduccion import FinalizarProduccionBobinaTuboRequest, FinalizarProduccionBobinaTuboResponse
 from app.Models.BobinaPapel.PausaProduccion import PausarProduccionBobinaTuboRequest,PausarProduccionBobinaTuboResponse
@@ -13,6 +19,12 @@ from app.Models.BobinaPapel.ReanudarProduccion import ReanudarProduccionBobinaTu
 from app.Models.BobinaPapel.CancelarProduccion import CancelarProduccionBobinaTuboRequest,CancelarProduccionBobinaTuboResponse
 from app.Models.BobinaPapel.ReIngresarBobina import ReingresarBobinaAInventarioRequest,ReingresarBobinaAInventarioResponse
 from app.Models.BobinaPapel.BajarBobina import DarDeBajaBobinaRequest,DarDeBajaBobinaResponse
+
+from app.Models.BobinaPapel.InventarioBobinaPapel import (
+    VerResumenInventarioBobinaPapelResponse,
+    VerDetalleInventarioBobinaPapelRequest,
+    VerDetalleInventarioBobinaPapelResponse,
+)
 
 from app.Models.BobinaPapel.OperadorLogs import InsertarMovimientoOperadorLogsRequest,InsertarMovimientoOperadorLogsResponse
 
@@ -25,6 +37,9 @@ def bobina_papel_service(db: Session = Depends(get_db)) -> LoteBobinaService:
 
 def iniciar_produccion_bobina_tubo_service(db: Session = Depends(get_db)) -> ProduccionBobinaTuboService:
     return ProduccionBobinaTuboService(db)
+
+def inventario_bobina_papel_service(db: Session = Depends(get_db)) -> InventarioBobinaPapelService:
+    return InventarioBobinaPapelService(db)
 
 @PapelBobinaRouter.post(
     "/cargarlotebobinapapel",
@@ -133,3 +148,26 @@ def InsertarMovimientoLog(
     service: ProduccionBobinaTuboService = Depends(iniciar_produccion_bobina_tubo_service)
 ):
     return service.InsertarMovimientoOperadorLogs(data)
+
+@PapelBobinaRouter.get(
+    "/verinventariobobinapapel",
+    response_model=list[VerResumenInventarioBobinaPapelResponse],
+    status_code=200,
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR]))]
+)
+def VerInventarioBobinaPapel(
+    service: InventarioBobinaPapelService = Depends(inventario_bobina_papel_service)
+):
+    return service.VerResumen()
+
+@PapelBobinaRouter.get(
+    "/verdetalleinventariobobinapapel/{IdTipoBobina}",
+    response_model=list[VerDetalleInventarioBobinaPapelResponse],
+    status_code=200,
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR]))]
+)
+def VerDetalleInventarioBobinaPapel(
+    IdTipoBobina: int,
+    service: InventarioBobinaPapelService = Depends(inventario_bobina_papel_service)
+):
+    return service.VerDetalle(VerDetalleInventarioBobinaPapelRequest(IdTipoBobina=IdTipoBobina))
