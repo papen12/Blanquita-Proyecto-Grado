@@ -4,7 +4,6 @@ from typing import Optional
 
 class CancelarProduccionBobinaTuboRequest(BaseModel):
     IdProduccionBobinaTubo: int
-    IdUsuario: int
     MotivoCancelacion: Optional[str] = None
 
 

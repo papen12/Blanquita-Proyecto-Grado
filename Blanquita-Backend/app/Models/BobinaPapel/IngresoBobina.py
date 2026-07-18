@@ -30,7 +30,6 @@ class BobinaPapelIngresoItem(BaseModel):
 class IngresoModelo(BaseModel):
     IdProveedor: int
     IdTipoBobina: int
-    IdUsuario: int
     Bobinas: List[BobinaPapelIngresoItem]
 
 

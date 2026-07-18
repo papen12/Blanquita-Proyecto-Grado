@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 class ReingresarBobinaAInventarioRequest(BaseModel):
     IdBobinaPapel: int
-    IdUsuario: int
     Observacion: Optional[str] = None
 
 

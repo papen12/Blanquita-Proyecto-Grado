@@ -7,7 +7,6 @@ from pydantic import BaseModel
 class InsertarMovimientoOperadorLogsRequest(BaseModel):
     IdProduccionBobinaTubo: int
     IdTipoMovimientoOperadorLogs: int
-    IdUsuario: int
     CantidadLogs: int
     Observacion: Optional[str] = None
 

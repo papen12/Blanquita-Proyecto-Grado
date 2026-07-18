@@ -5,7 +5,6 @@ from typing import Optional
 
 class DarDeBajaBobinaRequest(BaseModel):
     IdBobinaPapel: int
-    IdUsuario: int
     Observacion: Optional[str] = None
 
 

@@ -4,7 +4,6 @@ from datetime import datetime
 
 class PausarProduccionBobinaTuboRequest(BaseModel):
     IdProduccionBobinaTubo: int
-    IdUsuario: int
     MotivoPausaProduccion: Optional[str] = None
 
 

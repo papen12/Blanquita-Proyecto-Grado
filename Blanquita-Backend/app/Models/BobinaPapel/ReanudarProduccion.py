@@ -5,7 +5,6 @@ from datetime import datetime
 
 class ReanudarProduccionBobinaTuboRequest(BaseModel):
     IdProduccionBobinaTubo: int
-    IdUsuario: int
 
 
 class ReanudarProduccionBobinaTuboResponse(BaseModel):

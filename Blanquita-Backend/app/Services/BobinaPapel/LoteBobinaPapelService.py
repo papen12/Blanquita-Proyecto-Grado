@@ -11,11 +11,11 @@ class LoteBobinaService:
     def __init__(self, db: Session):
         self.repository = LoteBobinaPapelRepository(db)
 
-    def insertar_bobinas_papel(self, data: IngresoModelo) -> IngresoLoteBobinaPapelResponse:
+    def insertar_bobinas_papel(self, data: IngresoModelo, id_usuario: int) -> IngresoLoteBobinaPapelResponse:
         params = {
             "p_IdProveedor": data.IdProveedor,
             "p_IdTipoBobina": data.IdTipoBobina,
-            "p_IdUsuario": data.IdUsuario,
+            "p_IdUsuario": id_usuario,
             "p_Bobinas": json.dumps([b.model_dump() for b in data.Bobinas], default=str),
         }
 
@@ -37,11 +37,6 @@ class LoteBobinaService:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"El tipo de bobina con id {data.IdTipoBobina} no existe"
-                )
-            if "IdUsuario" in mensaje and "fkey" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"El usuario con id {data.IdUsuario} no existe"
                 )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
