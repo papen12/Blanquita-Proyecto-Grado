@@ -2,16 +2,12 @@ import React, { useState, useRef } from 'react';
 import './Login.css';
 
 export default function Login() {
-  const [ci, setCi] = useState(
-    (typeof localStorage !== 'undefined' && localStorage.getItem('pb_login_ci')) || ''
-  );
-  const [ciRecordado, setCiRecordado] = useState(
-    !!(typeof localStorage !== 'undefined' && localStorage.getItem('pb_login_ci'))
-  );
+  const [ci, setCi] = useState('');
   const [digitos, setDigitos] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [shake, setShake] = useState(false);
   const [foco, setFoco] = useState(-1);
+  const [cargando, setCargando] = useState(false);
 
   const refs = useRef(Array.from({ length: 6 }, () => React.createRef()));
 
@@ -47,23 +43,45 @@ export default function Login() {
 
   const handleCi = (e) => {
     setCi(e.target.value.replace(/\D/g, ''));
-    setCiRecordado(false);
   };
 
-  const olvidarCi = () => {
-    localStorage.removeItem('pb_login_ci');
-    setCi('');
-    setCiRecordado(false);
-  };
+  const handleIngresar = async () => {
+    if (cargando) return;
 
-  const handleIngresar = () => {
     if (!ci.trim()) return fail('Ingresa tu CI.');
     if (digitos.some((d) => !d)) return fail('Completa los 6 dígitos de tu contraseña.');
-    localStorage.setItem('pb_login_ci', ci.trim());
-    setCiRecordado(true);
+
+    const clave = digitos.join('');
+
+    setCargando(true);
     setError('');
-    setDigitos(['', '', '', '', '', '']);
-    alert('Ingreso correcto ✓ (demo)');
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ Ci: ci.trim(), Clave: clave })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        fail(data.detail || 'Credenciales inválidas.');
+        setDigitos(['', '', '', '', '', '']);
+        irA(0);
+        return;
+      }
+
+      window.location.href = data.rutaRedirect || '/';
+    } catch (err) {
+      fail('No se pudo conectar con el servidor. Intenta nuevamente.');
+      setDigitos(['', '', '', '', '', '']);
+      irA(0);
+    } finally {
+      setCargando(false);
+    }
   };
 
   const bloques = [];
@@ -106,16 +124,8 @@ export default function Login() {
               inputMode="numeric"
               autoComplete="username"
               placeholder="Ej. 8456123"
+              disabled={cargando}
             />
-            {ciRecordado && (
-              <div className="pb-remembered">
-                <span className="pb-remembered-dot" />
-                Último ingreso recordado ·{' '}
-                <span onClick={olvidarCi} className="pb-remembered-link">
-                  usar otro CI
-                </span>
-              </div>
-            )}
           </div>
 
           <div className="pb-field">
@@ -136,6 +146,7 @@ export default function Login() {
                     inputMode={bl.modo}
                     maxLength={1}
                     autoComplete="off"
+                    disabled={cargando}
                     className={`pb-otp-input${bl.lleno ? ' pb-otp-filled' : ''}${
                       bl.focado ? ' pb-otp-focused' : ''
                     }`}
@@ -146,8 +157,8 @@ export default function Login() {
             {error && <div className="pb-error">{error}</div>}
           </div>
 
-          <button className="pb-btn" onClick={handleIngresar}>
-            Ingresar
+          <button className="pb-btn" onClick={handleIngresar} disabled={cargando}>
+            {cargando ? 'Ingresando...' : 'Ingresar'}
           </button>
         </div>
 
