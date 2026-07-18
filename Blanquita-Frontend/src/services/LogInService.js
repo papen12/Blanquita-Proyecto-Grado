@@ -1,6 +1,6 @@
 import { UsuarioLogin, UsuarioLoginResponse } from "../models/Usuario/UsuarioLogIn";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const BACKEND_URL = import.meta.env.BACKEND_URL;
 
 export async function login(ci, clave) {
   const payload = UsuarioLogin(ci, clave);
