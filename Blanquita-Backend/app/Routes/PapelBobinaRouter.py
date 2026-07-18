@@ -57,7 +57,7 @@ def CargarLoteBobinaPapel(
     "/iniciarproduccion",
     response_model=IniciarProduccionBobinaTuboResponse,
     status_code=201,
-    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION]))]
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR]))]
 )
 def IniciarProduccion(
     data: IniciarProduccionBobinaTuboRequest,

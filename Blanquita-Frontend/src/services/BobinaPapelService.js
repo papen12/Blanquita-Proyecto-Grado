@@ -36,3 +36,4 @@ export async function VerDetalleInventarioBobinaPapel(IdTipoBobina) {
 
   return data.map((item) => new VerDetalleInventarioBobinaPapelResponse(item));
 }
+

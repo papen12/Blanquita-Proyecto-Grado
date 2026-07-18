@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
+import { Plus, X, Check, ArrowRight, Loader2 } from "lucide-react";
 import {
   VerResumenInventarioBobinaPapel,
   VerDetalleInventarioBobinaPapel,
 } from "../../services/BobinaPapelService";
 import "./InventarioPapelBobina.css";
+import { IniciarProduccionBobinaTubo } from "../../services/ProduccionBobinaPapelService";
 
 const META_COLORES = [
   { color: "#20A7DB", oscuro: "#1C96C5", suave: "#e3f4fb", borde: "#A0D9EF" },
@@ -37,6 +39,8 @@ export default function InventarioBobinasPapel() {
   const [formPeso, setFormPeso] = useState("");
   const [formGramaje, setFormGramaje] = useState("");
   const [formError, setFormError] = useState("");
+
+  const [enviando, setEnviando] = useState(false);
 
   const toastTimer = useRef(null);
 
@@ -140,14 +144,34 @@ export default function InventarioBobinasPapel() {
   const quitarChip = (codigo) =>
     setMarcadas((prev) => prev.filter((c) => c !== codigo));
 
-  const enviarProduccion = () => {
-    if (!listas) return;
-    setBobinasSel((prev) =>
-      prev.filter((b) => !marcadas.includes(b.CodigoBobina)),
-    );
-    mostrarToast(`${marcadas.join(" + ")} → En producción ✓`, 3200);
-    setMarcadas([]);
-    cargarResumen();
+  const enviarProduccion = async () => {
+    if (!listas || esServilleta) return;
+
+    const bobina1 = bobinasSel.find((b) => b.CodigoBobina === marcadas[0]);
+    const bobina2 = bobinasSel.find((b) => b.CodigoBobina === marcadas[1]);
+    if (!bobina1 || !bobina2) return;
+
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
+    setEnviando(true);
+    try {
+      await IniciarProduccionBobinaTubo({
+        IdBobina1: bobina1.IdBobinaPapel,
+        IdBobina2: bobina2.IdBobinaPapel,
+        IdUsuario: usuario.IdUsuario,
+      });
+
+      setBobinasSel((prev) =>
+        prev.filter((b) => !marcadas.includes(b.CodigoBobina)),
+      );
+      mostrarToast(`${marcadas.join(" + ")} → En producción ✓`, 3200);
+      setMarcadas([]);
+      cargarResumen();
+    } catch (e) {
+      mostrarToast(e.message, 3200);
+    } finally {
+      setEnviando(false);
+    }
   };
 
   const abrirIngreso = () => {
@@ -170,6 +194,7 @@ export default function InventarioBobinasPapel() {
     setFormGramaje("");
     mostrarToast(`Bobina ${formCodigo.trim()} registrada ✓`, 2600);
   };
+
   return (
     <div className="ibp-root">
       <header className="ibp-header">
@@ -178,7 +203,8 @@ export default function InventarioBobinasPapel() {
           <div className="ibp-header-title">Inventario de Bobinas de Papel</div>
         </div>
         <button onClick={abrirIngreso} className="ibp-btn-primary-header">
-          + Registrar ingreso
+          <Plus size={16} strokeWidth={2.75} />
+          Registrar ingreso
         </button>
       </header>
 
@@ -238,7 +264,8 @@ export default function InventarioBobinasPapel() {
                 </div>
               </div>
               <button onClick={cerrarDetalle} className="ibp-btn-cerrar">
-                ✕ Cerrar
+                <X size={15} strokeWidth={2.75} />
+                Cerrar
               </button>
             </div>
 
@@ -284,7 +311,7 @@ export default function InventarioBobinasPapel() {
                         onClick={() => quitarChip(codigo)}
                         className="ibp-chip-close"
                       >
-                        ✕
+                        <X size={13} strokeWidth={3} />
                       </span>
                     </div>
                   ))}
@@ -296,10 +323,20 @@ export default function InventarioBobinasPapel() {
                 </div>
                 <button
                   onClick={enviarProduccion}
-                  disabled={!listas}
+                  disabled={!listas || enviando}
                   className={`ibp-btn-enviar ${listas ? "ibp-btn-enviar-activo" : ""}`}
                 >
-                  Enviar a producción →
+                  {enviando ? (
+                    <>
+                      <Loader2 size={16} strokeWidth={2.75} className="ibp-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      Enviar a producción
+                      <ArrowRight size={16} strokeWidth={2.75} />
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -316,7 +353,7 @@ export default function InventarioBobinasPapel() {
                 onClick={() => setModal(false)}
                 className="ibp-btn-cerrar-modal"
               >
-                ✕
+                <X size={18} strokeWidth={2.5} />
               </button>
             </div>
 
@@ -435,7 +472,13 @@ function TarjetaTipo({ tipo: t, onClick }) {
       </div>
 
       <div className="ibp-tarjeta-footer">
-        <span style={{ fontWeight: 700, color: t.oscuro }}>Ver bobinas →</span>
+        <span
+          className="ibp-tarjeta-footer-link"
+          style={{ color: t.oscuro }}
+        >
+          Ver bobinas
+          <ArrowRight size={14} strokeWidth={2.75} />
+        </span>
       </div>
     </div>
   );
@@ -475,7 +518,7 @@ function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
                       background: on ? tipoSel.color : "#fff",
                     }}
                   >
-                    {on ? "✓" : ""}
+                    {on && <Check size={14} strokeWidth={3.5} />}
                   </div>
                 </td>
                 <td
@@ -532,7 +575,7 @@ function ListaMovilBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
                   background: on ? tipoSel.color : "#fff",
                 }}
               >
-                {on ? "✓" : ""}
+                {on && <Check size={15} strokeWidth={3.5} />}
               </div>
             </div>
             <div className="ibp-mobile-meta">
