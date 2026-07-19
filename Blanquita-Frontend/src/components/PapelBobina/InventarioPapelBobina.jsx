@@ -6,6 +6,7 @@ import {
 } from "../../services/BobinaPapelService";
 import "./InventarioPapelBobina.css";
 import { IniciarProduccionBobinaTubo } from "../../services/ProduccionBobinaPapelService";
+import {dateFormatter} from "../../utils/DateFormater"
 
 const META_COLORES = [
   { color: "#20A7DB", oscuro: "#1C96C5", suave: "#e3f4fb", borde: "#A0D9EF" },
@@ -528,7 +529,7 @@ function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
                   {b.CodigoBobina}
                 </td>
                 <td className="ibp-td">{b.CodigoLote}</td>
-                <td className="ibp-td">{b.FechaRecepcion}</td>
+                <td className="ibp-td">{dateFormatter(b.FechaRecepcion)}</td>
                 <td className="ibp-td">{b.NombreProveedor}</td>
                 <td className="ibp-td ibp-td-right">{fmt(b.PesoBrutoKg)} kg</td>
                 <td className="ibp-td ibp-td-right ibp-td-neto">
