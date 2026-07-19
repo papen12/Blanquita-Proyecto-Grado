@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
 from app.Models.Usuario.Usuario import UsuarioCreate, UsuarioResponse
 from app.Models.Usuario.UsuarioLogIn import UsuarioLogin, UsuarioLoginResponse
-from app.Services.UsuarioService import UsuarioService
+from app.Services.Usuario.UsuarioService import UsuarioService
 
 
 
