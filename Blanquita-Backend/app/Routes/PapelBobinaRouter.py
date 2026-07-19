@@ -19,6 +19,7 @@ from app.Models.BobinaPapel.ReanudarProduccion import ReanudarProduccionBobinaTu
 from app.Models.BobinaPapel.CancelarProduccion import CancelarProduccionBobinaTuboRequest,CancelarProduccionBobinaTuboResponse
 from app.Models.BobinaPapel.ReIngresarBobina import ReingresarBobinaAInventarioRequest,ReingresarBobinaAInventarioResponse
 from app.Models.BobinaPapel.BajarBobina import DarDeBajaBobinaRequest,DarDeBajaBobinaResponse
+from app.Models.BobinaPapel.VerProduccionBobinaTubo import VerProduccionBobinaTuboRequest, VerProduccionBobinaTuboResponse
 
 from app.Models.BobinaPapel.InventarioBobinaPapel import (
     VerResumenInventarioBobinaPapelResponse,
@@ -171,3 +172,16 @@ def VerDetalleInventarioBobinaPapel(
     service: InventarioBobinaPapelService = Depends(inventario_bobina_papel_service)
 ):
     return service.VerDetalle(VerDetalleInventarioBobinaPapelRequest(IdTipoBobina=IdTipoBobina))
+
+
+@PapelBobinaRouter.get(
+    "/verproduccionbobinatubo",
+    response_model=list[VerProduccionBobinaTuboResponse],
+    status_code=200,
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR]))]
+)
+def VerProduccionBobinaTubo(
+    IdTipoBobina: int | None = None,
+    service: ProduccionBobinaTuboService = Depends(iniciar_produccion_bobina_tubo_service)
+):
+    return service.VerProduccionBobinaTubo(VerProduccionBobinaTuboRequest(IdTipoBobina=IdTipoBobina))

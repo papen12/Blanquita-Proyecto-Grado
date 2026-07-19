@@ -10,6 +10,7 @@ from app.Models.BobinaPapel.CancelarProduccion import CancelarProduccionBobinaTu
 from app.Models.BobinaPapel.ReIngresarBobina import ReingresarBobinaAInventarioRequest,ReingresarBobinaAInventarioResponse
 from app.Models.BobinaPapel.BajarBobina import DarDeBajaBobinaRequest,DarDeBajaBobinaResponse
 from app.Models.BobinaPapel.OperadorLogs import InsertarMovimientoOperadorLogsRequest,InsertarMovimientoOperadorLogsResponse
+from app.Models.BobinaPapel.VerProduccionBobinaTubo import VerProduccionBobinaTuboRequest, VerProduccionBobinaTuboResponse
 
 class ProduccionBobinaTuboService:
     def __init__(self, db: Session):
@@ -311,3 +312,11 @@ class ProduccionBobinaTuboService:
             )
 
         return InsertarMovimientoOperadorLogsResponse(**resultado)
+    def VerProduccionBobinaTubo(self, data: VerProduccionBobinaTuboRequest) -> list[VerProduccionBobinaTuboResponse]:
+        params = {
+            "p_IdTipoBobina": data.IdTipoBobina,
+        }
+
+        resultados = self.repository.VerProduccionBobinaTubo(params)
+
+        return [VerProduccionBobinaTuboResponse(**resultado) for resultado in resultados]

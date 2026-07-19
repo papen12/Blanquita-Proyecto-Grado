@@ -81,3 +81,10 @@ class ProduccionBobinaTuboRepository:
             )
         """
         return self.caller.LlamarUnRegistro(sql,params)
+    def VerProduccionBobinaTubo(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerProduccionBobinaTubo"(
+                :p_IdTipoBobina
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
