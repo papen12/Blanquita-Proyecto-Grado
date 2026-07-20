@@ -21,14 +21,3 @@ InventarioPalletRouter = APIRouter(
     prefix="/pallet/inventario", tags=["Pallet - Inventario"]
 )
 
-@InventarioPalletRouter.post(
-    "/iniciar",
-    response_model=IniciarProduccionPalletResponse,
-    status_code=201
-)
-def IniciarProduccionPallet(
-    data: IniciarProduccionPalletRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR])),
-    service: ProduccionPalletService = Depends(produccion_pallet_service)
-):
-    return service.IniciarProduccionPallet(data, usuario_actual["IdUsuario"])

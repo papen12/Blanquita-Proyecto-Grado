@@ -50,7 +50,7 @@ ProduccionBobinaPapelRouter = APIRouter(
 
 
 @ProduccionBobinaPapelRouter.post(
-    "/iniciarproduccion",
+    "/iniciar",
     response_model=IniciarProduccionBobinaTuboResponse,
     status_code=201,
 )
@@ -65,7 +65,7 @@ def IniciarProduccion(
 
 
 @ProduccionBobinaPapelRouter.post(
-    "/finalizarproduccion",
+    "/finalizar",
     response_model=FinalizarProduccionBobinaTuboResponse,
     status_code=200,
 )
@@ -78,7 +78,7 @@ def FinalizarProduccion(
 
 
 @ProduccionBobinaPapelRouter.post(
-    "/pausarproduccion",
+    "/pausar",
     response_model=PausarProduccionBobinaTuboResponse,
     status_code=200,
 )
@@ -91,7 +91,7 @@ def PausarProduccion(
 
 
 @ProduccionBobinaPapelRouter.post(
-    "/reanudarproduccion",
+    "/reanudar",
     response_model=ReanudarProduccionBobinaTuboResponse,
     status_code=200,
 )
@@ -104,7 +104,7 @@ def ReanudarProduccion(
 
 
 @ProduccionBobinaPapelRouter.post(
-    "/cancelarproduccion",
+    "/cancelar",
     response_model=CancelarProduccionBobinaTuboResponse,
     status_code=200,
 )

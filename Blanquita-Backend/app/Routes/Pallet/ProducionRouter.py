@@ -7,10 +7,19 @@ from app.Services.Pallet.ProduccionPalletService import ProduccionPalletService
 
 
 from app.Auth.Dependencies import require_role
-from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR
+from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 
 
-from app.Models.Pallet.ProduccionPallet import IniciarProduccionPalletRequest, IniciarProduccionPalletResponse
+from app.Models.Pallet.ProduccionPallet import (
+    IniciarProduccionPalletRequest,
+    IniciarProduccionPalletResponse,
+    PausaProduccionPalletRequest,
+    PausaProduccionPalletResponse,
+    ReanudarProduccionPalletRequest,
+    ReanudarProduccionPalletResponse,
+    FinalizarProduccionPalletRequest,
+    FinalizarProduccionPalletResponse
+)
 
 
 
@@ -28,7 +37,43 @@ ProduccionPalletRouter = APIRouter(
 )
 def IniciarProduccionPallet(
     data: IniciarProduccionPalletRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR])),
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionPalletService = Depends(produccion_pallet_service)
 ):
     return service.IniciarProduccionPallet(data, usuario_actual["IdUsuario"])
+
+@ProduccionPalletRouter.post(
+    "/pausar",
+    response_model=PausaProduccionPalletResponse,
+    status_code=200
+)
+def PausarProduccionPallet(
+    data: PausaProduccionPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+):
+    return service.PausaProduccionPallet(data, usuario_actual["IdUsuario"])
+
+@ProduccionPalletRouter.post(
+    "/reanudar",
+    response_model=ReanudarProduccionPalletResponse,
+    status_code=200
+)
+def ReanudarProduccionPallet(
+    data:ReanudarProduccionPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+): return service.ReanudarProduccionPallet(data, usuario_actual["IdUsuario"])
+
+
+@ProduccionPalletRouter.post(
+    "/finalizar",
+    response_model=FinalizarProduccionPalletResponse,
+    status_code=200
+)
+def FinalizarProduccionPallet(
+    data: FinalizarProduccionPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+):
+    return service.FinalizarProduccionPallet(data, usuario_actual["IdUsuario"])

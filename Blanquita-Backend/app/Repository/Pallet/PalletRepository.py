@@ -16,3 +16,5 @@ class PalletRepository:
             )
         """
         return self.caller.LlamarUnRegistro(sql, params)
+    
+    
