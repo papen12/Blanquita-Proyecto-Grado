@@ -2,8 +2,8 @@ import json
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
-from app.Repository.BobinaPapel.LoteBobinaPapelRepository import LoteBobinaPapelRepository
-from app.Models.BobinaPapel.IngresoBobina import ListaBobinasPapel,BobinaPapelIngresoItem,IngresoModelo,IngresoLoteBobinaPapelResponse
+from app.Repository.BobinaPapel.BobinaPapelRepository import LoteBobinaPapelRepository
+from app.Models.BobinaPapel.IngresoBobinaPapel import ListaBobinasPapel,BobinaPapelIngresoItem,IngresoModelo,IngresoLoteBobinaPapelResponse
 
 
 
