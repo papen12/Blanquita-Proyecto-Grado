@@ -3,18 +3,23 @@ from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
 
 from app.Services.Pallet.PalletService import PalletService
+from app.Services.Pallet.ProduccionPalletService import ProduccionPalletService
 
 from app.Auth.Dependencies import require_role
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR
 
 from app.Models.Pallet.IngresoPallet import IngresoPalletRequest, IngresoPalletResponse
-
+from app.Models.Pallet.ProduccionPallet import IniciarProduccionPalletRequest, IniciarProduccionPalletResponse
 
 PalletRouter = APIRouter(prefix="/pallet", tags=["Operaciones de Pallet"])
 
 
 def pallet_service(db: Session = Depends(get_db)) -> PalletService:
     return PalletService(db)
+
+
+def produccion_pallet_service(db: Session = Depends(get_db)) -> ProduccionPalletService:
+    return ProduccionPalletService(db)
 
 
 @PalletRouter.post(
@@ -28,3 +33,16 @@ def CargarLotePallet(
     service: PalletService = Depends(pallet_service)
 ):
     return service.InsertarPallets(data, usuario_actual["IdUsuario"])
+
+
+@PalletRouter.post(
+    "/iniciarproduccionpallet",
+    response_model=IniciarProduccionPalletResponse,
+    status_code=201
+)
+def IniciarProduccionPallet(
+    data: IniciarProduccionPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+):
+    return service.IniciarProduccionPallet(data, usuario_actual["IdUsuario"])
