@@ -1,8 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.Routes.UsuarioRouter import UsuarioRouter
-from app.Routes.PapelBobinaRouter import PapelBobinaRouter
-from app.Routes.PalletRouter import PalletRouter
+
+
+from app.Routes.Pallet.PalletRouter import PalletRouter
+
+from app.Routes.BobinaPapel.BobinaPapelRouter import BobinaPapelRouter
+from app.Routes.BobinaPapel.InventarioRouter import InventarioBobinaPapelRouter
+from app.Routes.BobinaPapel.ProduccionRouter import ProduccionBobinaPapelRouter
+
+
 app=FastAPI(debug=True
             ,title="Backend Blanquita"
             ,version="1.0.0"
@@ -24,7 +31,20 @@ def Servidor():
         "Servidor":"El servidor dice hola",
         "Documentación en:":" http://127.0.0.1:8000/documentacion"
     }
-    
+
+
+#ROUTERS USUARIO
 app.include_router(UsuarioRouter)
-app.include_router(PapelBobinaRouter)
+
+
+
+
+#ROUTERS BOBINA PAPEL
+app.include_router(BobinaPapelRouter)
+app.include_router(InventarioBobinaPapelRouter)
+app.include_router(ProduccionBobinaPapelRouter)
+
+
+
+#ROUTERS PALLET
 app.include_router(PalletRouter)

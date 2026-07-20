@@ -9,7 +9,7 @@ from app.Auth.Dependencies import require_role
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR
 
 from app.Models.Pallet.IngresoPallet import IngresoPalletRequest, IngresoPalletResponse
-from app.Models.Pallet.ProduccionPallet import IniciarProduccionPalletRequest, IniciarProduccionPalletResponse
+
 
 PalletRouter = APIRouter(prefix="/pallet", tags=["Operaciones de Pallet"])
 
@@ -35,14 +35,3 @@ def CargarLotePallet(
     return service.InsertarPallets(data, usuario_actual["IdUsuario"])
 
 
-@PalletRouter.post(
-    "/iniciarproduccionpallet",
-    response_model=IniciarProduccionPalletResponse,
-    status_code=201
-)
-def IniciarProduccionPallet(
-    data: IniciarProduccionPalletRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR])),
-    service: ProduccionPalletService = Depends(produccion_pallet_service)
-):
-    return service.IniciarProduccionPallet(data, usuario_actual["IdUsuario"])
