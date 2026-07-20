@@ -88,3 +88,19 @@ class ProduccionBobinaTuboRepository:
             )
         """
         return self.caller.LlamarFuncion(sql, params)
+    
+
+    def VerPausasActivas(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerPausasProduccionBobinaTuboActivas"(
+                :p_FiltroIdTipoBobina
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+
+
+    def VerBobinasFueraInventario(self) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerBobinasPapelFueraInventario"()
+        """
+        return self.caller.LlamarFuncion(sql, {})

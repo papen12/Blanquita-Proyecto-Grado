@@ -11,6 +11,8 @@ from app.Models.BobinaPapel.ReIngresarBobina import ReingresarBobinaAInventarioR
 from app.Models.BobinaPapel.BajarBobina import DarDeBajaBobinaRequest,DarDeBajaBobinaResponse
 from app.Models.BobinaPapel.OperadorLogs import InsertarMovimientoOperadorLogsRequest,InsertarMovimientoOperadorLogsResponse
 from app.Models.BobinaPapel.VerProduccionBobinaTubo import VerProduccionBobinaTuboRequest, VerProduccionBobinaTuboResponse
+from app.Models.BobinaPapel.VerBobinasPapelFueraInventario import VerBobinasPapelFueraInventarioResponse
+from app.Models.BobinaPapel.VerPausasProduccionBobina import VerPausasProduccionBobinaTuboActivasRequest, VerPausasProduccionBobinaTuboActivasResponse
 
 class ProduccionBobinaTuboService:
     def __init__(self, db: Session):
@@ -320,3 +322,16 @@ class ProduccionBobinaTuboService:
         resultados = self.repository.VerProduccionBobinaTubo(params)
 
         return [VerProduccionBobinaTuboResponse(**resultado) for resultado in resultados]
+    def VerBobinasFueraInventario(self) -> list[VerBobinasPapelFueraInventarioResponse]:
+        resultados = self.repository.VerBobinasFueraInventario()
+
+        return [VerBobinasPapelFueraInventarioResponse(**resultado) for resultado in resultados]
+    
+    def VerPausasActivas(self, data: VerPausasProduccionBobinaTuboActivasRequest) -> list[VerPausasProduccionBobinaTuboActivasResponse]:
+        params = {
+            "p_FiltroIdTipoBobina": data.FiltroIdTipoBobina,
+        }
+
+        resultados = self.repository.VerPausasActivas(params)
+
+        return [VerPausasProduccionBobinaTuboActivasResponse(**resultado) for resultado in resultados]

@@ -21,6 +21,10 @@ from app.Models.BobinaPapel.ReIngresarBobina import ReingresarBobinaAInventarioR
 from app.Models.BobinaPapel.BajarBobina import DarDeBajaBobinaRequest,DarDeBajaBobinaResponse
 from app.Models.BobinaPapel.VerProduccionBobinaTubo import VerProduccionBobinaTuboRequest, VerProduccionBobinaTuboResponse
 
+from app.Models.BobinaPapel.VerPausasProduccionBobina import VerPausasProduccionBobinaTuboActivasRequest, VerPausasProduccionBobinaTuboActivasResponse
+from app.Models.BobinaPapel.VerBobinasPapelFueraInventario import VerBobinasPapelFueraInventarioResponse
+
+
 from app.Models.BobinaPapel.InventarioBobinaPapel import (
     VerResumenInventarioBobinaPapelResponse,
     VerDetalleInventarioBobinaPapelRequest,
@@ -41,6 +45,8 @@ def iniciar_produccion_bobina_tubo_service(db: Session = Depends(get_db)) -> Pro
 
 def inventario_bobina_papel_service(db: Session = Depends(get_db)) -> InventarioBobinaPapelService:
     return InventarioBobinaPapelService(db)
+
+
 
 @PapelBobinaRouter.post(
     "/cargarlotebobinapapel",
@@ -185,3 +191,28 @@ def VerProduccionBobinaTubo(
     service: ProduccionBobinaTuboService = Depends(iniciar_produccion_bobina_tubo_service)
 ):
     return service.VerProduccionBobinaTubo(VerProduccionBobinaTuboRequest(IdTipoBobina=IdTipoBobina))
+
+@PapelBobinaRouter.get(
+    "/verpausasactivas",
+    response_model=list[VerPausasProduccionBobinaTuboActivasResponse],
+    status_code=200,
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR]))]
+)
+def VerPausasProduccionBobinaTuboActivas(
+    FiltroIdTipoBobina: int | None = None,
+    service: ProduccionBobinaTuboService = Depends(iniciar_produccion_bobina_tubo_service)
+):
+    return service.VerPausasActivas(VerPausasProduccionBobinaTuboActivasRequest(FiltroIdTipoBobina=FiltroIdTipoBobina))
+
+
+
+@PapelBobinaRouter.get(
+    "/verbobinasfuerainventario",
+    response_model=list[VerBobinasPapelFueraInventarioResponse],
+    status_code=200,
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR]))]
+)
+def VerBobinasPapelFueraInventario(
+    service: ProduccionBobinaTuboService = Depends(iniciar_produccion_bobina_tubo_service)
+):
+    return service.VerBobinasFueraInventario()
