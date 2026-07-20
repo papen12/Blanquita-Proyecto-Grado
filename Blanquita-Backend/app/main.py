@@ -3,11 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.Routes.UsuarioRouter import UsuarioRouter
 
 
-from app.Routes.Pallet.PalletRouter import PalletRouter
-
 from app.Routes.BobinaPapel.BobinaPapelRouter import BobinaPapelRouter
 from app.Routes.BobinaPapel.InventarioRouter import InventarioBobinaPapelRouter
 from app.Routes.BobinaPapel.ProduccionRouter import ProduccionBobinaPapelRouter
+
+
+from app.Routes.Pallet.PalletRouter import PalletRouter
+from app.Routes.Pallet.ProducionRouter import ProduccionPalletRouter
+from app.Routes.Pallet.InventarioRouter import InventarioPalletRouter
 
 
 app=FastAPI(debug=True
@@ -48,3 +51,5 @@ app.include_router(ProduccionBobinaPapelRouter)
 
 #ROUTERS PALLET
 app.include_router(PalletRouter)
+app.include_router(ProduccionPalletRouter)
+app.include_router(InventarioPalletRouter)

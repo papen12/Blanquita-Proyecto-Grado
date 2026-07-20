@@ -17,11 +17,11 @@ from app.Models.Pallet.ProduccionPallet import IniciarProduccionPalletRequest, I
 def produccion_pallet_service(db: Session = Depends(get_db)) -> ProduccionPalletService:
     return ProduccionPalletService(db)
 
-InventarioPalletRouter = APIRouter(
-    prefix="/pallet/inventario", tags=["Pallet - Inventario"]
+ProduccionPalletRouter = APIRouter(
+    prefix="/pallet/produccion", tags=["Pallet - Producción"]
 )
 
-@InventarioPalletRouter.post(
+@ProduccionPalletRouter.post(
     "/iniciar",
     response_model=IniciarProduccionPalletResponse,
     status_code=201
