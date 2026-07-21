@@ -15,7 +15,8 @@ from app.Models.Pallet.InventarioPallet import (
     DetalleInventarioPalletRequest,
     DetalleInventarioPalletResponse,
     ReingresarPalletInventarioRequest,
-    ReingresarPalletInventarioResponse
+    ReingresarPalletInventarioResponse,
+    DarDeBajaPalletRequest,DarDeBajaPalletResponse,
 )
 
 
@@ -59,3 +60,15 @@ def ReingresarInventarioPallet(
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: InventarioPalletService= Depends(inventario_pallet_service)
 ): return service.ReingresarPalletInventario(data,usuario_actual["IdUsuario"])
+
+@InventarioPalletRouter.post(
+    "/dardebaja",
+    response_model=DarDeBajaPalletResponse,
+    status_code=200
+)
+def DarDeBajaPallet(
+    data: DarDeBajaPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service:InventarioPalletService = Depends(inventario_pallet_service)
+):
+    return service.DarDeBajaPallet(data, usuario_actual["IdUsuario"])

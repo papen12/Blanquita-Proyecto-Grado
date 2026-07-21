@@ -9,7 +9,10 @@ from app.Models.Pallet.InventarioPallet import (
     DetalleInventarioPalletResponse,
     ReingresarPalletInventarioRequest,
     ReingresarPalletInventarioResponse,
+    DarDeBajaPalletRequest,
+    DarDeBajaPalletResponse,
 )
+
 
 class InventarioPalletService:
     def __init__(self, db: Session):
@@ -21,12 +24,14 @@ class InventarioPalletService:
         except SQLAlchemyError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No se pudo obtener el resumen de inventario de pallets"
+                detail="No se pudo obtener el resumen de inventario de pallets",
             )
 
         return [ResumenInventarioPalletResponse(**fila) for fila in resultado]
 
-    def VerDetalleInventarioPallet(self, data: DetalleInventarioPalletRequest) -> list[DetalleInventarioPalletResponse]:
+    def VerDetalleInventarioPallet(
+        self, data: DetalleInventarioPalletRequest
+    ) -> list[DetalleInventarioPalletResponse]:
         params = {
             "p_IdTipoPallet": data.IdTipoPallet,
         }
@@ -36,12 +41,14 @@ class InventarioPalletService:
         except SQLAlchemyError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No se pudo obtener el detalle de inventario de pallets"
+                detail="No se pudo obtener el detalle de inventario de pallets",
             )
 
         return [DetalleInventarioPalletResponse(**fila) for fila in resultado]
-    
-    def ReingresarPalletInventario(self, data: ReingresarPalletInventarioRequest, id_usuario: int) -> ReingresarPalletInventarioResponse:
+
+    def ReingresarPalletInventario(
+        self, data: ReingresarPalletInventarioRequest, id_usuario: int
+    ) -> ReingresarPalletInventarioResponse:
         params = {
             "p_IdPallet": data.IdPallet,
             "p_IdUsuario": id_usuario,
@@ -55,22 +62,58 @@ class InventarioPalletService:
             if "No existe el pallet" in mensaje:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"No existe el pallet con id {data.IdPallet}"
+                    detail=f"No existe el pallet con id {data.IdPallet}",
                 )
             if "no está Fuera de Inventario" in mensaje:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="El pallet indicado no está Fuera de Inventario, no puede reingresarse"
+                    detail="El pallet indicado no está Fuera de Inventario, no puede reingresarse",
                 )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No se pudo reingresar el pallet a inventario, verifica los datos ingresados"
+                detail="No se pudo reingresar el pallet a inventario, verifica los datos ingresados",
             )
 
         if not resultado:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No se pudo reingresar el pallet a inventario"
+                detail="No se pudo reingresar el pallet a inventario",
             )
 
         return ReingresarPalletInventarioResponse(**resultado)
+
+    def DarDeBajaPallet(
+        self, data: DarDeBajaPalletRequest, id_usuario: int
+    ) -> DarDeBajaPalletResponse:
+        params = {
+            "p_IdPallet": data.IdPallet,
+            "p_IdUsuario": id_usuario,
+            "p_Observacion": data.Observacion,
+        }
+
+        try:
+            resultado = self.repository.DarDeBajaPallet(params)
+        except SQLAlchemyError as e:
+            mensaje = str(e.orig) if hasattr(e, "orig") else str(e)
+            if "No existe el pallet" in mensaje:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"No existe el pallet con id {data.IdPallet}",
+                )
+            if "no está Fuera de Inventario" in mensaje:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="El pallet indicado no está Fuera de Inventario, no puede darse de baja",
+                )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo dar de baja el pallet, verifica los datos ingresados",
+            )
+
+        if not resultado:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo dar de baja el pallet",
+            )
+
+        return DarDeBajaPalletResponse(**resultado)

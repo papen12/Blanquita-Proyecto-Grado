@@ -59,15 +59,7 @@ class ProduccionPalletRepository:
     
     
 
-    def DarDeBajaPallet(self, params: dict) -> dict | None:
-        sql = """
-            SELECT * FROM "DarDeBajaPallet"(
-                :p_IdPallet,
-                :p_IdUsuario,
-                :p_Observacion
-            )
-        """
-        return self.caller.LlamarUnRegistro(sql, params)
+    
     
 
     def VerProduccionPallet(self, params: dict) -> list[dict]:

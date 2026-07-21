@@ -30,3 +30,15 @@ class ReingresarPalletInventarioResponse(BaseModel):
     IdPallet: int
     IdEstadoMateriaPrima: int
     FechaMovimiento: datetime
+
+
+class DarDeBajaPalletRequest(BaseModel):
+    IdPallet: int
+    Observacion: str | None = None
+
+
+class DarDeBajaPalletResponse(BaseModel):
+    IdPallet: int
+    IdEstadoMateriaPrima: int
+    FechaMovimiento: datetime
+

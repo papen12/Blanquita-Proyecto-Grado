@@ -67,22 +67,6 @@ class CancelarProduccionPalletResponse(BaseModel):
     IdEstadoProduccion: int
 
 
-
-
-
-
-class DarDeBajaPalletRequest(BaseModel):
-    IdPallet: int
-    Observacion: str | None = None
-
-
-class DarDeBajaPalletResponse(BaseModel):
-    IdPallet: int
-    IdEstadoMateriaPrima: int
-    FechaMovimiento: datetime
-
-
-
 class VerProduccionPalletRequest(BaseModel):
     IdTipoPallet: int | None = None
 

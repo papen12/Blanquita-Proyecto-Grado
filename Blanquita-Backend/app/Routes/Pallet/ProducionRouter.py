@@ -21,7 +21,6 @@ from app.Models.Pallet.ProduccionPallet import (
     FinalizarProduccionPalletResponse,
     CancelarProduccionPalletRequest,
     CancelarProduccionPalletResponse,
-    DarDeBajaPalletRequest,DarDeBajaPalletResponse,
     VerProduccionPalletRequest,VerProduccionPalletResponse,
     VerPausasProduccionPalletActivasRequest,
     VerPausasProduccionPalletActivasResponse
@@ -97,17 +96,7 @@ def CancelarProduccionPallet(
     return service.CancelarProduccionPallet(data, usuario_actual["IdUsuario"])
 
 
-@ProduccionPalletRouter.post(
-    "/dardebaja",
-    response_model=DarDeBajaPalletResponse,
-    status_code=200
-)
-def DarDeBajaPallet(
-    data: DarDeBajaPalletRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
-    service: ProduccionPalletService = Depends(produccion_pallet_service)
-):
-    return service.DarDeBajaPallet(data, usuario_actual["IdUsuario"])
+
 
 @ProduccionPalletRouter.post(
     "/activas",
