@@ -28,7 +28,7 @@ InventarioBobinaPapelRouter = APIRouter(
 
 
 @InventarioBobinaPapelRouter.get(
-    "/verinventariobobinapapel",
+    "/resumen",
     response_model=list[VerResumenInventarioBobinaPapelResponse],
     status_code=200,
     dependencies=[
@@ -42,7 +42,7 @@ def VerInventarioBobinaPapel(
 
 
 @InventarioBobinaPapelRouter.get(
-    "/verdetalleinventariobobinapapel/{IdTipoBobina}",
+    "/detalle/{IdTipoBobina}",
     response_model=list[VerDetalleInventarioBobinaPapelResponse],
     status_code=200,
     dependencies=[
