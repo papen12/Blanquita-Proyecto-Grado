@@ -112,28 +112,76 @@ def require_role(roles_permitidos: list[int]):
 
 
 
-#Repository/Pallet/ProduccionPallet.py
-from sqlalchemy.orm import Session
-from app.Repository.DbCaller import DbCaller
+#Models/Pallet/IngresoPallet.py
+from datetime import date
+
+from pydantic import BaseModel
 
 
-class ProduccionPalletRepository:
-    def __init__(self, db: Session):
-        self.caller = DbCaller(db)
- 
-    def IniciarProduccionPallet(self, params: dict) -> dict | None:
-        sql = """
-            SELECT * FROM "IniciarProduccionPalletTubo"(
-                :p_IdPallet,
-                :p_IdUsuario
-            )
-        """
-        return self.caller.LlamarUnRegistro(sql, params)
+class PalletItem(BaseModel):
+    CodigoPallet: str
+
+
+class IngresoPalletRequest(BaseModel):
+    IdProveedor: int
+    IdTipoPallet: int
+    Pallets: list[PalletItem]
+
+
+class IngresoPalletResponse(BaseModel):
+    FechaRecepcion: date
+    CantidadPallets: int
+
+#Models/Pallet/InventarioPallet.py
+
+from datetime import date
+from pydantic import BaseModel
+from datetime import datetime
+
+class ResumenInventarioPalletResponse(BaseModel):
+    IdTipoPallet: int
+    NumeroRodelas: int | None
+    Descripcion: str | None
+    CantidadPallets: int
+
+
+class DetalleInventarioPalletRequest(BaseModel):
+    IdTipoPallet: int
+
+
+class DetalleInventarioPalletResponse(BaseModel):
+    IdPallet: int
+    CodigoPallet: str
+    CodigoLote: str
+    FechaRecepcion: date
+    NombreProveedor: str
+
+
+class ReingresarPalletInventarioRequest(BaseModel):
+    IdPallet: int
+    Observacion: str | None = None
+
+
+class ReingresarPalletInventarioResponse(BaseModel):
+    IdPallet: int
+    IdEstadoMateriaPrima: int
+    FechaMovimiento: datetime
+
+
+class DarDeBajaPalletRequest(BaseModel):
+    IdPallet: int
+    Observacion: str | None = None
+
+
+class DarDeBajaPalletResponse(BaseModel):
+    IdPallet: int
+    IdEstadoMateriaPrima: int
+    FechaMovimiento: datetime
 
 
 
+#Models/Pallet/ProduccionPallet.py
 
-#ProduccionPallet.py
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -150,58 +198,325 @@ class IniciarProduccionPalletResponse(BaseModel):
 
 
 
-#Services/Pallet/ProduccionPalletService.py
+class PausaProduccionPalletRequest(BaseModel):
+    IdProduccionPalletTubo: int
+    MotivoPausaProduccion: str | None = None
+
+
+class PausaProduccionPalletResponse(BaseModel):
+    IdPausaProduccionPalletTubo: int
+    IdProduccionPalletTubo: int
+    FechaHoraPausa: datetime
+    MotivoPausaProduccion: str | None
+    FechaHoraReanudacion: datetime | None
+    IdEstadoProduccion: int
+
+
+
+class ReanudarProduccionPalletRequest(BaseModel):
+    IdProduccionPalletTubo: int
+
+
+class ReanudarProduccionPalletResponse(BaseModel):
+    IdPausaProduccionPalletTubo: int
+    IdProduccionPalletTubo: int
+    FechaHoraPausa: datetime
+    MotivoPausaProduccion: str | None
+    FechaHoraReanudacion: datetime
+    IdEstadoProduccion: int
+
+
+
+class FinalizarProduccionPalletRequest(BaseModel):
+    IdProduccionPalletTubo: int
+
+
+class FinalizarProduccionPalletResponse(BaseModel):
+    IdProduccionPalletTubo: int
+    FechaFinProduccion: datetime
+    IdEstadoProduccion: int
+    NombreEstadoProduccion: str
+
+
+class CancelarProduccionPalletRequest(BaseModel):
+    IdProduccionPalletTubo: int
+    MotivoCancelacion: str | None = None
+
+
+class CancelarProduccionPalletResponse(BaseModel):
+    IdCancelacionProduccionPalletTubo: int
+    IdProduccionPalletTubo: int
+    FechaHoraCancelacion: datetime
+    MotivoCancelacion: str | None
+    IdEstadoProduccion: int
+
+
+class VerProduccionPalletRequest(BaseModel):
+    IdTipoPallet: int | None = None
+
+
+class VerProduccionPalletResponse(BaseModel):
+    IdProduccionPalletTubo: int
+    NombreEstadoProduccion: str
+    CodigoPallet: str
+    IdTipoPallet: int
+    NombreTurno: str
+    FechaInicioProduccion: datetime
+
+class VerPausasProduccionPalletActivasRequest(BaseModel):
+    IdTipoPallet: int | None = None
+
+
+class VerPausasProduccionPalletActivasResponse(BaseModel):
+    IdPausaProduccionPalletTubo: int
+    IdProduccionPalletTubo: int
+    CodigoPallet: str
+    IdTipoPallet: int
+    FechaHoraPausa: datetime
+    NombreEstadoProduccion: str
+
+
+
+
+#Repository/Pallet/InventarioPallet.py
+
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
-from fastapi import HTTPException, status
-from app.Repository.Pallet.ProduccionPallet import ProduccionPalletRepository
-from app.Models.Pallet.ProduccionPallet import IniciarProduccionPalletRequest, IniciarProduccionPalletResponse
+from app.Repository.DbCaller import DbCaller
 
 
-class ProduccionPalletService:
+class InventarioPalletRepository:
     def __init__(self, db: Session):
-        self.repository = ProduccionPalletRepository(db)
+        self.caller = DbCaller(db)
 
-    def IniciarProduccionPallet(self, data: IniciarProduccionPalletRequest, id_usuario: int) -> IniciarProduccionPalletResponse:
-        params = {
-            "p_IdPallet": data.IdPallet,
-            "p_IdUsuario": id_usuario,
-        }
+    def VerResumenInventarioPallet(self) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerResumenInventarioPallet"()
+        """
+        return self.caller.LlamarFuncion(sql)
 
-        try:
-            resultado = self.repository.IniciarProduccionPallet(params)
-        except SQLAlchemyError as e:
-            mensaje = str(e.orig) if hasattr(e, "orig") else str(e)
-            if "es obligatorio" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="IdPallet es obligatorio para iniciar producción"
-                )
-            if "No existe el pallet" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"No existe el pallet con id {data.IdPallet}"
-                )
-            if "no está En almacén" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="El pallet indicado no está disponible en almacén"
-                )
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No se pudo iniciar la producción de pallet tubo, verifica los datos ingresados"
+    def VerDetalleInventarioPallet(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerDetalleInventarioPallet"(
+                :p_IdTipoPallet
             )
+        """
+        return self.caller.LlamarFuncion(sql, params)
 
-        if not resultado:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No se pudo iniciar la producción de pallet tubo"
+    def ReingresarPalletInventario(self, params: dict) -> dict | None:
+        sql = """
+        SELECT * FROM "ReingresarPalletAInventario"(
+            :p_IdPallet,
+            :p_IdUsuario,
+            :p_Observacion
+        )
+    """
+        return self.caller.LlamarUnRegistro(sql, params)
+
+    def DarDeBajaPallet(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "DarDeBajaPallet"(
+                :p_IdPallet,
+                :p_IdUsuario,
+                :p_Observacion
             )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)
+    
 
-        return IniciarProduccionPalletResponse(**resultado)
+#Repository/Pallet/ProduccionPallet.py
+from sqlalchemy.orm import Session
+from app.Repository.DbCaller import DbCaller
 
 
-#Routes/ProduccionRouter.py
+class ProduccionPalletRepository:
+    def __init__(self, db: Session):
+        self.caller = DbCaller(db)
+
+    def IniciarProduccionPallet(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "IniciarProduccionPalletTubo"(
+                :p_IdPallet,
+                :p_IdUsuario
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)
+    
+
+    
+
+    def PausaProduccionPallet(self, params: dict) -> dict | None:
+        sql = """
+        SELECT * FROM "PausaProduccionPalletTubo"(
+            :p_IdProduccionPalletTubo,
+            :p_IdUsuario,
+            :p_MotivoPausaProduccion
+        )
+    """
+        return self.caller.LlamarUnRegistro(sql, params)
+    
+    def ReanudarProduccionPallet(self, params: dict) -> dict | None:
+        sql = """
+        SELECT * FROM "ReanudarProduccionPalletTubo"(
+            :p_IdProduccionPalletTubo,
+            :p_IdUsuario
+        )
+    """
+        return self.caller.LlamarUnRegistro(sql, params)
+
+    def FinalizarProduccionPallet(self, params: dict) -> dict | None:
+        sql = """
+        SELECT * FROM "FinalizarProduccionPalletTubo"(
+            :p_IdProduccionPalletTubo,
+            :p_IdUsuario
+        )
+    """
+        return self.caller.LlamarUnRegistro(sql, params)
+    
+    def CancelarProduccionPallet(self, params: dict) -> dict | None:
+        sql = """
+        SELECT * FROM "CancelarProduccionPalletTubo"(
+            :p_id_produccion,
+            :p_id_usuario,
+            :p_motivo_cancelacion
+        )
+    """
+        return self.caller.LlamarUnRegistro(sql, params)
+    
+    
+    
+
+    
+    
+
+    def VerProduccionPallet(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerProduccionPalletTubo"(
+                :p_IdTipoPallet
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+    def VerPausasProduccionPalletActivas(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerPausasProduccionPalletTuboActivas"(
+                :p_IdTipoPallet
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+    
+
+
+#Repository/Pallet/PalletRepository.py
+
+from sqlalchemy.orm import Session
+from app.Repository.DbCaller import DbCaller
+
+
+class PalletRepository:
+    def __init__(self, db: Session):
+        self.caller = DbCaller(db)
+
+    def InsertarPallets(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "InsertarPallets"(
+                :p_IdProveedor,
+                :p_IdTipoPallet,
+                :p_IdUsuario,
+                :p_Pallets
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)
+    
+    
+
+#Routes/Pallet/InventarioPallet.py
+
+from sqlalchemy.orm import Session
+from app.Repository.DbCaller import DbCaller
+
+
+class InventarioPalletRepository:
+    def __init__(self, db: Session):
+        self.caller = DbCaller(db)
+
+    def VerResumenInventarioPallet(self) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerResumenInventarioPallet"()
+        """
+        return self.caller.LlamarFuncion(sql)
+
+    def VerDetalleInventarioPallet(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerDetalleInventarioPallet"(
+                :p_IdTipoPallet
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+
+    def ReingresarPalletInventario(self, params: dict) -> dict | None:
+        sql = """
+        SELECT * FROM "ReingresarPalletAInventario"(
+            :p_IdPallet,
+            :p_IdUsuario,
+            :p_Observacion
+        )
+    """
+        return self.caller.LlamarUnRegistro(sql, params)
+
+    def DarDeBajaPallet(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "DarDeBajaPallet"(
+                :p_IdPallet,
+                :p_IdUsuario,
+                :p_Observacion
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)
+
+
+#Routes/Pallet/PalletRouter.py
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.Config.supabase import get_db
+
+from app.Services.Pallet.PalletService import PalletService
+from app.Services.Pallet.ProduccionPalletService import ProduccionPalletService
+
+from app.Auth.Dependencies import require_role
+from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR
+
+from app.Models.Pallet.IngresoPallet import IngresoPalletRequest, IngresoPalletResponse
+
+
+PalletRouter = APIRouter(prefix="/pallet", tags=["Pallet CRUD y Ingreso"])
+
+
+def pallet_service(db: Session = Depends(get_db)) -> PalletService:
+    return PalletService(db)
+
+
+def produccion_pallet_service(db: Session = Depends(get_db)) -> ProduccionPalletService:
+    return ProduccionPalletService(db)
+
+
+@PalletRouter.post(
+    "/cargarlotepallet",
+    response_model=IngresoPalletResponse,
+    status_code=201
+)
+def CargarLotePallet(
+    data: IngresoPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR])),
+    service: PalletService = Depends(pallet_service)
+):
+    return service.InsertarPallets(data, usuario_actual["IdUsuario"])
+
+
+
+
+
+
+#Routes/Pallet/ProduccionRouter.py
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
@@ -211,10 +526,24 @@ from app.Services.Pallet.ProduccionPalletService import ProduccionPalletService
 
 
 from app.Auth.Dependencies import require_role
-from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR
+from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 
 
-from app.Models.Pallet.ProduccionPallet import IniciarProduccionPalletRequest, IniciarProduccionPalletResponse
+from app.Models.Pallet.ProduccionPallet import (
+    IniciarProduccionPalletRequest,
+    IniciarProduccionPalletResponse,
+    PausaProduccionPalletRequest,
+    PausaProduccionPalletResponse,
+    ReanudarProduccionPalletRequest,
+    ReanudarProduccionPalletResponse,
+    FinalizarProduccionPalletRequest,
+    FinalizarProduccionPalletResponse,
+    CancelarProduccionPalletRequest,
+    CancelarProduccionPalletResponse,
+    VerProduccionPalletRequest,VerProduccionPalletResponse,
+    VerPausasProduccionPalletActivasRequest,
+    VerPausasProduccionPalletActivasResponse
+)
 
 
 
@@ -232,7 +561,84 @@ ProduccionPalletRouter = APIRouter(
 )
 def IniciarProduccionPallet(
     data: IniciarProduccionPalletRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR])),
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionPalletService = Depends(produccion_pallet_service)
 ):
     return service.IniciarProduccionPallet(data, usuario_actual["IdUsuario"])
+
+@ProduccionPalletRouter.post(
+    "/pausar",
+    response_model=PausaProduccionPalletResponse,
+    status_code=200
+)
+def PausarProduccionPallet(
+    data: PausaProduccionPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+):
+    return service.PausaProduccionPallet(data, usuario_actual["IdUsuario"])
+
+@ProduccionPalletRouter.post(
+    "/reanudar",
+    response_model=ReanudarProduccionPalletResponse,
+    status_code=200
+)
+def ReanudarProduccionPallet(
+    data:ReanudarProduccionPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+): return service.ReanudarProduccionPallet(data, usuario_actual["IdUsuario"])
+
+
+@ProduccionPalletRouter.post(
+    "/finalizar",
+    response_model=FinalizarProduccionPalletResponse,
+    status_code=200
+)
+def FinalizarProduccionPallet(
+    data: FinalizarProduccionPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+):
+    return service.FinalizarProduccionPallet(data, usuario_actual["IdUsuario"])
+
+@ProduccionPalletRouter.post(
+    "/cancelar",
+    response_model=CancelarProduccionPalletResponse,
+    status_code=200
+)
+def CancelarProduccionPallet(
+    data: CancelarProduccionPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+):
+    return service.CancelarProduccionPallet(data, usuario_actual["IdUsuario"])
+
+
+
+
+@ProduccionPalletRouter.post(
+    "/activas",
+    response_model=list[VerProduccionPalletResponse],
+    status_code=200
+)
+def VerProduccionPallet(
+    data: VerProduccionPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+):
+    return service.VerProduccionPallet(data)
+
+@ProduccionPalletRouter.post(
+    "/pausadas",
+    response_model=list[VerPausasProduccionPalletActivasResponse],
+    status_code=200
+)
+def VerPausasProduccionPalletActivas(
+    data: VerPausasProduccionPalletActivasRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+):
+    return service.VerPausasProduccionPalletActivas(data)
+
+
