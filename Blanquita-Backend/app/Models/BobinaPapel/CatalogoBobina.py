@@ -1,4 +1,5 @@
-from datetime import datetime
+
+from datetime import date, datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -20,10 +21,6 @@ class VerProduccionBobinaTuboResponse(BaseModel):
     CantidadLogsActual: int
 
 
-from datetime import datetime
-from typing import Optional
-
-from pydantic import BaseModel
 
 
 class VerPausasProduccionBobinaTuboActivasRequest(BaseModel):
@@ -41,11 +38,17 @@ class VerPausasProduccionBobinaTuboActivasResponse(BaseModel):
 
 
 
+class VerBobinasPapelFueraInventarioResponse(BaseModel):
+    IdBobinaPapel: int
+    CodigoBobina: str
+    NombreTipoBobina: str
+    PesoBrutoKg: Optional[float]
+    Gramaje: Optional[float]
+    NombreProveedor: str
+    FechaRecepcion: date
+    UltimaObservacion: Optional[str]
+    FechaUltimoMovimiento: Optional[datetime]
 
-from datetime import date, datetime
-from typing import Optional
-
-from pydantic import BaseModel
 
 
 class VerBobinasPapelFueraInventarioResponse(BaseModel):
@@ -61,30 +64,7 @@ class VerBobinasPapelFueraInventarioResponse(BaseModel):
 
 
 
-from datetime import date, datetime
-from typing import Optional
 
-from pydantic import BaseModel
-
-
-class VerBobinasPapelFueraInventarioResponse(BaseModel):
-    IdBobinaPapel: int
-    CodigoBobina: str
-    NombreTipoBobina: str
-    PesoBrutoKg: Optional[float]
-    Gramaje: Optional[float]
-    NombreProveedor: str
-    FechaRecepcion: date
-    UltimaObservacion: Optional[str]
-    FechaUltimoMovimiento: Optional[datetime]
-
-
-
-
-
-from datetime import datetime
-from pydantic import BaseModel
-from typing import Optional
 
 
 class DarDeBajaBobinaRequest(BaseModel):

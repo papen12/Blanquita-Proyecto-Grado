@@ -117,7 +117,7 @@ def CancelarProduccion(
 
 
 @ProduccionBobinaPapelRouter.post(
-    "/reingresarbobinainventario",
+    "/reingresar",
     response_model=ReingresarBobinaAInventarioResponse,
     status_code=200,
 )
@@ -130,7 +130,7 @@ def ReIngresarBobinaInventario(
 
 
 @ProduccionBobinaPapelRouter.post(
-    "/dardebajabobina", response_model=DarDeBajaBobinaResponse, status_code=200
+    "/dardebaja", response_model=DarDeBajaBobinaResponse, status_code=200
 )
 def DarDeBajaBobina(
     data: DarDeBajaBobinaRequest,
@@ -156,7 +156,7 @@ def InsertarMovimientoLog(
 
 
 @ProduccionBobinaPapelRouter.get(
-    "/verproduccionbobinatubo",
+    "/activas",
     response_model=list[VerProduccionBobinaTuboResponse],
     status_code=200,
     dependencies=[
@@ -173,7 +173,7 @@ def VerProduccionBobinaTubo(
 
 
 @ProduccionBobinaPapelRouter.get(
-    "/verpausasactivas",
+    "/pausadas",
     response_model=list[VerPausasProduccionBobinaTuboActivasResponse],
     status_code=200,
     dependencies=[
@@ -192,7 +192,7 @@ def VerPausasProduccionBobinaTuboActivas(
 
 
 @ProduccionBobinaPapelRouter.get(
-    "/verbobinasfuerainventario",
+    "/fuerainventario",
     response_model=list[VerBobinasPapelFueraInventarioResponse],
     status_code=200,
     dependencies=[

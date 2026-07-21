@@ -1,7 +1,8 @@
 from datetime import datetime
-
 from pydantic import BaseModel
-
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
 
 class IniciarProduccionBobinaTuboRequest(BaseModel):
     IdBobina1: int
@@ -14,9 +15,6 @@ class IniciarProduccionBobinaTuboResponse(BaseModel):
     NombreTurno: str
 
 
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
 
 class PausarProduccionBobinaTuboRequest(BaseModel):
     IdProduccionBobinaTubo: int
@@ -33,9 +31,6 @@ class PausarProduccionBobinaTuboResponse(BaseModel):
 
 
 
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
 
 
 class ReanudarProduccionBobinaTuboRequest(BaseModel):
@@ -50,9 +45,6 @@ class ReanudarProduccionBobinaTuboResponse(BaseModel):
     FechaHoraReanudacion: datetime
     IdEstadoProduccion: int
 
-from datetime import datetime
-from pydantic import BaseModel
-from typing import Optional
 
 class CancelarProduccionBobinaTuboRequest(BaseModel):
     IdProduccionBobinaTubo: int
@@ -67,10 +59,6 @@ class CancelarProduccionBobinaTuboResponse(BaseModel):
     IdEstadoProduccion: int
 
 
-from datetime import datetime
-from pydantic import BaseModel
-
-
 class FinalizarProduccionBobinaTuboRequest(BaseModel):
     IdProduccionBobinaTubo: int
 class FinalizarProduccionBobinaTuboResponse(BaseModel):
@@ -79,12 +67,6 @@ class FinalizarProduccionBobinaTuboResponse(BaseModel):
     IdEstadoProduccion: int
     NombreEstadoProduccion: str
 
-
-
-
-from typing import Optional
-from datetime import datetime
-from pydantic import BaseModel
 
 class ReingresarBobinaAInventarioRequest(BaseModel):
     IdBobinaPapel: int
@@ -95,11 +77,6 @@ class ReingresarBobinaAInventarioResponse(BaseModel):
     IdBobinaPapel: int
     IdEstadoMateriaPrima: int
     FechaMovimiento: datetime
-
-from datetime import datetime
-from pydantic import BaseModel
-from typing import Optional
-
 
 class DarDeBajaBobinaRequest(BaseModel):
     IdBobinaPapel: int
