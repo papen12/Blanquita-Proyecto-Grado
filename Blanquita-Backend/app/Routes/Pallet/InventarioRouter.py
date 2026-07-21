@@ -38,7 +38,7 @@ def VerResumenInventarioPallet(
 ):
     return service.VerResumenInventarioPallet()
 
-@InventarioPalletRouter.post(
+@InventarioPalletRouter.get(
     "/detalle",
     response_model=list[DetalleInventarioPalletResponse],
     status_code=200

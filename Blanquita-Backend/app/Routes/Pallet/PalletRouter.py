@@ -11,7 +11,7 @@ from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR
 from app.Models.Pallet.IngresoPallet import IngresoPalletRequest, IngresoPalletResponse
 
 
-PalletRouter = APIRouter(prefix="/pallet", tags=["Operaciones de Pallet"])
+PalletRouter = APIRouter(prefix="/pallet", tags=["Pallet CRUD y Ingreso"])
 
 
 def pallet_service(db: Session = Depends(get_db)) -> PalletService:
