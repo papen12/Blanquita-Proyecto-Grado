@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.Routes.UsuarioRouter import UsuarioRouter
+
+from app.Routes.Usuario.UsuarioRouter import UsuarioRouter
 
 
 from app.Routes.BobinaPapel.BobinaPapelRouter import BobinaPapelRouter
