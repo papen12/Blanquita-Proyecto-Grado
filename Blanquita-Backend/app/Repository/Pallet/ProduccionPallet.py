@@ -45,3 +45,34 @@ class ProduccionPalletRepository:
         )
     """
         return self.caller.LlamarUnRegistro(sql, params)
+    
+    def CancelarProduccionPallet(self, params: dict) -> dict | None:
+        sql = """
+        SELECT * FROM "CancelarProduccionPalletTubo"(
+            :p_id_produccion,
+            :p_id_usuario,
+            :p_motivo_cancelacion
+        )
+    """
+        return self.caller.LlamarUnRegistro(sql, params)
+    
+    def ReingresarPalletInventario(self, params: dict) -> dict | None:
+        sql = """
+        SELECT * FROM "ReingresarPalletAInventario"(
+            :p_IdPallet,
+            :p_IdUsuario,
+            :p_Observacion
+        )
+    """
+        return self.caller.LlamarUnRegistro(sql, params)
+    
+
+    def DarDeBajaPallet(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "DarDeBajaPallet"(
+                :p_IdPallet,
+                :p_IdUsuario,
+                :p_Observacion
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)

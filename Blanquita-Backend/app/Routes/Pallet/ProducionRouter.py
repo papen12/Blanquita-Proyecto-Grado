@@ -18,7 +18,12 @@ from app.Models.Pallet.ProduccionPallet import (
     ReanudarProduccionPalletRequest,
     ReanudarProduccionPalletResponse,
     FinalizarProduccionPalletRequest,
-    FinalizarProduccionPalletResponse
+    FinalizarProduccionPalletResponse,
+    CancelarProduccionPalletRequest,
+    CancelarProduccionPalletResponse,
+    ReingresarPalletInventarioResponse,
+    ReingresarPalletInventarioRequest,
+    DarDeBajaPalletRequest,DarDeBajaPalletResponse
 )
 
 
@@ -77,3 +82,38 @@ def FinalizarProduccionPallet(
     service: ProduccionPalletService = Depends(produccion_pallet_service)
 ):
     return service.FinalizarProduccionPallet(data, usuario_actual["IdUsuario"])
+
+@ProduccionPalletRouter.post(
+    "/cancelar",
+    response_model=CancelarProduccionPalletResponse,
+    status_code=200
+)
+def CancelarProduccionPallet(
+    data: CancelarProduccionPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+):
+    return service.CancelarProduccionPallet(data, usuario_actual["IdUsuario"])
+
+@ProduccionPalletRouter.post(
+    "/reingresar",
+    response_model=ReingresarPalletInventarioResponse,
+    status_code=200
+)
+def ReingresarInventarioPallet(
+    data: ReingresarPalletInventarioRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService= Depends(produccion_pallet_service)
+): return service.ReingresarPalletInventario(data,usuario_actual["IdUsuario"])
+
+@ProduccionPalletRouter.post(
+    "/dardebaja",
+    response_model=DarDeBajaPalletResponse,
+    status_code=200
+)
+def DarDeBajaPallet(
+    data: DarDeBajaPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+):
+    return service.DarDeBajaPallet(data, usuario_actual["IdUsuario"])

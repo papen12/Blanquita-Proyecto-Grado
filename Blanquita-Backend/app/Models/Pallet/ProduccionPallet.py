@@ -52,3 +52,40 @@ class FinalizarProduccionPalletResponse(BaseModel):
     FechaFinProduccion: datetime
     IdEstadoProduccion: int
     NombreEstadoProduccion: str
+
+
+class CancelarProduccionPalletRequest(BaseModel):
+    IdProduccionPalletTubo: int
+    MotivoCancelacion: str | None = None
+
+
+class CancelarProduccionPalletResponse(BaseModel):
+    IdCancelacionProduccionPalletTubo: int
+    IdProduccionPalletTubo: int
+    FechaHoraCancelacion: datetime
+    MotivoCancelacion: str | None
+    IdEstadoProduccion: int
+
+
+
+class ReingresarPalletInventarioRequest(BaseModel):
+    IdPallet: int
+    Observacion: str | None = None
+
+
+class ReingresarPalletInventarioResponse(BaseModel):
+    IdPallet: int
+    IdEstadoMateriaPrima: int
+    FechaMovimiento: datetime
+
+
+
+class DarDeBajaPalletRequest(BaseModel):
+    IdPallet: int
+    Observacion: str | None = None
+
+
+class DarDeBajaPalletResponse(BaseModel):
+    IdPallet: int
+    IdEstadoMateriaPrima: int
+    FechaMovimiento: datetime
