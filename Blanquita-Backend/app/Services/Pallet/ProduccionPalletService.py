@@ -15,7 +15,10 @@ from app.Models.Pallet.ProduccionPallet import (
     CancelarProduccionPalletResponse,
     ReingresarPalletInventarioRequest,
     ReingresarPalletInventarioResponse,
-    DarDeBajaPalletRequest,DarDeBajaPalletResponse
+    DarDeBajaPalletRequest,DarDeBajaPalletResponse,
+    VerProduccionPalletRequest,VerProduccionPalletResponse,
+    VerPausasProduccionPalletActivasRequest,
+    VerPausasProduccionPalletActivasResponse
 )
 
 class ProduccionPalletService:
@@ -273,3 +276,33 @@ class ProduccionPalletService:
             )
 
         return DarDeBajaPalletResponse(**resultado)
+    
+    def VerProduccionPallet(self, data: VerProduccionPalletRequest) -> list[VerProduccionPalletResponse]:
+        params = {
+            "p_IdTipoPallet": data.IdTipoPallet,
+        }
+
+        try:
+            resultado = self.repository.VerProduccionPallet(params)
+        except SQLAlchemyError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener la producción de pallet tubo"
+            )
+
+        return [VerProduccionPalletResponse(**fila) for fila in resultado]
+    
+    def VerPausasProduccionPalletActivas(self, data: VerPausasProduccionPalletActivasRequest) -> list[VerPausasProduccionPalletActivasResponse]:
+        params = {
+            "p_IdTipoPallet": data.IdTipoPallet,
+        }
+
+        try:
+            resultado = self.repository.VerPausasProduccionPalletActivas(params)
+        except SQLAlchemyError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener las pausas de producción de pallet tubo"
+            )
+
+        return [VerPausasProduccionPalletActivasResponse(**fila) for fila in resultado]

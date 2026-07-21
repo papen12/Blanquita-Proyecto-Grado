@@ -89,3 +89,29 @@ class DarDeBajaPalletResponse(BaseModel):
     IdPallet: int
     IdEstadoMateriaPrima: int
     FechaMovimiento: datetime
+
+
+
+class VerProduccionPalletRequest(BaseModel):
+    IdTipoPallet: int | None = None
+
+
+class VerProduccionPalletResponse(BaseModel):
+    IdProduccionPalletTubo: int
+    NombreEstadoProduccion: str
+    CodigoPallet: str
+    IdTipoPallet: int
+    NombreTurno: str
+    FechaInicioProduccion: datetime
+
+class VerPausasProduccionPalletActivasRequest(BaseModel):
+    IdTipoPallet: int | None = None
+
+
+class VerPausasProduccionPalletActivasResponse(BaseModel):
+    IdPausaProduccionPalletTubo: int
+    IdProduccionPalletTubo: int
+    CodigoPallet: str
+    IdTipoPallet: int
+    FechaHoraPausa: datetime
+    NombreEstadoProduccion: str

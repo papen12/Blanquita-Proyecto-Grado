@@ -76,3 +76,19 @@ class ProduccionPalletRepository:
             )
         """
         return self.caller.LlamarUnRegistro(sql, params)
+    
+
+    def VerProduccionPallet(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerProduccionPalletTubo"(
+                :p_IdTipoPallet
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+    def VerPausasProduccionPalletActivas(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerPausasProduccionPalletTuboActivas"(
+                :p_IdTipoPallet
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)

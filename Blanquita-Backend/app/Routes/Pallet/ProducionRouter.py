@@ -23,7 +23,10 @@ from app.Models.Pallet.ProduccionPallet import (
     CancelarProduccionPalletResponse,
     ReingresarPalletInventarioResponse,
     ReingresarPalletInventarioRequest,
-    DarDeBajaPalletRequest,DarDeBajaPalletResponse
+    DarDeBajaPalletRequest,DarDeBajaPalletResponse,
+    VerProduccionPalletRequest,VerProduccionPalletResponse,
+    VerPausasProduccionPalletActivasRequest,
+    VerPausasProduccionPalletActivasResponse
 )
 
 
@@ -117,3 +120,27 @@ def DarDeBajaPallet(
     service: ProduccionPalletService = Depends(produccion_pallet_service)
 ):
     return service.DarDeBajaPallet(data, usuario_actual["IdUsuario"])
+
+@ProduccionPalletRouter.post(
+    "/activas",
+    response_model=list[VerProduccionPalletResponse],
+    status_code=200
+)
+def VerProduccionPallet(
+    data: VerProduccionPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+):
+    return service.VerProduccionPallet(data)
+
+@ProduccionPalletRouter.post(
+    "/pausadas",
+    response_model=list[VerPausasProduccionPalletActivasResponse],
+    status_code=200
+)
+def VerPausasProduccionPalletActivas(
+    data: VerPausasProduccionPalletActivasRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionPalletService = Depends(produccion_pallet_service)
+):
+    return service.VerPausasProduccionPalletActivas(data)
