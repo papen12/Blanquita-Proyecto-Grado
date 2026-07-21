@@ -68,15 +68,6 @@ class CancelarProduccionPalletResponse(BaseModel):
 
 
 
-class ReingresarPalletInventarioRequest(BaseModel):
-    IdPallet: int
-    Observacion: str | None = None
-
-
-class ReingresarPalletInventarioResponse(BaseModel):
-    IdPallet: int
-    IdEstadoMateriaPrima: int
-    FechaMovimiento: datetime
 
 
 

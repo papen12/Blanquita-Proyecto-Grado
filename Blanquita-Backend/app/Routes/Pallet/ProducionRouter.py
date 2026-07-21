@@ -21,8 +21,6 @@ from app.Models.Pallet.ProduccionPallet import (
     FinalizarProduccionPalletResponse,
     CancelarProduccionPalletRequest,
     CancelarProduccionPalletResponse,
-    ReingresarPalletInventarioResponse,
-    ReingresarPalletInventarioRequest,
     DarDeBajaPalletRequest,DarDeBajaPalletResponse,
     VerProduccionPalletRequest,VerProduccionPalletResponse,
     VerPausasProduccionPalletActivasRequest,
@@ -98,16 +96,6 @@ def CancelarProduccionPallet(
 ):
     return service.CancelarProduccionPallet(data, usuario_actual["IdUsuario"])
 
-@ProduccionPalletRouter.post(
-    "/reingresar",
-    response_model=ReingresarPalletInventarioResponse,
-    status_code=200
-)
-def ReingresarInventarioPallet(
-    data: ReingresarPalletInventarioRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
-    service: ProduccionPalletService= Depends(produccion_pallet_service)
-): return service.ReingresarPalletInventario(data,usuario_actual["IdUsuario"])
 
 @ProduccionPalletRouter.post(
     "/dardebaja",

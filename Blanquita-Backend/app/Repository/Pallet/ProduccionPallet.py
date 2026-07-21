@@ -56,15 +56,7 @@ class ProduccionPalletRepository:
     """
         return self.caller.LlamarUnRegistro(sql, params)
     
-    def ReingresarPalletInventario(self, params: dict) -> dict | None:
-        sql = """
-        SELECT * FROM "ReingresarPalletAInventario"(
-            :p_IdPallet,
-            :p_IdUsuario,
-            :p_Observacion
-        )
-    """
-        return self.caller.LlamarUnRegistro(sql, params)
+    
     
 
     def DarDeBajaPallet(self, params: dict) -> dict | None:

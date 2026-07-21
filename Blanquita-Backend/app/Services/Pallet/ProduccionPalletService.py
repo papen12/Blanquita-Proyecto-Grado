@@ -13,8 +13,6 @@ from app.Models.Pallet.ProduccionPallet import (
     ReanudarProduccionPalletResponse,
     CancelarProduccionPalletRequest,
     CancelarProduccionPalletResponse,
-    ReingresarPalletInventarioRequest,
-    ReingresarPalletInventarioResponse,
     DarDeBajaPalletRequest,DarDeBajaPalletResponse,
     VerProduccionPalletRequest,VerProduccionPalletResponse,
     VerPausasProduccionPalletActivasRequest,
@@ -210,39 +208,7 @@ class ProduccionPalletService:
             )
 
         return CancelarProduccionPalletResponse(**resultado)
-    def ReingresarPalletInventario(self, data: ReingresarPalletInventarioRequest, id_usuario: int) -> ReingresarPalletInventarioResponse:
-        params = {
-            "p_IdPallet": data.IdPallet,
-            "p_IdUsuario": id_usuario,
-            "p_Observacion": data.Observacion,
-        }
-
-        try:
-            resultado = self.repository.ReingresarPalletInventario(params)
-        except SQLAlchemyError as e:
-            mensaje = str(e.orig) if hasattr(e, "orig") else str(e)
-            if "No existe el pallet" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"No existe el pallet con id {data.IdPallet}"
-                )
-            if "no está Fuera de Inventario" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="El pallet indicado no está Fuera de Inventario, no puede reingresarse"
-                )
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No se pudo reingresar el pallet a inventario, verifica los datos ingresados"
-            )
-
-        if not resultado:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No se pudo reingresar el pallet a inventario"
-            )
-
-        return ReingresarPalletInventarioResponse(**resultado)
+    
     def DarDeBajaPallet(self, data: DarDeBajaPalletRequest, id_usuario: int) -> DarDeBajaPalletResponse:
         params = {
             "p_IdPallet": data.IdPallet,

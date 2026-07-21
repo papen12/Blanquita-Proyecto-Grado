@@ -6,6 +6,16 @@ class InventarioPalletRepository:
     def __init__(self, db: Session):
         self.caller = DbCaller(db)
 
+    def ReingresarPalletInventario(self, params: dict) -> dict | None:
+        sql = """
+        SELECT * FROM "ReingresarPalletAInventario"(
+            :p_IdPallet,
+            :p_IdUsuario,
+            :p_Observacion
+        )
+    """
+        return self.caller.LlamarUnRegistro(sql, params)
+
     def VerResumenInventarioPallet(self) -> list[dict]:
         sql = """
             SELECT * FROM "VerResumenInventarioPallet"()
@@ -19,3 +29,5 @@ class InventarioPalletRepository:
             )
         """
         return self.caller.LlamarFuncion(sql, params)
+    
+    

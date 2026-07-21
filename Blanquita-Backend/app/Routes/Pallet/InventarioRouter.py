@@ -13,7 +13,9 @@ from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 from app.Models.Pallet.InventarioPallet import (
     ResumenInventarioPalletResponse,
     DetalleInventarioPalletRequest,
-    DetalleInventarioPalletResponse
+    DetalleInventarioPalletResponse,
+    ReingresarPalletInventarioRequest,
+    ReingresarPalletInventarioResponse
 )
 
 
@@ -46,3 +48,14 @@ def VerDetalleInventarioPallet(
     service: InventarioPalletService = Depends(inventario_pallet_service)
 ):
     return service.VerDetalleInventarioPallet(data)
+
+@InventarioPalletRouter.post(
+    "/reingresar",
+    response_model=ReingresarPalletInventarioResponse,
+    status_code=200
+)
+def ReingresarInventarioPallet(
+    data: ReingresarPalletInventarioRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: InventarioPalletService= Depends(inventario_pallet_service)
+): return service.ReingresarPalletInventario(data,usuario_actual["IdUsuario"])
