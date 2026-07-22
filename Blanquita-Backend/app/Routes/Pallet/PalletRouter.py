@@ -23,7 +23,7 @@ def produccion_pallet_service(db: Session = Depends(get_db)) -> ProduccionPallet
 
 
 @PalletRouter.post(
-    "/cargarlotepallet",
+    "/cargarlote",
     response_model=IngresoPalletResponse,
     status_code=201
 )

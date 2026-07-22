@@ -23,7 +23,7 @@ BobinaPapelRouter = APIRouter(
 
 
 @BobinaPapelRouter.post(
-    "/cargarlotebobinapapel",
+    "/cargarlote",
     response_model=IngresoLoteBobinaPapelResponse,
     status_code=201,
 )
