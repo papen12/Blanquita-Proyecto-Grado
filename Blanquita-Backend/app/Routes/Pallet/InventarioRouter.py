@@ -16,7 +16,9 @@ from app.Models.Pallet.InventarioPallet import (
     DetalleInventarioPalletResponse,
     ReingresarPalletInventarioRequest,
     ReingresarPalletInventarioResponse,
-    DarDeBajaPalletRequest,DarDeBajaPalletResponse,
+    DarDeBajaPalletRequest,
+    DarDeBajaPalletResponse,
+    PalletFueraInventarioResponse
 )
 
 
@@ -72,3 +74,14 @@ def DarDeBajaPallet(
     service:InventarioPalletService = Depends(inventario_pallet_service)
 ):
     return service.DarDeBajaPallet(data, usuario_actual["IdUsuario"])
+
+@InventarioPalletRouter.get(
+    "/fuera",
+    response_model=list[PalletFueraInventarioResponse],
+    status_code=200
+)
+def VerPalletFueraInventario(
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: InventarioPalletService = Depends(inventario_pallet_service)
+):
+    return service.VerPalletsFueraInventario()

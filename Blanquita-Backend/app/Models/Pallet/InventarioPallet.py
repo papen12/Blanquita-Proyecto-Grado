@@ -42,3 +42,13 @@ class DarDeBajaPalletResponse(BaseModel):
     IdEstadoMateriaPrima: int
     FechaMovimiento: datetime
 
+
+class PalletFueraInventarioResponse(BaseModel):
+    IdPallet: int
+    CodigoPallet: str
+    NumeroRodelas: int | None
+    Descripcion: str | None
+    NombreProveedor: str
+    FechaRecepcion: date
+    UltimaObservacion: str | None
+    FechaUltimoMovimiento: datetime

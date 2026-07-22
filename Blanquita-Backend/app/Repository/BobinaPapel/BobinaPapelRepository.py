@@ -16,3 +16,5 @@ class LoteBobinaPapelRepository:
             )
         """
         return self.caller.LlamarUnRegistro(sql, params)
+
+    

@@ -11,6 +11,7 @@ from app.Models.Pallet.InventarioPallet import (
     ReingresarPalletInventarioResponse,
     DarDeBajaPalletRequest,
     DarDeBajaPalletResponse,
+    PalletFueraInventarioResponse
 )
 
 
@@ -117,3 +118,7 @@ class InventarioPalletService:
             )
 
         return DarDeBajaPalletResponse(**resultado)
+
+    def VerPalletsFueraInventario(self) -> list[PalletFueraInventarioResponse]:
+        resultado = self.repository.VerPalletsFueraInventario()
+        return resultado

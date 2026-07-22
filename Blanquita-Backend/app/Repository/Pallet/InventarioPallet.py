@@ -39,3 +39,8 @@ class InventarioPalletRepository:
             )
         """
         return self.caller.LlamarUnRegistro(sql, params)
+    def VerPalletsFueraInventario(self) -> list[dict]:
+            sql = """
+                SELECT * FROM "VerPalletsFueraInventario"()
+            """
+            return self.caller.LlamarFuncion(sql)

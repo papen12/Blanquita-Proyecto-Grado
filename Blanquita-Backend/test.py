@@ -430,47 +430,93 @@ class PalletRepository:
 
 #Routes/Pallet/InventarioPallet.py
 
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.Repository.DbCaller import DbCaller
+from app.Config.supabase import get_db
 
 
-class InventarioPalletRepository:
-    def __init__(self, db: Session):
-        self.caller = DbCaller(db)
+from app.Services.Pallet.InventarioPalletService import InventarioPalletService
 
-    def VerResumenInventarioPallet(self) -> list[dict]:
-        sql = """
-            SELECT * FROM "VerResumenInventarioPallet"()
-        """
-        return self.caller.LlamarFuncion(sql)
 
-    def VerDetalleInventarioPallet(self, params: dict) -> list[dict]:
-        sql = """
-            SELECT * FROM "VerDetalleInventarioPallet"(
-                :p_IdTipoPallet
-            )
-        """
-        return self.caller.LlamarFuncion(sql, params)
+from app.Auth.Dependencies import require_role
+from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 
-    def ReingresarPalletInventario(self, params: dict) -> dict | None:
-        sql = """
-        SELECT * FROM "ReingresarPalletAInventario"(
-            :p_IdPallet,
-            :p_IdUsuario,
-            :p_Observacion
-        )
-    """
-        return self.caller.LlamarUnRegistro(sql, params)
 
-    def DarDeBajaPallet(self, params: dict) -> dict | None:
-        sql = """
-            SELECT * FROM "DarDeBajaPallet"(
-                :p_IdPallet,
-                :p_IdUsuario,
-                :p_Observacion
-            )
-        """
-        return self.caller.LlamarUnRegistro(sql, params)
+from app.Models.Pallet.InventarioPallet import (
+    ResumenInventarioPalletResponse,
+    DetalleInventarioPalletRequest,
+    DetalleInventarioPalletResponse,
+    ReingresarPalletInventarioRequest,
+    ReingresarPalletInventarioResponse,
+    DarDeBajaPalletRequest,
+    DarDeBajaPalletResponse,
+    PalletFueraInventarioResponse
+)
+
+
+def inventario_pallet_service(db: Session = Depends(get_db)) -> InventarioPalletService:
+    return InventarioPalletService(db)
+
+InventarioPalletRouter = APIRouter(
+    prefix="/pallet/inventario", tags=["Pallet - Inventario"]
+)
+
+@InventarioPalletRouter.get(
+    "/resumen",
+    response_model=list[ResumenInventarioPalletResponse],
+    status_code=200
+)
+def VerResumenInventarioPallet(
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: InventarioPalletService = Depends(inventario_pallet_service)
+):
+    return service.VerResumenInventarioPallet()
+
+@InventarioPalletRouter.get(
+    "/detalle",
+    response_model=list[DetalleInventarioPalletResponse],
+    status_code=200
+)
+def VerDetalleInventarioPallet(
+    data: DetalleInventarioPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: InventarioPalletService = Depends(inventario_pallet_service)
+):
+    return service.VerDetalleInventarioPallet(data)
+
+@InventarioPalletRouter.post(
+    "/reingresar",
+    response_model=ReingresarPalletInventarioResponse,
+    status_code=200
+)
+def ReingresarInventarioPallet(
+    data: ReingresarPalletInventarioRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: InventarioPalletService= Depends(inventario_pallet_service)
+): return service.ReingresarPalletInventario(data,usuario_actual["IdUsuario"])
+
+@InventarioPalletRouter.post(
+    "/dardebaja",
+    response_model=DarDeBajaPalletResponse,
+    status_code=200
+)
+def DarDeBajaPallet(
+    data: DarDeBajaPalletRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service:InventarioPalletService = Depends(inventario_pallet_service)
+):
+    return service.DarDeBajaPallet(data, usuario_actual["IdUsuario"])
+
+@InventarioPalletRouter.get(
+    "/fuera",
+    response_model=list[PalletFueraInventarioResponse],
+    status_code=200
+)
+def VerPalletFueraInventario(
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: InventarioPalletService = Depends(inventario_pallet_service)
+):
+    return service.VerPalletsFueraInventario()
 
 
 #Routes/Pallet/PalletRouter.py
