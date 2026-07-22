@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
-from app.Repository.BobinaPapel.produccionbobinarepository import (
-    ProduccionBobinaTuboRepository,
+from app.Repository.BobinaPapel.ProduccionBobinaPapel import (
+    ProduccionBobinaPapelRepository,
 )
 from app.Models.BobinaPapel.ProduccionBobinaPapel import (
     IniciarProduccionBobinaTuboRequest,
@@ -15,27 +15,18 @@ from app.Models.BobinaPapel.ProduccionBobinaPapel import (
     ReanudarProduccionBobinaTuboResponse,
     CancelarProduccionBobinaTuboRequest,
     CancelarProduccionBobinaTuboResponse,
-    ReingresarBobinaAInventarioRequest,
-    ReingresarBobinaAInventarioResponse,
-    DarDeBajaBobinaRequest,
-    DarDeBajaBobinaResponse,
-)
-from app.Models.BobinaPapel.OperadorLogs import (
     InsertarMovimientoOperadorLogsRequest,
     InsertarMovimientoOperadorLogsResponse,
-)
-from app.Models.BobinaPapel.CatalogoBobina import (
     VerProduccionBobinaTuboRequest,
     VerProduccionBobinaTuboResponse,
-    VerBobinasPapelFueraInventarioResponse,
     VerPausasProduccionBobinaTuboActivasRequest,
     VerPausasProduccionBobinaTuboActivasResponse,
 )
 
 
-class ProduccionBobinaTuboService:
+class ProduccionBobinaPapelService:
     def __init__(self, db: Session):
-        self.repository = ProduccionBobinaTuboRepository(db)
+        self.repository = ProduccionBobinaPapelRepository(db)
 
     def IniciarProduccionBobinaTubo(
         self, data: IniciarProduccionBobinaTuboRequest, id_usuario: int
@@ -87,7 +78,7 @@ class ProduccionBobinaTuboService:
         }
 
         try:
-            resultado = self.repository.FinalizarProduccion(params)
+            resultado = self.repository.FinalizarProduccionBobinaTubo(params)
         except SQLAlchemyError as e:
             mensaje = str(e.orig) if hasattr(e, "orig") else str(e)
             if "No existe la producción" in mensaje:
@@ -123,7 +114,7 @@ class ProduccionBobinaTuboService:
         }
 
         try:
-            resultado = self.repository.PausarProduccion(params)
+            resultado = self.repository.PausaProduccionBobinaTubo(params)
         except SQLAlchemyError as e:
             mensaje = str(e.orig) if hasattr(e, "orig") else str(e)
             if "No existe la producción" in mensaje:
@@ -158,7 +149,7 @@ class ProduccionBobinaTuboService:
         }
 
         try:
-            resultado = self.repository.RenudarProduccion(params)
+            resultado = self.repository.ReanudarProduccionBobinaTubo(params)
         except SQLAlchemyError as e:
             mensaje = str(e.orig) if hasattr(e, "orig") else str(e)
             if "No existe la producción" in mensaje:
@@ -199,7 +190,7 @@ class ProduccionBobinaTuboService:
         }
 
         try:
-            resultado = self.repository.CancelarProduccion(params)
+            resultado = self.repository.CancelarProduccionBobinaTubo(params)
         except SQLAlchemyError as e:
             mensaje = str(e.orig) if hasattr(e, "orig") else str(e)
             if "No existe la producción" in mensaje:
@@ -224,78 +215,6 @@ class ProduccionBobinaTuboService:
             )
 
         return CancelarProduccionBobinaTuboResponse(**resultado)
-
-    def ReingresarBobina(
-        self, data: ReingresarBobinaAInventarioRequest, id_usuario: int
-    ) -> ReingresarBobinaAInventarioResponse:
-        params = {
-            "p_IdBobinaPapel": data.IdBobinaPapel,
-            "p_IdUsuario": id_usuario,
-            "p_Observacion": data.Observacion,
-        }
-
-        try:
-            resultado = self.repository.ReingresarBobina(params)
-        except SQLAlchemyError as e:
-            mensaje = str(e.orig) if hasattr(e, "orig") else str(e)
-            if "No existe la bobina" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"No existe la bobina con id {data.IdBobinaPapel}",
-                )
-            if "no está Fuera de Inventario" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="La bobina indicada no está Fuera de Inventario, no puede reingresarse",
-                )
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No se pudo reingresar la bobina a inventario, verifica los datos ingresados",
-            )
-
-        if not resultado:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No se pudo reingresar la bobina a inventario",
-            )
-
-        return ReingresarBobinaAInventarioResponse(**resultado)
-
-    def DarDeBajaBobina(
-        self, data: DarDeBajaBobinaRequest, id_usuario: int
-    ) -> DarDeBajaBobinaResponse:
-        params = {
-            "p_IdBobinaPapel": data.IdBobinaPapel,
-            "p_IdUsuario": id_usuario,
-            "p_Observacion": data.Observacion,
-        }
-
-        try:
-            resultado = self.repository.DarDeBajaBobina(params)
-        except SQLAlchemyError as e:
-            mensaje = str(e.orig) if hasattr(e, "orig") else str(e)
-            if "No existe la bobina" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"No existe la bobina con id {data.IdBobinaPapel}",
-                )
-            if "no está Fuera de Inventario" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="La bobina indicada no está Fuera de Inventario, no puede darse de baja",
-                )
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No se pudo dar de baja la bobina, verifica los datos ingresados",
-            )
-
-        if not resultado:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No se pudo dar de baja la bobina",
-            )
-
-        return DarDeBajaBobinaResponse(**resultado)
 
     def InsertarMovimientoOperadorLogs(
         self, data: InsertarMovimientoOperadorLogsRequest, id_usuario: int
@@ -363,14 +282,6 @@ class ProduccionBobinaTuboService:
             VerProduccionBobinaTuboResponse(**resultado) for resultado in resultados
         ]
 
-    def VerBobinasFueraInventario(self) -> list[VerBobinasPapelFueraInventarioResponse]:
-        resultados = self.repository.VerBobinasFueraInventario()
-
-        return [
-            VerBobinasPapelFueraInventarioResponse(**resultado)
-            for resultado in resultados
-        ]
-
     def VerPausasActivas(
         self, data: VerPausasProduccionBobinaTuboActivasRequest
     ) -> list[VerPausasProduccionBobinaTuboActivasResponse]:
@@ -378,7 +289,7 @@ class ProduccionBobinaTuboService:
             "p_FiltroIdTipoBobina": data.FiltroIdTipoBobina,
         }
 
-        resultados = self.repository.VerPausasActivas(params)
+        resultados = self.repository.VerPausasProduccionBobinaTuboActivas(params)
 
         return [
             VerPausasProduccionBobinaTuboActivasResponse(**resultado)

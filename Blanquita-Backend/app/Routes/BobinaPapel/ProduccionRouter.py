@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
 
 from app.Services.BobinaPapel.ProduccionBobinaPapelService import (
-    ProduccionBobinaTuboService,
+    ProduccionBobinaPapelService,
 )
 
 from app.Auth.Dependencies import require_role
@@ -20,28 +20,19 @@ from app.Models.BobinaPapel.ProduccionBobinaPapel import (
     ReanudarProduccionBobinaTuboResponse,
     CancelarProduccionBobinaTuboRequest,
     CancelarProduccionBobinaTuboResponse,
-    ReingresarBobinaAInventarioRequest,
-    ReingresarBobinaAInventarioResponse,
-    DarDeBajaBobinaRequest,
-    DarDeBajaBobinaResponse,
-)
-from app.Models.BobinaPapel.CatalogoBobina import (
+    InsertarMovimientoOperadorLogsRequest,
+    InsertarMovimientoOperadorLogsResponse,
     VerProduccionBobinaTuboRequest,
     VerProduccionBobinaTuboResponse,
     VerPausasProduccionBobinaTuboActivasRequest,
     VerPausasProduccionBobinaTuboActivasResponse,
-    VerBobinasPapelFueraInventarioResponse,
-)
-from app.Models.BobinaPapel.OperadorLogs import (
-    InsertarMovimientoOperadorLogsRequest,
-    InsertarMovimientoOperadorLogsResponse,
 )
 
 
-def produccion_bobina_tubo_service(
+def produccion_bobina_papel_service(
     db: Session = Depends(get_db),
-) -> ProduccionBobinaTuboService:
-    return ProduccionBobinaTuboService(db)
+) -> ProduccionBobinaPapelService:
+    return ProduccionBobinaPapelService(db)
 
 
 ProduccionBobinaPapelRouter = APIRouter(
@@ -59,7 +50,7 @@ def IniciarProduccion(
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
-    service: ProduccionBobinaTuboService = Depends(produccion_bobina_tubo_service),
+    service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.IniciarProduccionBobinaTubo(data, usuario_actual["IdUsuario"])
 
@@ -72,7 +63,7 @@ def IniciarProduccion(
 def FinalizarProduccion(
     data: FinalizarProduccionBobinaTuboRequest,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
-    service: ProduccionBobinaTuboService = Depends(produccion_bobina_tubo_service),
+    service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.FinalizarProduccion(data, usuario_actual["IdUsuario"])
 
@@ -85,7 +76,7 @@ def FinalizarProduccion(
 def PausarProduccion(
     data: PausarProduccionBobinaTuboRequest,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
-    service: ProduccionBobinaTuboService = Depends(produccion_bobina_tubo_service),
+    service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.PausarProduccion(data, usuario_actual["IdUsuario"])
 
@@ -98,7 +89,7 @@ def PausarProduccion(
 def ReanudarProduccion(
     data: ReanudarProduccionBobinaTuboRequest,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
-    service: ProduccionBobinaTuboService = Depends(produccion_bobina_tubo_service),
+    service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.ReanudarProduccion(data, usuario_actual["IdUsuario"])
 
@@ -111,37 +102,13 @@ def ReanudarProduccion(
 def CancelarProduccion(
     data: CancelarProduccionBobinaTuboRequest,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
-    service: ProduccionBobinaTuboService = Depends(produccion_bobina_tubo_service),
+    service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.CancelarProduccion(data, usuario_actual["IdUsuario"])
 
 
 @ProduccionBobinaPapelRouter.post(
-    "/reingresar",
-    response_model=ReingresarBobinaAInventarioResponse,
-    status_code=200,
-)
-def ReIngresarBobinaInventario(
-    data: ReingresarBobinaAInventarioRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
-    service: ProduccionBobinaTuboService = Depends(produccion_bobina_tubo_service),
-):
-    return service.ReingresarBobina(data, usuario_actual["IdUsuario"])
-
-
-@ProduccionBobinaPapelRouter.post(
-    "/dardebaja", response_model=DarDeBajaBobinaResponse, status_code=200
-)
-def DarDeBajaBobina(
-    data: DarDeBajaBobinaRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
-    service: ProduccionBobinaTuboService = Depends(produccion_bobina_tubo_service),
-):
-    return service.DarDeBajaBobina(data, usuario_actual["IdUsuario"])
-
-
-@ProduccionBobinaPapelRouter.post(
-    "/insertarmovimientolog",
+    "/insertarlog",
     response_model=InsertarMovimientoOperadorLogsResponse,
     status_code=201,
 )
@@ -150,7 +117,7 @@ def InsertarMovimientoLog(
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
-    service: ProduccionBobinaTuboService = Depends(produccion_bobina_tubo_service),
+    service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.InsertarMovimientoOperadorLogs(data, usuario_actual["IdUsuario"])
 
@@ -165,7 +132,7 @@ def InsertarMovimientoLog(
 )
 def VerProduccionBobinaTubo(
     IdTipoBobina: int | None = None,
-    service: ProduccionBobinaTuboService = Depends(produccion_bobina_tubo_service),
+    service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.VerProduccionBobinaTubo(
         VerProduccionBobinaTuboRequest(IdTipoBobina=IdTipoBobina)
@@ -182,24 +149,10 @@ def VerProduccionBobinaTubo(
 )
 def VerPausasProduccionBobinaTuboActivas(
     FiltroIdTipoBobina: int | None = None,
-    service: ProduccionBobinaTuboService = Depends(produccion_bobina_tubo_service),
+    service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.VerPausasActivas(
         VerPausasProduccionBobinaTuboActivasRequest(
             FiltroIdTipoBobina=FiltroIdTipoBobina
         )
     )
-
-
-@ProduccionBobinaPapelRouter.get(
-    "/fuerainventario",
-    response_model=list[VerBobinasPapelFueraInventarioResponse],
-    status_code=200,
-    dependencies=[
-        Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR]))
-    ],
-)
-def VerBobinasPapelFueraInventario(
-    service: ProduccionBobinaTuboService = Depends(produccion_bobina_tubo_service),
-):
-    return service.VerBobinasFueraInventario()

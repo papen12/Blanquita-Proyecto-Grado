@@ -1,19 +1,19 @@
 from datetime import datetime
-from pydantic import BaseModel
-from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+
+from pydantic import BaseModel
+
 
 class IniciarProduccionBobinaTuboRequest(BaseModel):
     IdBobina1: int
     IdBobina2: int
+
 
 class IniciarProduccionBobinaTuboResponse(BaseModel):
     IdProduccionBobinaTubo: int
     FechaInicioProduccion: datetime
     IdTurno: int
     NombreTurno: str
-
 
 
 class PausarProduccionBobinaTuboRequest(BaseModel):
@@ -30,9 +30,6 @@ class PausarProduccionBobinaTuboResponse(BaseModel):
     IdEstadoProduccion: int
 
 
-
-
-
 class ReanudarProduccionBobinaTuboRequest(BaseModel):
     IdProduccionBobinaTubo: int
 
@@ -44,6 +41,17 @@ class ReanudarProduccionBobinaTuboResponse(BaseModel):
     MotivoPausaProduccion: Optional[str] = None
     FechaHoraReanudacion: datetime
     IdEstadoProduccion: int
+
+
+class FinalizarProduccionBobinaTuboRequest(BaseModel):
+    IdProduccionBobinaTubo: int
+
+
+class FinalizarProduccionBobinaTuboResponse(BaseModel):
+    IdProduccionBobinaTubo: int
+    FechaFinProduccion: datetime
+    IdEstadoProduccion: int
+    NombreEstadoProduccion: str
 
 
 class CancelarProduccionBobinaTuboRequest(BaseModel):
@@ -59,31 +67,47 @@ class CancelarProduccionBobinaTuboResponse(BaseModel):
     IdEstadoProduccion: int
 
 
-class FinalizarProduccionBobinaTuboRequest(BaseModel):
+class VerProduccionBobinaTuboRequest(BaseModel):
+    IdTipoBobina: Optional[int] = None
+
+
+class VerProduccionBobinaTuboResponse(BaseModel):
     IdProduccionBobinaTubo: int
-class FinalizarProduccionBobinaTuboResponse(BaseModel):
-    IdProduccionBobinaTubo: int
-    FechaFinProduccion: datetime
-    IdEstadoProduccion: int
+    IdTipoBobina: int
+    NombreTipoBobina: str
     NombreEstadoProduccion: str
+    CodigoBobina1: str
+    CodigoBobina2: str
+    NombreTurno: str
+    FechaInicioProduccion: datetime
+    CantidadLogsActual: int
 
 
-class ReingresarBobinaAInventarioRequest(BaseModel):
-    IdBobinaPapel: int
+class VerPausasProduccionBobinaTuboActivasRequest(BaseModel):
+    FiltroIdTipoBobina: Optional[int] = None
+
+
+class VerPausasProduccionBobinaTuboActivasResponse(BaseModel):
+    IdPausaProduccionBobinaTubo: int
+    IdProduccionBobinaTubo: int
+    CodigoBobina1: str
+    CodigoBobina2: str
+    FechaHoraPausa: datetime
+    NombreEstadoProduccion: str
+    CantidadLogsActual: int
+
+
+class InsertarMovimientoOperadorLogsRequest(BaseModel):
+    IdProduccionBobinaTubo: int
+    IdTipoMovimientoOperadorLogs: int
+    CantidadLogs: int
     Observacion: Optional[str] = None
 
 
-class ReingresarBobinaAInventarioResponse(BaseModel):
-    IdBobinaPapel: int
-    IdEstadoMateriaPrima: int
-    FechaMovimiento: datetime
-
-class DarDeBajaBobinaRequest(BaseModel):
-    IdBobinaPapel: int
-    Observacion: Optional[str] = None
-
-
-class DarDeBajaBobinaResponse(BaseModel):
-    IdBobinaPapel: int
-    IdEstadoMateriaPrima: int
+class InsertarMovimientoOperadorLogsResponse(BaseModel):
+    IdMovimientoOperadorLogs: int
+    IdProduccionBobinaTubo: int
+    IdTipoMovimientoOperadorLogs: int
+    CantidadLogs: int
+    CantidadTotalActual: int
     FechaMovimiento: datetime

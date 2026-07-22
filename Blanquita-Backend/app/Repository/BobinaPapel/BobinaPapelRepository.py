@@ -2,11 +2,11 @@ from sqlalchemy.orm import Session
 from app.Repository.DbCaller import DbCaller
 
 
-class LoteBobinaPapelRepository:
+class BobinaPapelRepository:
     def __init__(self, db: Session):
         self.caller = DbCaller(db)
 
-    def insertar_bobinas_papel(self, params: dict) -> dict | None:
+    def InsertarBobinasPapel(self, params: dict) -> dict | None:
         sql = """
             SELECT * FROM "InsertarBobinasPapel"(
                 :p_IdProveedor,
@@ -16,5 +16,3 @@ class LoteBobinaPapelRepository:
             )
         """
         return self.caller.LlamarUnRegistro(sql, params)
-
-    

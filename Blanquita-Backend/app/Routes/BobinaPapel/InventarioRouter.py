@@ -13,6 +13,11 @@ from app.Models.BobinaPapel.InventarioBobinaPapel import (
     VerResumenInventarioBobinaPapelResponse,
     VerDetalleInventarioBobinaPapelRequest,
     VerDetalleInventarioBobinaPapelResponse,
+    ReingresarBobinaAInventarioRequest,
+    ReingresarBobinaAInventarioResponse,
+    DarDeBajaBobinaRequest,
+    DarDeBajaBobinaResponse,
+    VerBobinasPapelFueraInventarioResponse,
 )
 
 
@@ -56,3 +61,47 @@ def VerDetalleInventarioBobinaPapel(
     return service.VerDetalle(
         VerDetalleInventarioBobinaPapelRequest(IdTipoBobina=IdTipoBobina)
     )
+
+
+@InventarioBobinaPapelRouter.post(
+    "/reingresar",
+    response_model=ReingresarBobinaAInventarioResponse,
+    status_code=200,
+)
+def ReingresarInventarioBobinaPapel(
+    data: ReingresarBobinaAInventarioRequest,
+    usuario_actual: dict = Depends(
+        require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
+    ),
+    service: InventarioBobinaPapelService = Depends(inventario_bobina_papel_service),
+):
+    return service.ReingresarBobinaInventario(data, usuario_actual["IdUsuario"])
+
+
+@InventarioBobinaPapelRouter.post(
+    "/dardebaja",
+    response_model=DarDeBajaBobinaResponse,
+    status_code=200,
+)
+def DarDeBajaBobinaPapel(
+    data: DarDeBajaBobinaRequest,
+    usuario_actual: dict = Depends(
+        require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
+    ),
+    service: InventarioBobinaPapelService = Depends(inventario_bobina_papel_service),
+):
+    return service.DarDeBajaBobina(data, usuario_actual["IdUsuario"])
+
+
+@InventarioBobinaPapelRouter.get(
+    "/fuera",
+    response_model=list[VerBobinasPapelFueraInventarioResponse],
+    status_code=200,
+    dependencies=[
+        Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR]))
+    ],
+)
+def VerBobinasPapelFueraInventario(
+    service: InventarioBobinaPapelService = Depends(inventario_bobina_papel_service),
+):
+    return service.VerBobinasFueraInventario()

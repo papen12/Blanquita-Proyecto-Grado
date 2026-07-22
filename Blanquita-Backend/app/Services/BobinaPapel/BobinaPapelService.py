@@ -2,16 +2,20 @@ import json
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
-from app.Repository.BobinaPapel.BobinaPapelRepository import LoteBobinaPapelRepository
-from app.Models.BobinaPapel.IngresoBobinaPapel import ListaBobinasPapel,BobinaPapelIngresoItem,IngresoModelo,IngresoLoteBobinaPapelResponse
+from app.Repository.BobinaPapel.BobinaPapelRepository import BobinaPapelRepository
+from app.Models.BobinaPapel.BobinaPapel import (
+    ListaBobinasPapel,
+    BobinaPapelIngresoItem,
+    IngresoModelo,
+    IngresoLoteBobinaPapelResponse,
+)
 
 
-
-class LoteBobinaService:
+class BobinaPapelService:
     def __init__(self, db: Session):
-        self.repository = LoteBobinaPapelRepository(db)
+        self.repository = BobinaPapelRepository(db)
 
-    def insertar_bobinas_papel(self, data: IngresoModelo, id_usuario: int) -> IngresoLoteBobinaPapelResponse:
+    def InsertarBobinasPapel(self, data: IngresoModelo, id_usuario: int) -> IngresoLoteBobinaPapelResponse:
         params = {
             "p_IdProveedor": data.IdProveedor,
             "p_IdTipoBobina": data.IdTipoBobina,
@@ -20,7 +24,7 @@ class LoteBobinaService:
         }
 
         try:
-            resultado = self.repository.insertar_bobinas_papel(params)
+            resultado = self.repository.InsertarBobinasPapel(params)
         except SQLAlchemyError as e:
             mensaje = str(e.orig) if hasattr(e, "orig") else str(e)
             if "duplicate key" in mensaje and "CodigoBobina" in mensaje:
