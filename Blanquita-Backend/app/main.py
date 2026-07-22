@@ -15,6 +15,7 @@ from app.Routes.Pallet.InventarioRouter import InventarioPalletRouter
 
 
 from app.Routes.Empaque.EmpaqueBobinaRouter import EmpaqueBobinaRouter
+from app.Routes.Empaque.EmpaqueBolsaRouter import EmpaqueBolsaRouter
 
 
 app=FastAPI(debug=True
@@ -60,3 +61,4 @@ app.include_router(InventarioPalletRouter)
 
 #ROUTERS EMPAQUE BOBINA / BOLSA
 app.include_router(EmpaqueBobinaRouter)
+app.include_router(EmpaqueBolsaRouter)
