@@ -19,6 +19,7 @@ from app.Routes.Empaque.EmpaqueBolsaRouter import EmpaqueBolsaRouter
 
 
 from app.Routes.BobinaServilleta.BobinaServilletaRouter import BobinaServilletaRouter
+from app.Routes.BobinaServilleta.InventarioRouter import InventarioBobinaServilletaRouter
 
 
 app=FastAPI(debug=True
@@ -69,3 +70,4 @@ app.include_router(EmpaqueBolsaRouter)
 
 #ROUTERS BOBINA SERVILLETA
 app.include_router(BobinaServilletaRouter)
+app.include_router(InventarioBobinaServilletaRouter)
