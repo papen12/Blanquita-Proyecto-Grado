@@ -18,6 +18,9 @@ from app.Routes.Empaque.EmpaqueBobinaRouter import EmpaqueBobinaRouter
 from app.Routes.Empaque.EmpaqueBolsaRouter import EmpaqueBolsaRouter
 
 
+from app.Routes.BobinaServilleta.BobinaServilletaRouter import BobinaServilletaRouter
+
+
 app=FastAPI(debug=True
             ,title="Backend Blanquita"
             ,version="1.0.0"
@@ -62,3 +65,7 @@ app.include_router(InventarioPalletRouter)
 #ROUTERS EMPAQUE BOBINA / BOLSA
 app.include_router(EmpaqueBobinaRouter)
 app.include_router(EmpaqueBolsaRouter)
+
+
+#ROUTERS BOBINA SERVILLETA
+app.include_router(BobinaServilletaRouter)
