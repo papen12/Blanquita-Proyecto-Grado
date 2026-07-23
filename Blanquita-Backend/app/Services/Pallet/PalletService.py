@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 from app.Repository.Pallet.PalletRepository import PalletRepository
-from app.Models.Pallet.IngresoPallet import IngresoPalletRequest, IngresoPalletResponse
+from app.Models.Pallet.Pallet import IngresoPalletRequest, IngresoPalletResponse
 
 
 class PalletService:
