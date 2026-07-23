@@ -46,10 +46,11 @@ def VerResumenInventarioPallet(
     status_code=200
 )
 def VerDetalleInventarioPallet(
-    data: DetalleInventarioPalletRequest,
+    IdTipoPallet: int,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: InventarioPalletService = Depends(inventario_pallet_service)
 ):
+    data = DetalleInventarioPalletRequest(IdTipoPallet=IdTipoPallet)
     return service.VerDetalleInventarioPallet(data)
 
 @InventarioPalletRouter.post(

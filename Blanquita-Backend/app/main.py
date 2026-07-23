@@ -19,6 +19,7 @@ from app.Routes.Empaque.EmpaqueBolsaRouter import EmpaqueBolsaRouter
 
 
 from app.Routes.BobinaServilleta.BobinaServilletaRouter import BobinaServilletaRouter
+from app.Routes.BobinaServilleta.ProduccionRouter import ProduccionBobinaServilletaRouter
 from app.Routes.BobinaServilleta.InventarioRouter import InventarioBobinaServilletaRouter
 
 
@@ -63,11 +64,15 @@ app.include_router(PalletRouter)
 app.include_router(ProduccionPalletRouter)
 app.include_router(InventarioPalletRouter)
 
-#ROUTERS EMPAQUE BOBINA / BOLSA
-app.include_router(EmpaqueBobinaRouter)
-app.include_router(EmpaqueBolsaRouter)
+
 
 
 #ROUTERS BOBINA SERVILLETA
 app.include_router(BobinaServilletaRouter)
+app.include_router(ProduccionBobinaServilletaRouter)
 app.include_router(InventarioBobinaServilletaRouter)
+
+
+#ROUTERS EMPAQUE BOBINA / BOLSA
+app.include_router(EmpaqueBobinaRouter)
+app.include_router(EmpaqueBolsaRouter)

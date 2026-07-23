@@ -95,29 +95,28 @@ def CancelarProduccionPallet(
 ):
     return service.CancelarProduccionPallet(data, usuario_actual["IdUsuario"])
 
-
-
-
-@ProduccionPalletRouter.post(
+@ProduccionPalletRouter.get(
     "/activas",
     response_model=list[VerProduccionPalletResponse],
     status_code=200
 )
 def VerProduccionPallet(
-    data: VerProduccionPalletRequest,
+    IdTipoPallet: int | None = None,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionPalletService = Depends(produccion_pallet_service)
 ):
+    data = VerProduccionPalletRequest(IdTipoPallet=IdTipoPallet)
     return service.VerProduccionPallet(data)
 
-@ProduccionPalletRouter.post(
+@ProduccionPalletRouter.get(
     "/pausadas",
     response_model=list[VerPausasProduccionPalletActivasResponse],
     status_code=200
 )
 def VerPausasProduccionPalletActivas(
-    data: VerPausasProduccionPalletActivasRequest,
+    IdTipoPallet: int | None = None,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionPalletService = Depends(produccion_pallet_service)
 ):
+    data = VerPausasProduccionPalletActivasRequest(IdTipoPallet=IdTipoPallet)
     return service.VerPausasProduccionPalletActivas(data)

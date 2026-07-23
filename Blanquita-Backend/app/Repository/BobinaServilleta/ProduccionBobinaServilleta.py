@@ -15,3 +15,50 @@ class ProduccionBobinaServilletaRepository:
             )
         """
         return self.caller.LlamarUnRegistro(sql, params)
+
+    def IniciarProduccionServilleta(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "IniciarProduccionServilleta"(
+                :p_IdSubBobina,
+                :p_IdUsuario
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)
+
+    def PausaProduccionServilleta(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "PausaProduccionServilleta"(
+                :p_IdProduccionServilleta,
+                :p_IdUsuario,
+                :p_MotivoPausaProduccion
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)
+
+    def ReanudarProduccionServilleta(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "ReanudarProduccionServilleta"(
+                :p_IdProduccionServilleta,
+                :p_IdUsuario
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)
+
+    def FinalizarProduccionServilleta(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "FinalizarProduccionServilleta"(
+                :p_IdProduccionServilleta,
+                :p_IdUsuario
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)
+
+    def CancelarProduccionServilleta(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "CancelarProduccionServilleta"(
+                :p_id_produccion,
+                :p_id_usuario,
+                :p_motivo_cancelacion
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)
