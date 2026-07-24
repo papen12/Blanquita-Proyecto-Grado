@@ -1,6 +1,6 @@
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHash
-import re
+import unicodedata
 
 ph = PasswordHasher(
     time_cost=3,
@@ -10,25 +10,35 @@ ph = PasswordHasher(
     salt_len=16
 )
 
+LONGITUD_MINIMA = 15
+LONGITUD_MAXIMA = 64
+
 
 def EstructuraClave(clave):
-    patron = r'^[A-Z]{3}\d{3}$'
-    if re.fullmatch(patron, clave):
-        return True
-    else:
+    if not isinstance(clave, str) or clave == "":
         return False
+
+    clave = unicodedata.normalize('NFC', clave)
+
+    longitud = len(clave)  
+    if longitud < LONGITUD_MINIMA or longitud > LONGITUD_MAXIMA:
+        return False
+    if any(ch.isspace() for ch in clave):
+        return False
+
+    return True
 
 
 def HashPassword(clave):
-    clave_hash = ph.hash(clave)
+    clave_normalizada = unicodedata.normalize('NFC', clave)
+    clave_hash = ph.hash(clave_normalizada)
     return clave_hash
 
 
 def VerificarClave(clave_hash, clave_plana):
     try:
-        ph.verify(clave_hash, clave_plana)
+        clave_normalizada = unicodedata.normalize('NFC', clave_plana)
+        ph.verify(clave_hash, clave_normalizada)
         return True
     except (VerifyMismatchError, VerificationError, InvalidHash):
         return False
-    
-    
