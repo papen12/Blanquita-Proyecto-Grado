@@ -10,16 +10,19 @@ from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 from app.Models.BobinaServilleta.ProduccionBobinaServilleta import (
     AbrirBobinaServilletaRequest,
     AbrirBobinaServilletaResponse,
-    IniciarProduccionServilletaResponse,
     IniciarProduccionServilletaRequest,
-    PausaProduccionServilletaResponse,
+    IniciarProduccionServilletaResponse,
     PausaProduccionServilletaRequest,
+    PausaProduccionServilletaResponse,
     ReanudarProduccionServilletaRequest,
     ReanudarProduccionServilletaResponse,
-    FinalizarProduccionServilletaResponse,
     FinalizarProduccionServilletaRequest,
+    FinalizarProduccionServilletaResponse,
+    CancelarProduccionServilletaRequest,
     CancelarProduccionServilletaResponse,
-    CancelarProduccionServilletaRequest
+    VerPausasProduccionServilletaActivasResponse,
+    VerProduccionServilletaActivasRequest,
+    VerProduccionServilletaActivasResponse
 )
 
 ProduccionBobinaServilletaRouter = APIRouter(
@@ -102,3 +105,26 @@ def CancelarProduccionServilleta(
     service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
 ):
     return service.CancelarProduccionServilleta(data, usuario_actual["IdUsuario"])
+@ProduccionBobinaServilletaRouter.get(
+    "/activas",
+    response_model=list[VerProduccionServilletaActivasResponse],
+    status_code=200
+)
+def VerProduccionServilletaActivas(
+    IdTipoMedidaSubBobina: int | None = None,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
+):
+    data = VerProduccionServilletaActivasRequest(IdTipoMedidaSubBobina=IdTipoMedidaSubBobina)
+    return service.VerProduccionServilletaActivas(data)
+
+@ProduccionBobinaServilletaRouter.get(
+    "/pausadas",
+    response_model=list[VerPausasProduccionServilletaActivasResponse],
+    status_code=200
+)
+def VerPausasProduccionServilletaActivas(
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
+):
+    return service.VerPausasProduccionServilletaActivas()

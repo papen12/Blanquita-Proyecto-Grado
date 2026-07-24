@@ -74,3 +74,12 @@ class DetalleInventarioSubBobinaServilletaRequest(BaseModel):
 class DetalleInventarioSubBobinaServilletaResponse(BaseModel):
     IdSubBobinaServilleta: int
     CodigoUnidadOrigen: str
+
+
+
+class SubBobinaServilletaFueraInventarioResponse(BaseModel):
+    IdSubBobinaServilleta: int
+    CodigoUnidadOrigen: str
+    NombreTipoMedida: str
+    UltimaObservacion: str | None
+    FechaUltimoMovimiento: datetime | None

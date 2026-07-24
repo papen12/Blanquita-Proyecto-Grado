@@ -62,3 +62,18 @@ class ProduccionBobinaServilletaRepository:
             )
         """
         return self.caller.LlamarUnRegistro(sql, params)
+
+
+    def VerProduccionServilletaActivas(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerProduccionServilletaActivas"(
+                :p_IdTipoMedidaSubBobina
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+
+    def VerPausasProduccionServilletaActivas(self) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerPausasProduccionServilletaActivas"()
+        """
+        return self.caller.LlamarFuncion(sql)

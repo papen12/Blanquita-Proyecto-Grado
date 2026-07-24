@@ -78,3 +78,27 @@ class CancelarProduccionServilletaResponse(BaseModel):
     FechaHoraCancelacion: datetime
     MotivoCancelacion: str | None
     IdEstadoProduccion: int
+
+
+
+class VerProduccionServilletaActivasRequest(BaseModel):
+    IdTipoMedidaSubBobina: int | None = None
+
+
+class VerProduccionServilletaActivasResponse(BaseModel):
+    IdProduccionServilleta: int
+    NombreEstadoProduccion: str
+    IdSubBobina: int
+    CodigoUnidadOrigen: str
+    IdTipoMedidaSubBobina: int
+    NombreTurno: str
+    FechaInicioProduccion: datetime
+
+
+class VerPausasProduccionServilletaActivasResponse(BaseModel):
+    IdPausaProduccionServilleta: int
+    IdProduccionServilleta: int
+    IdSubBobina: int
+    CodigoUnidadOrigen: str
+    FechaHoraPausa: datetime
+    NombreEstadoProduccion: str

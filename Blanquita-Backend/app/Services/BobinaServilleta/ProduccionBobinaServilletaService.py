@@ -17,7 +17,10 @@ from app.Models.BobinaServilleta.ProduccionBobinaServilleta import (
     FinalizarProduccionServilletaRequest,
     FinalizarProduccionServilletaResponse,
     CancelarProduccionServilletaRequest,
-    CancelarProduccionServilletaResponse
+    CancelarProduccionServilletaResponse,
+    VerPausasProduccionServilletaActivasResponse,
+    VerProduccionServilletaActivasRequest,
+    VerProduccionServilletaActivasResponse
 )
 
 
@@ -118,8 +121,8 @@ class ProduccionBobinaServilletaService:
         return FinalizarProduccionServilletaResponse(**resultado)
 
     def CancelarProduccionServilleta(
-    self, data: CancelarProduccionServilletaRequest, id_usuario: int
-) -> CancelarProduccionServilletaResponse:
+        self, data: CancelarProduccionServilletaRequest, id_usuario: int
+    ) -> CancelarProduccionServilletaResponse:
         params = {
             "p_id_produccion": data.IdProduccionServilleta,
             "p_id_usuario": id_usuario,
@@ -135,3 +138,18 @@ class ProduccionBobinaServilletaService:
             )
 
         return CancelarProduccionServilletaResponse(**resultado)
+
+    def VerProduccionServilletaActivas(
+        self, data: VerProduccionServilletaActivasRequest
+    ) -> list[VerProduccionServilletaActivasResponse]:
+        params = {
+            "p_IdTipoMedidaSubBobina": data.IdTipoMedidaSubBobina,
+        }
+
+        resultados = self.repository.VerProduccionServilletaActivas(params)
+
+        return [VerProduccionServilletaActivasResponse(**fila) for fila in resultados]
+
+    def VerPausasProduccionServilletaActivas(self) -> list[VerPausasProduccionServilletaActivasResponse]:
+        resultados = self.repository.VerPausasProduccionServilletaActivas()
+        return [VerPausasProduccionServilletaActivasResponse(**fila) for fila in resultados]

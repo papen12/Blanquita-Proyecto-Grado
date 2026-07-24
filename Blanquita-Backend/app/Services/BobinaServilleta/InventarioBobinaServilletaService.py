@@ -15,7 +15,8 @@ from app.Models.BobinaServilleta.InventarioBobinaServilleta import(
     DetalleInventarioBobinaServilletaResponse,
     ResumenInventarioSubBobinaServilletaResponse,
     DetalleInventarioSubBobinaServilletaRequest,
-    DetalleInventarioSubBobinaServilletaResponse
+    DetalleInventarioSubBobinaServilletaResponse,
+    SubBobinaServilletaFueraInventarioResponse
 )
 
 
@@ -89,3 +90,7 @@ class InventarioBobinaServilletaService:
         resultados = self.repository.VerDetalleInventarioSubBobinaServilleta(params)
 
         return [DetalleInventarioSubBobinaServilletaResponse(**fila) for fila in resultados]
+
+    def VerSubBobinasServilletaFueraInventario(self) -> list[SubBobinaServilletaFueraInventarioResponse]:
+        resultados = self.repository.VerSubBobinasServilletaFueraInventario()
+        return [SubBobinaServilletaFueraInventarioResponse(**fila) for fila in resultados]
