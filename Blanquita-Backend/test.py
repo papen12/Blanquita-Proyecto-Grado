@@ -530,7 +530,7 @@ from app.Services.Pallet.ProduccionPalletService import ProduccionPalletService
 from app.Auth.Dependencies import require_role
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR
 
-from app.Models.Pallet.IngresoPallet import IngresoPalletRequest, IngresoPalletResponse
+from app.Models.Pallet.Pallet import IngresoPalletRequest, IngresoPalletResponse
 
 
 PalletRouter = APIRouter(prefix="/pallet", tags=["Pallet CRUD y Ingreso"])

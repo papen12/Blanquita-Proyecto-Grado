@@ -22,6 +22,8 @@ from app.Routes.BobinaServilleta.BobinaServilletaRouter import BobinaServilletaR
 from app.Routes.BobinaServilleta.ProduccionRouter import ProduccionBobinaServilletaRouter
 from app.Routes.BobinaServilleta.InventarioRouter import InventarioBobinaServilletaRouter
 
+from app.Routes.InventarioFinal.ProductoFinal import ProductoFinalRouter
+
 
 app=FastAPI(debug=True
             ,title="Backend Blanquita"
@@ -76,3 +78,6 @@ app.include_router(InventarioBobinaServilletaRouter)
 #ROUTERS EMPAQUE BOBINA / BOLSA
 app.include_router(EmpaqueBobinaRouter)
 app.include_router(EmpaqueBolsaRouter)
+
+#ROUTERS INVENTARIO PRODUCTO FINAL
+app.include_router(ProductoFinalRouter)
