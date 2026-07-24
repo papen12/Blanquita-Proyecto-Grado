@@ -60,7 +60,7 @@ def InsertarSalidaInventario(
 )
 def AjustePositivoInventarioProductoTerminado(
     data: AjustePositivoInventarioRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProductoFinalService = Depends(producto_terminado_service)
 ):
     return service.AjustePositivoInventarioProductoTerminado(data, usuario_actual["IdUsuario"])
@@ -73,7 +73,7 @@ def AjustePositivoInventarioProductoTerminado(
 )
 def AjusteNegativoInventarioProductoTerminado(
     data: AjusteNegativoInventarioRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProductoFinalService = Depends(producto_terminado_service)
 ):
     return service.AjusteNegativoInventarioProductoTerminado(data, usuario_actual["IdUsuario"])

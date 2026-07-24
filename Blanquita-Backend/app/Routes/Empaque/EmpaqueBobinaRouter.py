@@ -66,7 +66,7 @@ def VerInventario(
     return service.VerResumenInventarioEmpaque()
 
 
-@EmpaqueBobinaRouter.post(
+@EmpaqueBobinaRouter.get(
     "/inventariodetalle",
     response_model=list[DetalleInventarioEmpaqueResponse],
     status_code=200
