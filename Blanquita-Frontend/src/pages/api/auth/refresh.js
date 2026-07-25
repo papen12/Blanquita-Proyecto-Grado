@@ -1,43 +1,32 @@
 export const prerender = false;
 
 import { jwtVerify } from "jose";
-import { login } from "../../../services/Usuario/Auth";
+import { refresh } from "../../../services/Usuario/Auth";
 import { SesionUsuario } from "../../../models/Usuario/Auth";
 
 const SECRET_KEY = new TextEncoder().encode(import.meta.env.SECRET_KEY);
-const ACCESS_TOKEN_MAX_AGE_SEGUNDOS = 60 * 15; 
+const ACCESS_TOKEN_MAX_AGE_SEGUNDOS = 60 * 15;
 
-const RUTA_POR_ROL = {
-  1: "/operador/inicio",
-  2: "/encargado/inicio"
-};
+export async function POST({ cookies }) {
+  const refreshTokenCrudo = cookies.get("refresh_token")?.value;
 
-export async function POST({ request, cookies }) {
-  let Ci, Clave;
-
-  try {
-    ({ Ci, Clave } = await request.json());
-  } catch {
+  if (!refreshTokenCrudo) {
     return new Response(
-      JSON.stringify({ detail: "Cuerpo de la petición inválido" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  if (!Ci || !Clave) {
-    return new Response(
-      JSON.stringify({ detail: "Ci y Clave son requeridos" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ detail: "No hay sesión activa" }),
+      { status: 401, headers: { "Content-Type": "application/json" } }
     );
   }
 
   let resultado;
   try {
-    resultado = await login(Ci, Clave);
+    resultado = await refresh(refreshTokenCrudo);
   } catch (error) {
+    cookies.delete("token", { path: "/" });
+    cookies.delete("refresh_token", { path: "/" });
+
     return new Response(
-      JSON.stringify({ detail: error.message || "Error al iniciar sesión" }),
-      { status: error.status || 500, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ detail: error.message || "No se pudo renovar la sesión" }),
+      { status: error.status || 401, headers: { "Content-Type": "application/json" } }
     );
   }
 
@@ -64,10 +53,7 @@ export async function POST({ request, cookies }) {
   });
 
   const response = new Response(
-    JSON.stringify({
-      ...sesion,
-      rutaRedirect: RUTA_POR_ROL[sesion.IdRol] || "/"
-    }),
+    JSON.stringify(sesion),
     { status: 200, headers: { "Content-Type": "application/json" } }
   );
 

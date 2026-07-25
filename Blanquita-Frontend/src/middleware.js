@@ -1,7 +1,7 @@
 import { defineMiddleware } from "astro/middleware";
+import { obtenerAccessTokenValido, limpiarSesion, SECRET_KEY } from "./lib/auth-server";
 import { jwtVerify } from "jose";
-
-const SECRET_KEY = new TextEncoder().encode(import.meta.env.SECRET_KEY);
+import { SesionUsuario } from "./models/Usuario/Auth";
 
 const PREFIJO_POR_ROL = {
   1: "/operador",
@@ -14,48 +14,55 @@ const RUTA_POR_ROL = {
 };
 
 const RUTAS_PROTEGIDAS = ["/operador", "/encargado"];
+const RUTAS_PUBLICAS_AUTH = ["/"];
+
+async function resolverSesion(context) {
+  const accessToken = await obtenerAccessTokenValido(context.cookies);
+  if (!accessToken) return null;
+
+  try {
+    const { payload } = await jwtVerify(accessToken, SECRET_KEY);
+    const sesion = SesionUsuario(payload);
+    if (!sesion.IdRol || !sesion.IdUsuario) return null;
+    return sesion;
+  } catch {
+    return null;
+  }
+}
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
   const esRutaProtegida = RUTAS_PROTEGIDAS.some((prefijo) =>
     pathname.startsWith(prefijo)
   );
+  const esRutaPublicaAuth = RUTAS_PUBLICAS_AUTH.includes(pathname);
 
-  if (!esRutaProtegida) {
+  if (!esRutaProtegida && !esRutaPublicaAuth) {
     return next();
   }
 
-  const token = context.cookies.get("token")?.value;
+  const sesion = await resolverSesion(context);
 
-  if (!token) {
-    return context.redirect("/");
-  }
-
-  try {
-    const { payload } = await jwtVerify(token, SECRET_KEY);
-    const idRol = Number(payload.rol_id);
-    const idUsuario = Number(payload.sub);
-    const nombreRol = payload.rol;
-
-    if (!idRol || !idUsuario) {
-      return context.redirect("/");
+  if (esRutaPublicaAuth) {
+    if (sesion) {
+      return context.redirect(RUTA_POR_ROL[sesion.IdRol] || "/");
     }
-
-    const prefijoPermitido = PREFIJO_POR_ROL[idRol];
-
-    if (!prefijoPermitido || !pathname.startsWith(prefijoPermitido)) {
-      return context.redirect(RUTA_POR_ROL[idRol] || "/");
-    }
-
-    context.locals.usuario = {
-      IdUsuario: idUsuario,
-      IdRol: idRol,
-      NombreRol: nombreRol
-    };
-
+    limpiarSesion(context.cookies);
     return next();
-  } catch (error) {
-    context.cookies.delete("token", { path: "/" });
+  }
+
+  if (!sesion) {
+    limpiarSesion(context.cookies);
     return context.redirect("/");
   }
+
+  const prefijoPermitido = PREFIJO_POR_ROL[sesion.IdRol];
+
+  if (!prefijoPermitido || !pathname.startsWith(prefijoPermitido)) {
+    return context.redirect(RUTA_POR_ROL[sesion.IdRol] || "/");
+  }
+
+  context.locals.usuario = sesion;
+
+  return next();
 });

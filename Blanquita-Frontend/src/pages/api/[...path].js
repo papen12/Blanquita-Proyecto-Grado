@@ -1,11 +1,14 @@
 export const prerender = false;
 
+import { obtenerAccessTokenValido, limpiarSesion } from "../../lib/auth-server";
+
 const BACKEND_URL = import.meta.env.BACKEND_URL;
 
 export const ALL = async ({ request, params, cookies }) => {
-  const token = cookies.get("token")?.value;
+  const accessToken = await obtenerAccessTokenValido(cookies);
 
-  if (!token) {
+  if (!accessToken) {
+    limpiarSesion(cookies);
     return new Response(
       JSON.stringify({ detail: "No autenticado" }),
       { status: 401, headers: { "Content-Type": "application/json" } }
@@ -16,7 +19,7 @@ export const ALL = async ({ request, params, cookies }) => {
   const targetUrl = `${BACKEND_URL}/${params.path}${url.search}`;
 
   const headers = {
-    Authorization: `Bearer ${token}`
+    Authorization: `Bearer ${accessToken}`
   };
 
   const contentType = request.headers.get("content-type");
