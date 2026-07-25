@@ -69,7 +69,7 @@ def login(
 
 
 @AuthRouter.post("/refresh", response_model=RefreshResponse)
-@limiter("20/minute")
+@limiter.limit("20/minute")
 def refresh(
     request: Request,
     response: Response,
