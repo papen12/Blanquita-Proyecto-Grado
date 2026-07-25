@@ -25,6 +25,13 @@ from app.Routes.BobinaServilleta.InventarioRouter import InventarioBobinaServill
 from app.Routes.InventarioFinal.ProductoFinal import ProductoFinalRouter
 
 
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
+from app.Auth.Limiter import limiter
+from slowapi.middleware import SlowAPIMiddleware
+
+
+
 app=FastAPI(debug=True
             ,title="Backend Blanquita"
             ,version="1.0.0"
@@ -40,6 +47,15 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
 )
+app.add_middleware(SlowAPIMiddleware)
+
+app.state.limiter = limiter
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler
+)
+
+
 @app.get("/")
 def Servidor():
     return{

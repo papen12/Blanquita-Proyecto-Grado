@@ -113,3 +113,5 @@ class AuthService:
     def LogoutTodasLasSesiones(self, id_usuario: int) -> int:
         resultado = self.repository.RevocarCadenaRefreshToken({"p_IdUsuario": id_usuario})
         return resultado["SesionesRevocadas"] if resultado else 0
+
+    

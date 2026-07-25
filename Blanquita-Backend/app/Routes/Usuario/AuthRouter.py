@@ -12,6 +12,7 @@ from app.Models.Usuario.Auth import (
     LogoutResponse,
     LogoutTodosResponse,
 )
+from app.Auth.Limiter import limiter
 
 AuthRouter = APIRouter(prefix="/auth", tags=["Autenticación"])
 
@@ -47,6 +48,7 @@ def _ObtenerUserAgent(request: Request) -> str | None:
 
 
 @AuthRouter.post("/login", response_model=LoginResponse)
+@limiter.limit("5/minute")
 def login(
     datos: LoginRequest,
     request: Request,

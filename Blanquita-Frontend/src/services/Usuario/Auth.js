@@ -10,6 +10,13 @@ const BACKEND_URL = import.meta.env.BACKEND_URL;
 
 async function manejarErrorBackend(response) {
   const data = await response.json().catch(() => ({}));
+
+  if (response.status === 429) {
+    const error = new Error("Demasiados intentos. Esperá un momento antes de volver a intentar.");
+    error.status = 429;
+    throw error;
+  }
+
   const error = new Error(data.detail || "Error en el servidor de autenticación");
   error.status = response.status;
   throw error;
@@ -89,3 +96,4 @@ export async function logoutTodos(accessToken) {
 
   return LogoutTodosResponse(data);
 }
+
