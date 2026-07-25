@@ -113,3 +113,187 @@ def require_role(roles_permitidos: list[int]):
         return usuario_actual
 
     return verificar_rol
+
+
+
+
+
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+from fastapi import HTTPException, status
+
+
+class DbCaller:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def LlamarFuncion(self, consulta: str, parametros: dict | None = None, commit: bool = True) -> list[dict]:
+        try:
+            res = self.db.execute(text(consulta), parametros or {})
+            filas = [dict(fila) for fila in res.mappings().all()]
+            if commit:
+                self.db.commit()
+            return filas
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error ejecutando operación en base de datos: {str(e)}"
+            )
+
+    def LlamarUnRegistro(self, consulta: str, parametros: dict | None = None, commit: bool = True) -> dict | None:
+        filas = self.LlamarFuncion(consulta, parametros, commit)
+        return filas[0] if filas else None
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from pydantic import BaseModel, Field
+from datetime import datetime
+from typing import Optional
+
+
+
+class LoginRequest(BaseModel):
+    Ci: str
+    Clave: str
+
+
+class LoginResponse(BaseModel):
+    AccessToken: str
+    TokenType: str = "bearer"
+
+
+class RefreshResponse(BaseModel):
+    AccessToken: str
+    TokenType: str = "bearer"
+
+
+class ValidacionRefreshToken(BaseModel):
+    Valido: bool
+    IdUsuario: Optional[int] = None
+    IdRefreshToken: Optional[int] = None
+    Motivo: str
+
+
+
+class CrearRefreshTokenData(BaseModel):
+    IdUsuario: int
+    TokenHash: str
+    FechaExpiracion: datetime
+    IpOrigen: Optional[str] = None
+    UserAgent: Optional[str] = None
+
+
+class RotarRefreshTokenData(BaseModel):
+    IdRefreshTokenViejo: int
+    IdUsuario: int
+    TokenHashNuevo: str
+    FechaExpiracionNueva: datetime
+    IpOrigen: Optional[str] = None
+    UserAgent: Optional[str] = None
+
+
+
+class LogoutResponse(BaseModel):
+    Revocado: bool
+
+
+class LogoutTodosResponse(BaseModel):
+    SesionesRevocadas: int
+
+
+from sqlalchemy.orm import Session
+from app.Repository.DbCaller import DbCaller
+
+
+class AuthRepository:
+    def __init__(self, db: Session):
+        self.caller = DbCaller(db)
+
+    def CrearRefreshToken(self, params: dict) -> dict | None:
+        consulta = '''
+            SELECT "CrearRefreshToken"(
+                p_IdUsuario => :p_IdUsuario,
+                p_TokenHash => :p_TokenHash,
+                p_FechaExpiracion => :p_FechaExpiracion,
+                p_IpOrigen => :p_IpOrigen,
+                p_UserAgent => :p_UserAgent
+            ) AS "IdRefreshToken"
+        '''
+        return self.caller.LlamarUnRegistro(consulta, params)
+
+    def ValidarRefreshToken(self, params: dict) -> dict | None:
+        consulta = '''
+            SELECT * FROM "ValidarRefreshToken"(p_TokenHash => :p_TokenHash)
+        '''
+        return self.caller.LlamarUnRegistro(consulta, params)
+
+    def RotarRefreshToken(self, params: dict) -> dict | None:
+        consulta = '''
+            SELECT "RotarRefreshToken"(
+                p_IdRefreshTokenViejo => :p_IdRefreshTokenViejo,
+                p_IdUsuario => :p_IdUsuario,
+                p_TokenHashNuevo => :p_TokenHashNuevo,
+                p_FechaExpiracionNueva => :p_FechaExpiracionNueva,
+                p_IpOrigen => :p_IpOrigen,
+                p_UserAgent => :p_UserAgent
+            ) AS "IdRefreshToken"
+        '''
+        return self.caller.LlamarUnRegistro(consulta, params)
+
+    def RevocarCadenaRefreshToken(self, params: dict) -> dict | None:
+        consulta = '''
+            SELECT "RevocarCadenaRefreshToken"(p_IdUsuario => :p_IdUsuario) AS "SesionesRevocadas"
+        '''
+        return self.caller.LlamarUnRegistro(consulta, params)
+
+    def RevocarRefreshToken(self, params: dict) -> dict | None:
+        consulta = '''
+            SELECT "RevocarRefreshToken"(p_TokenHash => :p_TokenHash) AS "Revocado"
+        '''
+        return self.caller.LlamarUnRegistro(consulta, params)
+
+
+
+
+
+
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+from fastapi import HTTPException, status
+
+from app.Repository.Usuario.Auth import AuthRepository
+from app.Models.Usuario.Auth import(
+    LoginRequest,
+    LoginResponse,
+    RefreshResponse,
+    ValidacionRefreshToken,
+    CrearRefreshTokenData,
+    RotarRefreshTokenData,
+    LogoutResponse,
+    LogoutTodosResponse
+)
+
+class AuthService:
+    def __init__(self, db: Session):
+        self.repository=AuthRepository(db)

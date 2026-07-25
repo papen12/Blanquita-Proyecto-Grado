@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.Routes.Usuario.UsuarioRouter import UsuarioRouter
-
+from app.Routes.Usuario.AuthRouter import AuthRouter
 
 from app.Routes.BobinaPapel.BobinaPapelRouter import BobinaPapelRouter
 from app.Routes.BobinaPapel.InventarioRouter import InventarioBobinaPapelRouter
@@ -37,8 +37,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 @app.get("/")
 def Servidor():
@@ -50,7 +50,7 @@ def Servidor():
 
 #ROUTERS USUARIO
 app.include_router(UsuarioRouter)
-
+app.include_router(AuthRouter)
 
 
 
