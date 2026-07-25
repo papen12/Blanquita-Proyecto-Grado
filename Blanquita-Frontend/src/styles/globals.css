@@ -128,3 +128,57 @@
     @apply font-sans;
     }
 }
+
+
+@font-face {
+    font-family: "Ekamai";
+    src: url("/fonts/Ekamai.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Montserrat";
+    src: url("/fonts/Montserrat-VariableFont_wght.ttf") format("truetype-variations");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@theme {
+    /* Fuentes */
+    --font-sans: "Montserrat", sans-serif;
+    --font-ekamai: "Ekamai", sans-serif;
+
+    /* Colores principales */
+    --color-c1: #62C1E5;
+    --color-c2: #A0D9EF;
+    --color-c3: #1C96C5;
+    --color-c4: #20A7DB;
+
+    /* Eco-Pack */
+    --color-eco1: #BE106A;
+    --color-eco2: #942065;
+
+    /* Luxury */
+    --color-lux1: #99518E;
+    --color-lux2: #592D6A;
+
+    /* Mega Pack */
+    --color-mega1: #922D89;
+    --color-mega2: #E33D8E;
+
+    /* Servilletas */
+    --color-serv1: #E43214;
+    --color-serv2: #E6923A;
+    --color-serv3: #4E9293;
+}
+
+@layer base {
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+}
