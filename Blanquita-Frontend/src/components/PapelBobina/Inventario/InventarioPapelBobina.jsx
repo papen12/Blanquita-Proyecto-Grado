@@ -22,10 +22,12 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import {
-  VerResumenInventarioBobinaPapel,
-  VerDetalleInventarioBobinaPapel,
-} from "../../services/BobinaPapelService";
-import { IniciarProduccionBobinaTubo } from "../../services/ProduccionBobinaPapelService";
+  verResumenInventarioBobinaPapel,
+  verDetalleInventarioBobinaPapel,
+  verBobinasPapelFueraInventario,
+  reingresarBobinaInventario,
+  darDeBajaBobina,
+} from "../../../services/BobinaPapel/Inventario";
 import { dateFormatter } from "@/utils/dateFormater";
 
 const ACENTOS = [
@@ -62,7 +64,7 @@ const ACENTOS = [
 const fmt = (n) =>
   Number(n || 0).toLocaleString("es-BO", { maximumFractionDigits: 1 });
 
-export default function InventarioBobinasPapel() {
+export default function InventarioBobinasPapel({ usuario }) {
   const [tipos, setTipos] = useState([]);
   const [loadingTipos, setLoadingTipos] = useState(true);
   const [errorTipos, setErrorTipos] = useState("");
@@ -83,15 +85,22 @@ export default function InventarioBobinasPapel() {
 
   const [enviando, setEnviando] = useState(false);
 
+  const [mostrarFuera, setMostrarFuera] = useState(false);
+  const [fueraInventario, setFueraInventario] = useState([]);
+  const [loadingFuera, setLoadingFuera] = useState(false);
+  const [errorFuera, setErrorFuera] = useState("");
+  const [procesandoId, setProcesandoId] = useState(null);
+
   useEffect(() => {
     cargarResumen();
+    cargarFueraInventario();
   }, []);
 
   const cargarResumen = async () => {
     setLoadingTipos(true);
     setErrorTipos("");
     try {
-      const data = await VerResumenInventarioBobinaPapel();
+      const data = await verResumenInventarioBobinaPapel();
       const conMeta = data.map((t, i) => ({
         ...t,
         ...ACENTOS[i % ACENTOS.length],
@@ -116,7 +125,7 @@ export default function InventarioBobinasPapel() {
     setLoadingDetalle(true);
     setErrorDetalle("");
     try {
-      const data = await VerDetalleInventarioBobinaPapel(idTipoBobina);
+      const data = await verDetalleInventarioBobinaPapel(idTipoBobina);
       setBobinasSel(data);
     } catch (e) {
       setErrorDetalle(e.message);
@@ -175,26 +184,59 @@ export default function InventarioBobinasPapel() {
     const bobina2 = bobinasSel.find((b) => b.CodigoBobina === marcadas[1]);
     if (!bobina1 || !bobina2) return;
 
-    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    toast.info("Envío a producción pendiente de implementar");
+  };
 
-    setEnviando(true);
+  const cargarFueraInventario = async () => {
+    setLoadingFuera(true);
+    setErrorFuera("");
     try {
-      await IniciarProduccionBobinaTubo({
-        IdBobina1: bobina1.IdBobinaPapel,
-        IdBobina2: bobina2.IdBobinaPapel,
-        IdUsuario: usuario.IdUsuario,
-      });
+      const data = await verBobinasPapelFueraInventario();
+      setFueraInventario(data);
+    } catch (e) {
+      setErrorFuera(e.message);
+      setFueraInventario([]);
+    } finally {
+      setLoadingFuera(false);
+    }
+  };
 
-      setBobinasSel((prev) =>
-        prev.filter((b) => !marcadas.includes(b.CodigoBobina)),
+  const toggleFueraInventario = () => {
+    const nuevoEstado = !mostrarFuera;
+    setMostrarFuera(nuevoEstado);
+    if (nuevoEstado) {
+      cargarFueraInventario();
+    }
+  };
+
+  const handleReingresar = async (idBobinaPapel, codigoBobina) => {
+    setProcesandoId(idBobinaPapel);
+    try {
+      await reingresarBobinaInventario(idBobinaPapel);
+      toast.success(`Bobina ${codigoBobina} reingresada al inventario`);
+      setFueraInventario((prev) =>
+        prev.filter((b) => b.IdBobinaPapel !== idBobinaPapel),
       );
-      toast.success(`${marcadas.join(" + ")} → En producción`);
-      setMarcadas([]);
       cargarResumen();
     } catch (e) {
       toast.error(e.message);
     } finally {
-      setEnviando(false);
+      setProcesandoId(null);
+    }
+  };
+
+  const handleDarDeBaja = async (idBobinaPapel, codigoBobina) => {
+    setProcesandoId(idBobinaPapel);
+    try {
+      await darDeBajaBobina(idBobinaPapel);
+      toast.success(`Bobina ${codigoBobina} retirada definitivamente`);
+      setFueraInventario((prev) =>
+        prev.filter((b) => b.IdBobinaPapel !== idBobinaPapel),
+      );
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setProcesandoId(null);
     }
   };
 
@@ -274,6 +316,11 @@ export default function InventarioBobinasPapel() {
                 onClick={() => seleccionarTipo(t.IdTipoBobina)}
               />
             ))}
+            <TarjetaFueraInventario
+              cantidad={fueraInventario.length}
+              activo={mostrarFuera}
+              onClick={toggleFueraInventario}
+            />
           </div>
         )}
 
@@ -397,6 +444,103 @@ export default function InventarioBobinasPapel() {
             )}
           </div>
         )}
+        {mostrarFuera && (
+          <div className="mt-7 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-amber-50 px-5 py-4">
+              <div className="text-base font-extrabold text-amber-700">
+                Bobinas fuera de inventario
+              </div>
+              <Button
+                variant="ghost"
+                onClick={() => setMostrarFuera(false)}
+                className="h-11 gap-1.5 font-bold text-slate-500 hover:text-slate-900"
+              >
+                <X size={15} strokeWidth={2.75} />
+                Cerrar
+              </Button>
+            </div>
+
+            {loadingFuera && (
+              <div className="space-y-2 p-5">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            )}
+            {errorFuera && (
+              <div className="p-5 text-center text-sm font-semibold text-red-600">
+                {errorFuera}
+              </div>
+            )}
+            {!loadingFuera && !errorFuera && fueraInventario.length === 0 && (
+              <div className="p-8 text-center text-sm text-slate-400">
+                No hay bobinas fuera de inventario.
+              </div>
+            )}
+
+            {!loadingFuera && !errorFuera && fueraInventario.length > 0 && (
+              <div className="flex flex-col gap-3 p-5">
+                {fueraInventario.map((b) => (
+                  <div
+                    key={b.IdBobinaPapel}
+                    className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-[15px] font-extrabold text-slate-900">
+                          {b.CodigoBobina}
+                        </span>
+                        <Badge variant="outline" className="border-slate-300 font-bold text-slate-600">
+                          {b.NombreTipoBobina}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
+                        <span>{b.NombreProveedor}</span>
+                        <span>Recepción: {dateFormatter(b.FechaRecepcion)}</span>
+                        <span>Bruto: {fmt(b.PesoBrutoKg)} kg</span>
+                        <span>Gramaje: {fmt(b.Gramaje)} g/m²</span>
+                      </div>
+                      {b.UltimaObservacion && (
+                        <div className="text-[12.5px] italic text-slate-500">
+                          "{b.UltimaObservacion}"
+                        </div>
+                      )}
+                      {b.FechaUltimoMovimiento && (
+                        <div className="text-[11px] text-slate-400">
+                          Último movimiento: {dateFormatter(b.FechaUltimoMovimiento)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleReingresar(b.IdBobinaPapel, b.CodigoBobina)}
+                        disabled={procesandoId === b.IdBobinaPapel}
+                        className="h-10 gap-2 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
+                      >
+                        {procesandoId === b.IdBobinaPapel ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          "Reingresar"
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => handleDarDeBaja(b.IdBobinaPapel, b.CodigoBobina)}
+                        disabled={procesandoId === b.IdBobinaPapel}
+                        variant="outline"
+                        className="h-10 gap-2 border-red-300 font-bold text-red-600 hover:bg-red-50"
+                      >
+                        {procesandoId === b.IdBobinaPapel ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          "Retirar"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       <Dialog open={modal} onOpenChange={setModal}>
@@ -502,6 +646,66 @@ function RolloIcono({ className }) {
         strokeLinecap="round"
         opacity="0.5"
       />
+    </svg>
+  );
+}
+
+function TarjetaFueraInventario({ cantidad, activo, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex flex-col gap-3.5 rounded-2xl border-2 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+        activo ? "border-amber-400" : "border-slate-200",
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <FueraIcono className="h-8 w-8 shrink-0 text-amber-600" />
+          <div className="text-[17px] font-extrabold text-slate-900">
+            Fuera de inventario
+          </div>
+        </div>
+        <Badge
+          variant="outline"
+          className="border-0 bg-amber-100 font-bold text-amber-700"
+        >
+          {cantidad === 0 ? "Vacío" : "Requiere acción"}
+        </Badge>
+      </div>
+
+      <div className="flex items-baseline gap-1.5">
+        <div className="text-4xl font-extrabold tabular-nums text-amber-600">
+          {cantidad}
+        </div>
+        <div className="text-sm font-semibold text-slate-500">
+          bobinas dadas de baja o retiradas
+        </div>
+      </div>
+
+      <div className="rounded-lg bg-amber-50 px-3 py-2.5">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+          Acciones disponibles
+        </div>
+        <div className="text-sm font-bold text-slate-900">
+          Reingresar o retirar definitivamente
+        </div>
+      </div>
+
+      <div className="flex items-center justify-end gap-1.5 text-xs font-bold text-amber-600">
+        {activo ? "Ocultar lista" : "Ver bobinas"}
+        <ArrowRight size={14} strokeWidth={2.75} />
+      </div>
+    </button>
+  );
+}
+
+function FueraIcono({ className }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <rect x="5" y="9" width="22" height="16" rx="2.5" stroke="currentColor" strokeWidth="2.5" />
+      <path d="M5 13h22" stroke="currentColor" strokeWidth="2.5" />
+      <path d="M12 5.5h8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
 }

@@ -1,0 +1,32 @@
+export const BobinaPapel = (data) => ({
+  IdBobinaPapel: data.IdBobinaPapel ?? null,
+  CodigoBobina: data.CodigoBobina,
+  IdTipoBobina: data.IdTipoBobina,
+  IdLoteBobina: data.IdLoteBobina,
+  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
+  PesoBrutoKg: data.PesoBrutoKg ?? null,
+  Gramaje: data.Gramaje ?? null,
+  PesoNetoKg: data.PesoNetoKg ?? null
+});
+
+export const ListaBobinasPapel = (data) => ({
+  Bobinas: (data.Bobinas ?? []).map(BobinaPapel)
+});
+
+export const BobinaPapelIngresoItem = (data) => ({
+  CodigoBobina: data.CodigoBobina,
+  PesoBrutoKg: data.PesoBrutoKg ?? null,
+  Gramaje: data.Gramaje ?? null,
+  PesoNetoKg: data.PesoNetoKg ?? null
+});
+
+export const IngresoModelo = (data) => ({
+  IdProveedor: data.IdProveedor,
+  IdTipoBobina: data.IdTipoBobina,
+  Bobinas: (data.Bobinas ?? []).map(BobinaPapelIngresoItem)
+});
+
+export const IngresoLoteBobinaPapelResponse = (data) => ({
+  FechaRecepcion: data.FechaRecepcion,
+  CantidadBobinas: data.CantidadBobinas
+});
