@@ -30,7 +30,7 @@ export async function POST({ cookies }) {
     );
   }
 
-  const { AccessToken, SetCookie } = resultado;
+  const { AccessToken } = resultado;
 
   let payload;
   try {
@@ -52,14 +52,8 @@ export async function POST({ cookies }) {
     maxAge: ACCESS_TOKEN_MAX_AGE_SEGUNDOS
   });
 
-  const response = new Response(
+  return new Response(
     JSON.stringify(sesion),
     { status: 200, headers: { "Content-Type": "application/json" } }
   );
-
-  if (SetCookie) {
-    response.headers.append("Set-Cookie", SetCookie);
-  }
-
-  return response;
 }

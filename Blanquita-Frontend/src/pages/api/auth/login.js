@@ -5,14 +5,25 @@ import { login } from "../../../services/Usuario/Auth";
 import { SesionUsuario } from "../../../models/Usuario/Auth";
 
 const SECRET_KEY = new TextEncoder().encode(import.meta.env.SECRET_KEY);
-const ACCESS_TOKEN_MAX_AGE_SEGUNDOS = 60 * 15; 
+const ACCESS_TOKEN_MAX_AGE_SEGUNDOS = 60 * 15;
 
 const RUTA_POR_ROL = {
   1: "/operador/inicio",
   2: "/encargado/inicio"
 };
 
-export async function POST({ request, cookies }) {
+function obtenerIpReal(request, clientAddress) {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) return forwardedFor.split(",")[0].trim();
+
+  try {
+    return clientAddress ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function POST({ request, cookies, clientAddress }) {
   let Ci, Clave;
 
   try {
@@ -31,9 +42,12 @@ export async function POST({ request, cookies }) {
     );
   }
 
+  const ip = obtenerIpReal(request, clientAddress);
+  const userAgent = request.headers.get("user-agent");
+
   let resultado;
   try {
-    resultado = await login(Ci, Clave);
+    resultado = await login(Ci, Clave, ip, userAgent);
   } catch (error) {
     return new Response(
       JSON.stringify({ detail: error.message || "Error al iniciar sesión" }),

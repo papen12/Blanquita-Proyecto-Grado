@@ -69,6 +69,14 @@ def verificar_token(token: str) -> dict:
 
 
 
+from slowapi import Limiter
+
+limiter=Limiter(
+    key_func=lambda request:request.client.host
+)
+
+
+
 
 
 import secrets
@@ -90,6 +98,8 @@ def HashRefreshToken(token_crudo: str) -> str:
 
 def CalcularExpiracionRefreshToken() -> datetime:
     return datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+
+
 
 
 
@@ -143,6 +153,9 @@ def VerificarClave(clave_hash, clave_plana):
 
 
 
+
+
+
 import time
 import logging
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -176,9 +189,50 @@ class LoggingErrorMiddleware(BaseHTTPMiddleware):
 
 
 
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+from fastapi import HTTPException, status
 
 
-    
+class DbCaller:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def LlamarFuncion(self, consulta: str, parametros: dict | None = None, commit: bool = True) -> list[dict]:
+        try:
+            res = self.db.execute(text(consulta), parametros or {})
+            filas = [dict(fila) for fila in res.mappings().all()]
+            if commit:
+                self.db.commit()
+            return filas
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error ejecutando operación en base de datos: {str(e)}"
+            )
+
+    def LlamarUnRegistro(self, consulta: str, parametros: dict | None = None, commit: bool = True) -> dict | None:
+        filas = self.LlamarFuncion(consulta, parametros, commit)
+        return filas[0] if filas else None
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -323,6 +377,17 @@ class AuthRepository:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
@@ -445,16 +510,7 @@ class AuthService:
 
 
 
-    
-
-
-
-
-
-
-
-
-    import os
+import os
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
@@ -468,6 +524,7 @@ from app.Models.Usuario.Auth import (
     LogoutResponse,
     LogoutTodosResponse,
 )
+from app.Auth.Limiter import limiter
 
 AuthRouter = APIRouter(prefix="/auth", tags=["Autenticación"])
 
@@ -503,6 +560,7 @@ def _ObtenerUserAgent(request: Request) -> str | None:
 
 
 @AuthRouter.post("/login", response_model=LoginResponse)
+@limiter.limit("5/minute")
 def login(
     datos: LoginRequest,
     request: Request,
@@ -523,6 +581,7 @@ def login(
 
 
 @AuthRouter.post("/refresh", response_model=RefreshResponse)
+@limiter.limit("20/minute")
 def refresh(
     request: Request,
     response: Response,
@@ -583,3 +642,6 @@ def logout_todos(
     _BorrarCookieRefreshToken(response)
 
     return LogoutTodosResponse(SesionesRevocadas=sesiones_revocadas)
+
+
+

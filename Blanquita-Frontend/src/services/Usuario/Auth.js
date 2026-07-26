@@ -22,12 +22,16 @@ async function manejarErrorBackend(response) {
   throw error;
 }
 
-export async function login(ci, clave) {
+export async function login(ci, clave, ip, userAgent) {
   const payload = LoginRequest(ci, clave);
+
+  const headers = { "Content-Type": "application/json" };
+  if (ip) headers["X-Forwarded-For"] = ip;
+  if (userAgent) headers["X-Client-User-Agent"] = userAgent;
 
   const response = await fetch(`${BACKEND_URL}/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(payload)
   });
 
@@ -57,10 +61,7 @@ export async function refresh(refreshTokenCrudo) {
 
   const data = await response.json();
 
-  return {
-    ...RefreshResponse(data),
-    SetCookie: response.headers.get("set-cookie")
-  };
+  return RefreshResponse(data);
 }
 
 export async function logout(refreshTokenCrudo) {
@@ -96,4 +97,3 @@ export async function logoutTodos(accessToken) {
 
   return LogoutTodosResponse(data);
 }
-

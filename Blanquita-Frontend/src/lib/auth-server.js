@@ -12,12 +12,6 @@ export function limpiarSesion(cookies) {
   cookies.delete("refresh_token", { path: "/" });
 }
 
-function extraerRefreshTokenCrudo(setCookieHeader) {
-  if (!setCookieHeader) return null;
-  const match = setCookieHeader.match(/refresh_token=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
 function refrescarDeduplicando(refreshTokenCrudo) {
   if (refrescosEnCurso.has(refreshTokenCrudo)) {
     return refrescosEnCurso.get(refreshTokenCrudo);
@@ -55,17 +49,6 @@ export async function obtenerAccessTokenValido(cookies) {
       path: "/",
       maxAge: ACCESS_TOKEN_MAX_AGE_SEGUNDOS
     });
-
-    const nuevoRefreshTokenCrudo = extraerRefreshTokenCrudo(resultado.SetCookie);
-    if (nuevoRefreshTokenCrudo) {
-      cookies.set("refresh_token", nuevoRefreshTokenCrudo, {
-        httpOnly: true,
-        secure: import.meta.env.PROD,
-        sameSite: "strict",
-        path: "/",
-        maxAge: REFRESH_TOKEN_MAX_AGE_SEGUNDOS
-      });
-    }
 
     return resultado.AccessToken;
   } catch {

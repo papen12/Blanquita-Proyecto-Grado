@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Optional
 
 
-
 class LoginRequest(BaseModel):
     Ci: str
     Clave: str
@@ -21,10 +20,9 @@ class RefreshResponse(BaseModel):
 
 class ValidacionRefreshToken(BaseModel):
     Valido: bool
-    IdUsuario: Optional[int] = None
-    IdRefreshToken: Optional[int] = None
+    IdUsuarioOut: Optional[int] = None
+    IdRefreshTokenOut: Optional[int] = None
     Motivo: str
-
 
 
 class CrearRefreshTokenData(BaseModel):
@@ -35,21 +33,9 @@ class CrearRefreshTokenData(BaseModel):
     UserAgent: Optional[str] = None
 
 
-class RotarRefreshTokenData(BaseModel):
-    IdRefreshTokenViejo: int
-    IdUsuario: int
-    TokenHashNuevo: str
-    FechaExpiracionNueva: datetime
-    IpOrigen: Optional[str] = None
-    UserAgent: Optional[str] = None
-
-
-
 class LogoutResponse(BaseModel):
     Revocado: bool
 
 
 class LogoutTodosResponse(BaseModel):
     SesionesRevocadas: int
-
-

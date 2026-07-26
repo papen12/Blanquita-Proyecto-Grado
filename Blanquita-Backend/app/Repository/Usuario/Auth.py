@@ -36,27 +36,14 @@ class AuthRepository:
         '''
         return self.caller.LlamarUnRegistro(consulta, params)
 
-    def RotarRefreshToken(self, params: dict) -> dict | None:
+    def RevocarRefreshToken(self, params: dict) -> dict | None:
         consulta = '''
-            SELECT "RotarRefreshToken"(
-                p_IdRefreshTokenViejo => :p_IdRefreshTokenViejo,
-                p_IdUsuario => :p_IdUsuario,
-                p_TokenHashNuevo => :p_TokenHashNuevo,
-                p_FechaExpiracionNueva => :p_FechaExpiracionNueva,
-                p_IpOrigen => :p_IpOrigen,
-                p_UserAgent => :p_UserAgent
-            ) AS "IdRefreshToken"
+            SELECT "RevocarRefreshToken"(p_TokenHash => :p_TokenHash) AS "Revocado"
         '''
         return self.caller.LlamarUnRegistro(consulta, params)
 
     def RevocarCadenaRefreshToken(self, params: dict) -> dict | None:
         consulta = '''
             SELECT "RevocarCadenaRefreshToken"(p_IdUsuario => :p_IdUsuario) AS "SesionesRevocadas"
-        '''
-        return self.caller.LlamarUnRegistro(consulta, params)
-
-    def RevocarRefreshToken(self, params: dict) -> dict | None:
-        consulta = '''
-            SELECT "RevocarRefreshToken"(p_TokenHash => :p_TokenHash) AS "Revocado"
         '''
         return self.caller.LlamarUnRegistro(consulta, params)
