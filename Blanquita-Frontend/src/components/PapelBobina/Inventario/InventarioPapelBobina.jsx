@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, X, Check, ArrowRight, Loader2 } from "lucide-react";
+import { Plus, X, Check, ArrowRight, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import {
   reingresarBobinaInventario,
   darDeBajaBobina,
 } from "../../../services/BobinaPapel/Inventario";
+import { iniciarProduccion } from "../../../services/BobinaPapel/Produccion";
 import { dateFormatter } from "@/utils/dateFormater";
 
 const ACENTOS = [
@@ -73,6 +74,7 @@ export default function InventarioBobinasPapel({ usuario }) {
   const [bobinasSel, setBobinasSel] = useState([]);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [errorDetalle, setErrorDetalle] = useState("");
+  const [busquedaCodigo, setBusquedaCodigo] = useState("");
 
   const [marcadas, setMarcadas] = useState([]);
   const [modal, setModal] = useState(false);
@@ -147,15 +149,23 @@ export default function InventarioBobinasPapel({ usuario }) {
   );
   const listas = marcadas.length === requeridas;
 
+  const bobinasFiltradas = busquedaCodigo.trim()
+    ? bobinasSel.filter((b) =>
+        b.CodigoBobina.toLowerCase().includes(busquedaCodigo.trim().toLowerCase()),
+      )
+    : bobinasSel;
+
   const seleccionarTipo = (id) => {
     if (sel === id) {
       setSel(null);
       setBobinasSel([]);
       setMarcadas([]);
+      setBusquedaCodigo("");
       return;
     }
     setSel(id);
     setMarcadas([]);
+    setBusquedaCodigo("");
     cargarDetalle(id);
   };
 
@@ -163,6 +173,7 @@ export default function InventarioBobinasPapel({ usuario }) {
     setSel(null);
     setBobinasSel([]);
     setMarcadas([]);
+    setBusquedaCodigo("");
   };
 
   const toggleBobina = (codigo) => {
@@ -184,7 +195,21 @@ export default function InventarioBobinasPapel({ usuario }) {
     const bobina2 = bobinasSel.find((b) => b.CodigoBobina === marcadas[1]);
     if (!bobina1 || !bobina2) return;
 
-    toast.info("Envío a producción pendiente de implementar");
+    setEnviando(true);
+    try {
+      await iniciarProduccion(bobina1.IdBobinaPapel, bobina2.IdBobinaPapel);
+
+      setBobinasSel((prev) =>
+        prev.filter((b) => !marcadas.includes(b.CodigoBobina)),
+      );
+      toast.success(`${marcadas.join(" + ")} → En producción`);
+      setMarcadas([]);
+      cargarResumen();
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setEnviando(false);
+    }
   };
 
   const cargarFueraInventario = async () => {
@@ -357,6 +382,32 @@ export default function InventarioBobinasPapel({ usuario }) {
               </Button>
             </div>
 
+            {!loadingDetalle && !errorDetalle && bobinasSel.length > 0 && (
+              <div className="border-b border-slate-100 px-5 py-3.5">
+                <div className="relative max-w-xs">
+                  <Search
+                    size={16}
+                    strokeWidth={2.5}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <Input
+                    value={busquedaCodigo}
+                    onChange={(e) => setBusquedaCodigo(e.target.value)}
+                    placeholder="Buscar por código..."
+                    className="h-10 pl-9"
+                  />
+                  {busquedaCodigo && (
+                    <button
+                      onClick={() => setBusquedaCodigo("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                    >
+                      <X size={15} strokeWidth={2.75} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {loadingDetalle && (
               <div className="space-y-2 p-5">
                 <Skeleton className="h-10 w-full" />
@@ -374,12 +425,20 @@ export default function InventarioBobinasPapel({ usuario }) {
                 No hay bobinas en almacén para este tipo.
               </div>
             )}
+            {!loadingDetalle &&
+              !errorDetalle &&
+              bobinasSel.length > 0 &&
+              bobinasFiltradas.length === 0 && (
+                <div className="p-8 text-center text-sm text-slate-400">
+                  Ninguna bobina coincide con "{busquedaCodigo}".
+                </div>
+              )}
 
-            {!loadingDetalle && !errorDetalle && bobinasSel.length > 0 && (
+            {!loadingDetalle && !errorDetalle && bobinasFiltradas.length > 0 && (
               <>
                 <div className="hidden md:block">
                   <TablaBobinas
-                    bobinas={bobinasSel}
+                    bobinas={bobinasFiltradas}
                     tipoSel={tipoSel}
                     marcadas={marcadas}
                     onToggle={toggleBobina}
@@ -387,7 +446,7 @@ export default function InventarioBobinasPapel({ usuario }) {
                 </div>
                 <div className="md:hidden">
                   <ListaMovilBobinas
-                    bobinas={bobinasSel}
+                    bobinas={bobinasFiltradas}
                     tipoSel={tipoSel}
                     marcadas={marcadas}
                     onToggle={toggleBobina}

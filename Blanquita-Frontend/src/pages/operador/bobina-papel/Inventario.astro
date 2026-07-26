@@ -1,8 +1,9 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
 import InventarioBobinasPapel from '../../../components/PapelBobina/Inventario/InventarioPapelBobina';
+const { usuario } = Astro.locals;
 ---
 
 <Layout>
-	
+	<InventarioBobinasPapel client:load usuario={usuario}/>
 </Layout>

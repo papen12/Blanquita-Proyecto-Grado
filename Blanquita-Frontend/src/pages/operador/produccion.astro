@@ -1,0 +1,9 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProduccionBobinaTubo from '@/components/PapelBobina/Produccion/ProduccionPapelBobina';
+const { usuario } = Astro.locals;
+---
+
+<Layout>
+	<ProduccionBobinaTubo client:load usuario={usuario}/>
+</Layout>
