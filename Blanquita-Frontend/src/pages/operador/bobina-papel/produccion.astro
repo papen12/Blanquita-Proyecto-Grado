@@ -1,9 +1,11 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import Layout from '../../../layouts/Layout.astro';
 import ProduccionBobinaTubo from '@/components/PapelBobina/Produccion/ProduccionPapelBobina';
 const { usuario } = Astro.locals;
+import NavBar from '@/components/layout/NavBar';
 ---
 
 <Layout>
+	<NavBar client:load idRol={usuario.IdRol} />
 	<ProduccionBobinaTubo client:load usuario={usuario}/>
 </Layout>

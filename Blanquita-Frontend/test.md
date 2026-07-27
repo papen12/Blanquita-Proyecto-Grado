@@ -1,220 +1,72 @@
-export const prerender = false;
+export const BobinaPapel = (data) => ({
+  IdBobinaPapel: data.IdBobinaPapel ?? null,
+  CodigoBobina: data.CodigoBobina,
+  IdTipoBobina: data.IdTipoBobina,
+  IdLoteBobina: data.IdLoteBobina,
+  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
+  PesoBrutoKg: data.PesoBrutoKg ?? null,
+  Gramaje: data.Gramaje ?? null,
+  PesoNetoKg: data.PesoNetoKg ?? null
+});
 
-const BACKEND_URL = import.meta.env.BACKEND_URL;
+export const ListaBobinasPapel = (data) => ({
+  Bobinas: (data.Bobinas ?? []).map(BobinaPapel)
+});
 
-export const ALL = async ({ request, params, cookies }) => {
-  const token = cookies.get("token")?.value;
+export const BobinaPapelIngresoItem = (data) => ({
+  CodigoBobina: data.CodigoBobina,
+  PesoBrutoKg: data.PesoBrutoKg ?? null,
+  Gramaje: data.Gramaje ?? null,
+  PesoNetoKg: data.PesoNetoKg ?? null
+});
 
-  if (!token) {
-    return new Response(
-      JSON.stringify({ detail: "No autenticado" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
-  }
+export const IngresoModelo = (data) => ({
+  IdProveedor: data.IdProveedor,
+  IdTipoBobina: data.IdTipoBobina,
+  Bobinas: (data.Bobinas ?? []).map(BobinaPapelIngresoItem)
+});
 
-  const url = new URL(request.url);
-  const targetUrl = `${BACKEND_URL}/${params.path}${url.search}`;
-
-  const headers = {
-    Authorization: `Bearer ${token}`
-  };
-
-  const contentType = request.headers.get("content-type");
-  if (contentType) headers["Content-Type"] = contentType;
-
-  const init = {
-    method: request.method,
-    headers
-  };
-
-  if (!["GET", "HEAD"].includes(request.method)) {
-    init.body = await request.text();
-  }
-
-  const backendResponse = await fetch(targetUrl, init);
-  const data = await backendResponse.text();
-
-  return new Response(data, {
-    status: backendResponse.status,
-    headers: {
-      "Content-Type": backendResponse.headers.get("content-type") || "application/json"
-    }
-  });
-};
+export const IngresoLoteBobinaPapelResponse = (data) => ({
+  FechaRecepcion: data.FechaRecepcion,
+  CantidadBobinas: data.CantidadBobinas
+});
 
 
+import { IngresoModelo, IngresoLoteBobinaPapelResponse } from "../../models/BobinaPapel/BobinaPapel";
 
-import { UsuarioLogin, UsuarioLoginResponse } from "../models/Usuario/UsuarioLogIn";
+async function manejarErrorBackend(response) {
+  const data = await response.json().catch(() => ({}));
 
-const BACKEND_URL = import.meta.env.BACKEND_URL;
-
-export async function login(ci, clave) {
-  const payload = UsuarioLogin(ci, clave);
-
-  const response = await fetch(`${BACKEND_URL}/Usuario/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    const error = new Error(data.detail || "Error al iniciar sesión");
-    error.status = response.status;
+  if (response.status === 401) {
+    const error = new Error("Sesión no válida, inicia sesión nuevamente");
+    error.status = 401;
     throw error;
   }
 
-  return UsuarioLoginResponse(data);
+  const error = new Error(data.detail || "Error al procesar la solicitud");
+  error.status = response.status;
+  throw error;
 }
 
+export async function cargarLoteBobinaPapel(idProveedor, idTipoBobina, bobinas) {
+  const payload = IngresoModelo({
+    IdProveedor: idProveedor,
+    IdTipoBobina: idTipoBobina,
+    Bobinas: bobinas
+  });
 
+  const response = await fetch("/api/bobinapapel/cargarlote", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
 
-
-
-
-
-
-
-
-export const prerender = false;
-
-import { login } from "../../../services/LogInService";
-
-const RUTA_POR_ROL = {
-  1: "/operador/inicio",
-  2: "/encargado/inicio"
-};
-
-export async function POST({ request, cookies }) {
-  try {
-    const { Ci, Clave } = await request.json();
-
-    if (!Ci || !Clave) {
-      return new Response(
-        JSON.stringify({ detail: "Ci y Clave son requeridos" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    const usuario = await login(Ci, Clave);
-
-    cookies.set("token", usuario.access_token, {
-      httpOnly: true,
-      secure: import.meta.env.PROD,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24
-    });
-
-    return new Response(
-      JSON.stringify({
-        IdUsuario: usuario.IdUsuario,
-        IdRol: usuario.IdRol,
-        NombreRol: usuario.NombreRol,
-        PrimerNombre: usuario.PrimerNombre,
-        ApellidoPaterno: usuario.ApellidoPaterno,
-        rutaRedirect: RUTA_POR_ROL[usuario.IdRol] || "/"
-      }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ detail: error.message || "Error al iniciar sesión" }),
-      { status: error.status || 500, headers: { "Content-Type": "application/json" } }
-    );
+  if (!response.ok) {
+    await manejarErrorBackend(response);
   }
+
+  const data = await response.json();
+
+  return IngresoLoteBobinaPapelResponse(data);
 }
 
-
-
-
-export const UsuarioLogin = (Ci, Clave) => ({
-  Ci,
-  Clave
-});
-
-export const UsuarioLoginResponse = (data) => ({
-  access_token: data.access_token,
-  IdUsuario: data.IdUsuario,
-  IdRol: data.IdRol,
-  NombreRol: data.NombreRol,
-  PrimerNombre: data.PrimerNombre,
-  ApellidoPaterno: data.ApellidoPaterno
-});
-
-export const UsuarioSesion = (data) => ({
-  IdUsuario: data.IdUsuario,
-  IdRol: data.IdRol,
-  NombreRol: data.NombreRol,
-  PrimerNombre: data.PrimerNombre,
-  ApellidoPaterno: data.ApellidoPaterno
-});
-
-
-
-
-
-import { defineMiddleware } from "astro/middleware";
-import { jwtVerify } from "jose";
-
-const SECRET_KEY = new TextEncoder().encode(import.meta.env.SECRET_KEY);
-
-const PREFIJO_POR_ROL = {
-  1: "/operador",
-  2: "/encargado"
-};
-
-const RUTA_POR_ROL = {
-  1: "/operador/inicio",
-  2: "/encargado/inicio"
-};
-
-const RUTAS_PROTEGIDAS = ["/operador", "/encargado"];
-
-export const onRequest = defineMiddleware(async (context, next) => {
-  const { pathname } = context.url;
-  const esRutaProtegida = RUTAS_PROTEGIDAS.some((prefijo) =>
-    pathname.startsWith(prefijo)
-  );
-
-  if (!esRutaProtegida) {
-    return next();
-  }
-
-  const token = context.cookies.get("token")?.value;
-
-  if (!token) {
-    return context.redirect("/");
-  }
-
-  try {
-    const { payload } = await jwtVerify(token, SECRET_KEY);
-    const idRol = Number(payload.rol_id);
-    const idUsuario = Number(payload.sub);
-    const nombreRol = payload.rol;
-
-    if (!idRol || !idUsuario) {
-      return context.redirect("/");
-    }
-
-    const prefijoPermitido = PREFIJO_POR_ROL[idRol];
-
-    if (!prefijoPermitido || !pathname.startsWith(prefijoPermitido)) {
-      return context.redirect(RUTA_POR_ROL[idRol] || "/");
-    }
-
-    context.locals.usuario = {
-      IdUsuario: idUsuario,
-      IdRol: idRol,
-      NombreRol: nombreRol
-    };
-
-    return next();
-  } catch (error) {
-    context.cookies.delete("token", { path: "/" });
-    return context.redirect("/");
-  }
-});
