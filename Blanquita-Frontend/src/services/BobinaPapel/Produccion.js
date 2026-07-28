@@ -14,20 +14,8 @@ import {
   VerProduccionBobinaTuboResponse,
   VerPausasProduccionBobinaTuboActivasResponse
 } from "../../models/BobinaPapel/Produccion";
+import { manejarErrorBackend } from "@/utils/Error";
 
-async function manejarErrorBackend(response) {
-  const data = await response.json().catch(() => ({}));
-
-  if (response.status === 401) {
-    const error = new Error("Sesión no válida, inicia sesión nuevamente");
-    error.status = 401;
-    throw error;
-  }
-
-  const error = new Error(data.detail || "Error al procesar la solicitud");
-  error.status = response.status;
-  throw error;
-}
 
 export async function iniciarProduccion(idBobina1, idBobina2) {
   const payload = IniciarProduccionBobinaTuboRequest(idBobina1, idBobina2);

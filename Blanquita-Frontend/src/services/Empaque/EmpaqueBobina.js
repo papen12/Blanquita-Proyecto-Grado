@@ -1,0 +1,51 @@
+export const EmpaqueItem = (codigoEmpaque, idTipoEmpaque, pesoKg) => ({
+  CodigoEmpaque: codigoEmpaque,
+  IdTipoEmpaque: idTipoEmpaque,
+  PesoKg: pesoKg
+});
+
+export const IngresoEmpaqueRequest = (idProveedor, cantidadToneladasPedida, empaques) => ({
+  IdProveedor: idProveedor,
+  CantidadToneladasPedida: cantidadToneladasPedida,
+  Empaques: empaques.map((e) => EmpaqueItem(e.CodigoEmpaque, e.IdTipoEmpaque, e.PesoKg))
+});
+
+export const IngresoEmpaqueResponseItem = (data) => ({
+  FechaRecepcion: data.FechaRecepcion,
+  IdTipoEmpaque: data.IdTipoEmpaque,
+  NombreTipoEmpaque: data.NombreTipoEmpaque,
+  CantidadEmpaques: data.CantidadEmpaques
+});
+
+export const IngresoEmpaqueResponse = (data) => ({
+  Resumen: data.Resumen.map(IngresoEmpaqueResponseItem)
+});
+
+export const TrasladarEmpaquesProduccionRequest = (idsEmpaque) => ({
+  IdsEmpaque: idsEmpaque
+});
+
+export const TrasladarEmpaquesProduccionResponseItem = (data) => ({
+  IdEmpaque: data.IdEmpaque,
+  CodigoEmpaque: data.CodigoEmpaque,
+  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
+  FechaMovimiento: data.FechaMovimiento
+});
+
+export const ResumenInventarioEmpaqueResponse = (data) => ({
+  IdTipoEmpaque: data.IdTipoEmpaque,
+  NombreTipoEmpaque: data.NombreTipoEmpaque,
+  CantidadEmpaques: data.CantidadEmpaques
+});
+
+export const DetalleInventarioEmpaqueRequest = (idTipoEmpaque) => ({
+  IdTipoEmpaque: idTipoEmpaque
+});
+
+export const DetalleInventarioEmpaqueResponse = (data) => ({
+  IdEmpaque: data.IdEmpaque,
+  CodigoEmpaque: data.CodigoEmpaque,
+  PesoKg: data.PesoKg,
+  FechaRecepcion: data.FechaRecepcion,
+  NombreProveedor: data.NombreProveedor
+});
