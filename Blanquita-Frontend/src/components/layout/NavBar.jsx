@@ -23,7 +23,7 @@ function ItemNav({ item, basePath }) {
   if (item.subrutas) {
     return (
       <NavigationMenuItem>
-        <NavigationMenuTrigger className="bg-transparent text-white hover:!bg-[#20A7DB] focus:!bg-[#20A7DB] data-[state=open]:!bg-[#20A7DB]">
+        <NavigationMenuTrigger className="bg-transparent text-white hover:!bg-[#20A7DB] focus:!bg-[#20A7DB] data-[state=open]:!bg-[#20A7DB] ">
           <span className="flex items-center gap-2">
             <IconoItem item={item} />
             {item.titulo}
@@ -66,7 +66,7 @@ export default function NavBar({ idRol  }) {
 
   return (
     <nav
-      className="fixed top-0 left-0 z-30 flex flex-row items-center justify-center w-full px-4 h-30 text-white transition-all duration-300 ease-in-out"
+      className="fixed top-0 left-0 z-30 flex flex-row items-center justify-center w-full px-4 h-30 text-white transition-all duration-300 ease-in-out "
       style={{
         backgroundColor: "#62C1E5",
         backdropFilter: "blur(10px)",

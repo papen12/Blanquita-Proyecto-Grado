@@ -1,72 +1,56 @@
-export const BobinaPapel = (data) => ({
-  IdBobinaPapel: data.IdBobinaPapel ?? null,
-  CodigoBobina: data.CodigoBobina,
+export const VerResumenInventarioBobinaPapelResponse = (data) => ({
   IdTipoBobina: data.IdTipoBobina,
-  IdLoteBobina: data.IdLoteBobina,
-  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
-  PesoBrutoKg: data.PesoBrutoKg ?? null,
-  Gramaje: data.Gramaje ?? null,
-  PesoNetoKg: data.PesoNetoKg ?? null
+  NombreTipoBobina: data.NombreTipoBobina,
+  CantidadBobinas: data.CantidadBobinas,
+  PesoNetoTotalKg: data.PesoNetoTotalKg,
+  GramajePromedio: data.GramajePromedio
 });
 
-export const ListaBobinasPapel = (data) => ({
-  Bobinas: (data.Bobinas ?? []).map(BobinaPapel)
+export const VerDetalleInventarioBobinaPapelRequest = (idTipoBobina) => ({
+  IdTipoBobina: idTipoBobina
 });
 
-export const BobinaPapelIngresoItem = (data) => ({
+export const VerDetalleInventarioBobinaPapelResponse = (data) => ({
+  IdBobinaPapel: data.IdBobinaPapel,
   CodigoBobina: data.CodigoBobina,
-  PesoBrutoKg: data.PesoBrutoKg ?? null,
-  Gramaje: data.Gramaje ?? null,
-  PesoNetoKg: data.PesoNetoKg ?? null
-});
-
-export const IngresoModelo = (data) => ({
-  IdProveedor: data.IdProveedor,
-  IdTipoBobina: data.IdTipoBobina,
-  Bobinas: (data.Bobinas ?? []).map(BobinaPapelIngresoItem)
-});
-
-export const IngresoLoteBobinaPapelResponse = (data) => ({
+  CodigoLote: data.CodigoLote,
   FechaRecepcion: data.FechaRecepcion,
-  CantidadBobinas: data.CantidadBobinas
+  NombreProveedor: data.NombreProveedor,
+  PesoBrutoKg: data.PesoBrutoKg,
+  PesoNetoKg: data.PesoNetoKg,
+  Gramaje: data.Gramaje
 });
 
+export const ReingresarBobinaAInventarioRequest = (idBobinaPapel, observacion) => ({
+  IdBobinaPapel: idBobinaPapel,
+  Observacion: observacion ?? null
+});
 
-import { IngresoModelo, IngresoLoteBobinaPapelResponse } from "../../models/BobinaPapel/BobinaPapel";
+export const ReingresarBobinaAInventarioResponse = (data) => ({
+  IdBobinaPapel: data.IdBobinaPapel,
+  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
+  FechaMovimiento: data.FechaMovimiento
+});
 
-async function manejarErrorBackend(response) {
-  const data = await response.json().catch(() => ({}));
+export const DarDeBajaBobinaRequest = (idBobinaPapel, observacion) => ({
+  IdBobinaPapel: idBobinaPapel,
+  Observacion: observacion ?? null
+});
 
-  if (response.status === 401) {
-    const error = new Error("Sesión no válida, inicia sesión nuevamente");
-    error.status = 401;
-    throw error;
-  }
+export const DarDeBajaBobinaResponse = (data) => ({
+  IdBobinaPapel: data.IdBobinaPapel,
+  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
+  FechaMovimiento: data.FechaMovimiento
+});
 
-  const error = new Error(data.detail || "Error al procesar la solicitud");
-  error.status = response.status;
-  throw error;
-}
-
-export async function cargarLoteBobinaPapel(idProveedor, idTipoBobina, bobinas) {
-  const payload = IngresoModelo({
-    IdProveedor: idProveedor,
-    IdTipoBobina: idTipoBobina,
-    Bobinas: bobinas
-  });
-
-  const response = await fetch("/api/bobinapapel/cargarlote", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
-
-  return IngresoLoteBobinaPapelResponse(data);
-}
-
+export const VerBobinasPapelFueraInventarioResponse = (data) => ({
+  IdBobinaPapel: data.IdBobinaPapel,
+  CodigoBobina: data.CodigoBobina,
+  NombreTipoBobina: data.NombreTipoBobina,
+  PesoBrutoKg: data.PesoBrutoKg ?? null,
+  Gramaje: data.Gramaje ?? null,
+  NombreProveedor: data.NombreProveedor,
+  FechaRecepcion: data.FechaRecepcion,
+  UltimaObservacion: data.UltimaObservacion ?? null,
+  FechaUltimoMovimiento: data.FechaUltimoMovimiento ?? null
+});

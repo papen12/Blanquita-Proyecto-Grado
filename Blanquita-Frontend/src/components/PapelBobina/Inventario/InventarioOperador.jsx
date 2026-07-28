@@ -253,7 +253,7 @@ export default function InventarioBobinasPapel({ usuario }) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
+    <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900 mt-30" >
       <header className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-c3 to-c4 px-5 py-4 text-white sm:px-7">
         <div className="flex flex-col gap-0.5">
           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-white/80">
