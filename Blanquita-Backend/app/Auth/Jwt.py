@@ -1,30 +1,45 @@
 import os
+
 import jwt
-from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
+from jwt import PyJWKClient
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
-ALGORITHM = "HS256"
+SUPABASE_URL = os.getenv("SUPABASE_URL").rstrip("/")
+
+JWKS_URL = f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+ISSUER = f"{SUPABASE_URL}/auth/v1"
+AUDIENCE = "authenticated"
+
+ALGORITMOS = ["ES256"]
+
+_jwk_client = PyJWKClient(JWKS_URL, cache_keys=True, lifespan=900)
 
 
-def crear_token_acceso(data: dict) -> str:
-    to_encode = data.copy()
-    expira = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expira})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+def precargar_jwks() -> None:
+    try:
+        _jwk_client.get_jwk_set()
+    except Exception:
+        pass
 
 
 def verificar_token(token: str) -> dict:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        llave_firma = _jwk_client.get_signing_key_from_jwt(token).key
+        payload = jwt.decode(
+            token,
+            llave_firma,
+            algorithms=ALGORITMOS,
+            audience=AUDIENCE,
+            issuer=ISSUER,
+            options={"require": ["exp", "sub", "aud"]},
+        )
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token expirado"
         )
-    except jwt.InvalidTokenError:
+    except jwt.PyJWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido"

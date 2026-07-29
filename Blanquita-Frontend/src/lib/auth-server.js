@@ -1,11 +1,51 @@
-import { jwtVerify } from "jose";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import { refresh } from "../services/Usuario/Auth";
+import { SesionUsuario } from "../models/Usuario/Auth";
 
-export const SECRET_KEY = new TextEncoder().encode(import.meta.env.SECRET_KEY);
-export const ACCESS_TOKEN_MAX_AGE_SEGUNDOS = 60 * 15;
-export const REFRESH_TOKEN_MAX_AGE_SEGUNDOS = 60 * 60 * 24 * 30;
+const SUPABASE_URL = import.meta.env.SUPABASE_URL.replace(/\/+$/, "");
+const ISSUER = `${SUPABASE_URL}/auth/v1`;
+const AUDIENCE = "authenticated";
+const ALGORITMOS = ["ES256"];
+
+const JWKS = createRemoteJWKSet(
+  new URL(`${SUPABASE_URL}/auth/v1/.well-known/jwks.json`)
+);
+
+export const ACCESS_TOKEN_MAX_AGE_SEGUNDOS = 60 * 15; 
+export const REFRESH_TOKEN_MAX_AGE_SEGUNDOS = 60 * 60 * 12;
+
+const OPCIONES_COOKIE = {
+  httpOnly: true,
+  secure: import.meta.env.PROD,
+  sameSite: "strict",
+  path: "/"
+};
 
 const refrescosEnCurso = new Map();
+
+export async function verificarAccessToken(token) {
+  const { payload } = await jwtVerify(token, JWKS, {
+    issuer: ISSUER,
+    audience: AUDIENCE,
+    algorithms: ALGORITMOS
+  });
+
+  return payload;
+}
+
+export function guardarSesion(cookies, { AccessToken, RefreshToken }) {
+  cookies.set("token", AccessToken, {
+    ...OPCIONES_COOKIE,
+    maxAge: ACCESS_TOKEN_MAX_AGE_SEGUNDOS
+  });
+
+  if (RefreshToken) {
+    cookies.set("refresh_token", RefreshToken, {
+      ...OPCIONES_COOKIE,
+      maxAge: REFRESH_TOKEN_MAX_AGE_SEGUNDOS
+    });
+  }
+}
 
 export function limpiarSesion(cookies) {
   cookies.delete("token", { path: "/" });
@@ -30,7 +70,7 @@ export async function obtenerAccessTokenValido(cookies) {
 
   if (token) {
     try {
-      await jwtVerify(token, SECRET_KEY);
+      await verificarAccessToken(token);
       return token;
     } catch {
     }
@@ -41,16 +81,22 @@ export async function obtenerAccessTokenValido(cookies) {
 
   try {
     const resultado = await refrescarDeduplicando(refreshTokenCrudo);
-
-    cookies.set("token", resultado.AccessToken, {
-      httpOnly: true,
-      secure: import.meta.env.PROD,
-      sameSite: "strict",
-      path: "/",
-      maxAge: ACCESS_TOKEN_MAX_AGE_SEGUNDOS
-    });
-
+    guardarSesion(cookies, resultado);
     return resultado.AccessToken;
+  } catch {
+    return null;
+  }
+}
+
+export async function resolverSesion(cookies) {
+  const accessToken = await obtenerAccessTokenValido(cookies);
+  if (!accessToken) return null;
+
+  try {
+    const payload = await verificarAccessToken(accessToken);
+    const sesion = SesionUsuario(payload);
+    if (!sesion.IdUsuario || !sesion.IdRol) return null;
+    return sesion;
   } catch {
     return null;
   }

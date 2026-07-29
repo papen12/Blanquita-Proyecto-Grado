@@ -1,42 +1,19 @@
-import os
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from app.Config.supabase import get_db 
+from app.Config.supabase import get_db
 from app.Auth.Dependencies import get_current_user
 from app.Services.Usuario.Auth import AuthService
 from app.Models.Usuario.Auth import (
     LoginRequest,
     LoginResponse,
+    RefreshRequest,
     RefreshResponse,
     LogoutResponse,
-    LogoutTodosResponse,
 )
 from app.Auth.Limiter import limiter
 
 AuthRouter = APIRouter(prefix="/auth", tags=["Autenticación"])
-
-NOMBRE_COOKIE_REFRESH = "refresh_token"
-ENTORNO = os.getenv("ENTORNO")
-COOKIE_SECURE = ENTORNO == "production"
-REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS"))
-REFRESH_TOKEN_MAX_AGE_SEGUNDOS = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
-
-
-def _SetearCookieRefreshToken(response: Response, refresh_token_crudo: str) -> None:
-    response.set_cookie(
-        key=NOMBRE_COOKIE_REFRESH,
-        value=refresh_token_crudo,
-        httponly=True,
-        secure=COOKIE_SECURE,
-        samesite="strict",
-        max_age=REFRESH_TOKEN_MAX_AGE_SEGUNDOS,
-        path="/",
-    )
-
-
-def _BorrarCookieRefreshToken(response: Response) -> None:
-    response.delete_cookie(key=NOMBRE_COOKIE_REFRESH, path="/")
 
 
 def _ObtenerIp(request: Request) -> str | None:
@@ -49,12 +26,22 @@ def _ObtenerIp(request: Request) -> str | None:
 def _ObtenerUserAgent(request: Request) -> str | None:
     return request.headers.get("x-client-user-agent") or request.headers.get("user-agent")
 
+
+def _ObtenerAccessToken(request: Request) -> str | None:
+    autorizacion = request.headers.get("authorization")
+    if not autorizacion:
+        return None
+    partes = autorizacion.split()
+    if len(partes) != 2 or partes[0].lower() != "bearer":
+        return None
+    return partes[1]
+
+
 @AuthRouter.post("/login", response_model=LoginResponse)
 @limiter.limit("5/minute")
 def login(
     datos: LoginRequest,
     request: Request,
-    response: Response,
     db: Session = Depends(get_db),
 ):
     service = AuthService(db)
@@ -65,58 +52,56 @@ def login(
         user_agent=_ObtenerUserAgent(request),
     )
 
-    _SetearCookieRefreshToken(response, resultado["RefreshTokenCrudo"])
-
-    return LoginResponse(AccessToken=resultado["AccessToken"])
+    return LoginResponse(
+        AccessToken=resultado["AccessToken"],
+        RefreshToken=resultado["RefreshTokenCrudo"],
+    )
 
 
 @AuthRouter.post("/refresh", response_model=RefreshResponse)
 @limiter.limit("20/minute")
 def refresh(
+    datos: RefreshRequest,
     request: Request,
     db: Session = Depends(get_db),
 ):
-    refresh_token_crudo = request.cookies.get(NOMBRE_COOKIE_REFRESH)
-
-    if refresh_token_crudo is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No hay sesión activa"
-        )
-
     service = AuthService(db)
-    resultado = service.RefreshAccessToken(refresh_token_crudo=refresh_token_crudo)
+    resultado = service.RefreshAccessToken(refresh_token_crudo=datos.RefreshToken)
 
-    return RefreshResponse(AccessToken=resultado["AccessToken"])
+    return RefreshResponse(
+        AccessToken=resultado["AccessToken"],
+        RefreshToken=resultado["RefreshTokenCrudo"],
+    )
 
 
 @AuthRouter.post("/logout", response_model=LogoutResponse)
 def logout(
     request: Request,
-    response: Response,
     db: Session = Depends(get_db),
 ):
-    refresh_token_crudo = request.cookies.get(NOMBRE_COOKIE_REFRESH)
-    _BorrarCookieRefreshToken(response)
+    access_token = _ObtenerAccessToken(request)
 
-    if refresh_token_crudo is None:
+    if access_token is None:
         return LogoutResponse(Revocado=False)
 
     service = AuthService(db)
-    revocado = service.Logout(refresh_token_crudo)
+    revocado = service.Logout(access_token)
 
     return LogoutResponse(Revocado=revocado)
 
 
-@AuthRouter.post("/logout-todos", response_model=LogoutTodosResponse)
+@AuthRouter.post("/logout-todos", response_model=LogoutResponse)
 def logout_todos(
-    response: Response,
+    request: Request,
     usuario_actual: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    access_token = _ObtenerAccessToken(request)
+
+    if access_token is None:
+        return LogoutResponse(Revocado=False)
+
     service = AuthService(db)
-    sesiones_revocadas = service.LogoutTodasLasSesiones(usuario_actual["IdUsuario"])
+    revocado = service.LogoutTodasLasSesiones(access_token)
 
-    _BorrarCookieRefreshToken(response)
-
-    return LogoutTodosResponse(SesionesRevocadas=sesiones_revocadas)
+    return LogoutResponse(Revocado=revocado)

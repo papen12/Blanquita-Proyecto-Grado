@@ -1,16 +1,14 @@
 export const prerender = false;
 
-import { jwtVerify } from "jose";
+import { verificarAccessToken, guardarSesion, limpiarSesion } from "../../../lib/auth-server";
 import { refresh } from "../../../services/Usuario/Auth";
 import { SesionUsuario } from "../../../models/Usuario/Auth";
-
-const SECRET_KEY = new TextEncoder().encode(import.meta.env.SECRET_KEY);
-const ACCESS_TOKEN_MAX_AGE_SEGUNDOS = 60 * 15;
 
 export async function POST({ cookies }) {
   const refreshTokenCrudo = cookies.get("refresh_token")?.value;
 
   if (!refreshTokenCrudo) {
+    limpiarSesion(cookies);
     return new Response(
       JSON.stringify({ detail: "No hay sesión activa" }),
       { status: 401, headers: { "Content-Type": "application/json" } }
@@ -21,21 +19,18 @@ export async function POST({ cookies }) {
   try {
     resultado = await refresh(refreshTokenCrudo);
   } catch (error) {
-    cookies.delete("token", { path: "/" });
-    cookies.delete("refresh_token", { path: "/" });
-
+    limpiarSesion(cookies);
     return new Response(
       JSON.stringify({ detail: error.message || "No se pudo renovar la sesión" }),
       { status: error.status || 401, headers: { "Content-Type": "application/json" } }
     );
   }
 
-  const { AccessToken } = resultado;
-
   let payload;
   try {
-    ({ payload } = await jwtVerify(AccessToken, SECRET_KEY));
+    payload = await verificarAccessToken(resultado.AccessToken);
   } catch {
+    limpiarSesion(cookies);
     return new Response(
       JSON.stringify({ detail: "Token recibido inválido" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
@@ -44,13 +39,15 @@ export async function POST({ cookies }) {
 
   const sesion = SesionUsuario(payload);
 
-  cookies.set("token", AccessToken, {
-    httpOnly: true,
-    secure: import.meta.env.PROD,
-    sameSite: "strict",
-    path: "/",
-    maxAge: ACCESS_TOKEN_MAX_AGE_SEGUNDOS
-  });
+  if (!sesion.IdUsuario || !sesion.IdRol) {
+    limpiarSesion(cookies);
+    return new Response(
+      JSON.stringify({ detail: "Usuario no habilitado para operar el sistema" }),
+      { status: 403, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  guardarSesion(cookies, resultado);
 
   return new Response(
     JSON.stringify(sesion),

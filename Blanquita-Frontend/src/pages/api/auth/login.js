@@ -1,11 +1,8 @@
 export const prerender = false;
 
-import { jwtVerify } from "jose";
+import { verificarAccessToken, guardarSesion, limpiarSesion } from "../../../lib/auth-server";
 import { login } from "../../../services/Usuario/Auth";
 import { SesionUsuario } from "../../../models/Usuario/Auth";
-
-const SECRET_KEY = new TextEncoder().encode(import.meta.env.SECRET_KEY);
-const ACCESS_TOKEN_MAX_AGE_SEGUNDOS = 60 * 15;
 
 const RUTA_POR_ROL = {
   1: "/operador/inicio",
@@ -55,12 +52,11 @@ export async function POST({ request, cookies, clientAddress }) {
     );
   }
 
-  const { AccessToken, SetCookie } = resultado;
-
   let payload;
   try {
-    ({ payload } = await jwtVerify(AccessToken, SECRET_KEY));
+    payload = await verificarAccessToken(resultado.AccessToken);
   } catch {
+    limpiarSesion(cookies);
     return new Response(
       JSON.stringify({ detail: "Token recibido inválido" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
@@ -69,25 +65,21 @@ export async function POST({ request, cookies, clientAddress }) {
 
   const sesion = SesionUsuario(payload);
 
-  cookies.set("token", AccessToken, {
-    httpOnly: true,
-    secure: import.meta.env.PROD,
-    sameSite: "strict",
-    path: "/",
-    maxAge: ACCESS_TOKEN_MAX_AGE_SEGUNDOS
-  });
+  if (!sesion.IdUsuario || !sesion.IdRol) {
+    limpiarSesion(cookies);
+    return new Response(
+      JSON.stringify({ detail: "Usuario no habilitado para operar el sistema" }),
+      { status: 403, headers: { "Content-Type": "application/json" } }
+    );
+  }
 
-  const response = new Response(
+  guardarSesion(cookies, resultado);
+
+  return new Response(
     JSON.stringify({
       ...sesion,
       rutaRedirect: RUTA_POR_ROL[sesion.IdRol] || "/"
     }),
     { status: 200, headers: { "Content-Type": "application/json" } }
   );
-
-  if (SetCookie) {
-    response.headers.append("Set-Cookie", SetCookie);
-  }
-
-  return response;
 }

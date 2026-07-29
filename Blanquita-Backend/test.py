@@ -35,6 +35,13 @@ def require_role(roles_permitidos: list[int]):
 
 
 
+
+
+
+
+
+
+
 import os
 import jwt
 from datetime import datetime, timedelta, timezone
@@ -69,11 +76,32 @@ def verificar_token(token: str) -> dict:
 
 
 
+
+
+
+
+
+
+
+
 from slowapi import Limiter
 
-limiter=Limiter(
-    key_func=lambda request:request.client.host
+
+def obtener_ip_real(request):
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.client.host if request.client else "desconocido"
+
+
+limiter = Limiter(
+    key_func=obtener_ip_real
 )
+
+
+
+
+
 
 
 
@@ -98,6 +126,15 @@ def HashRefreshToken(token_crudo: str) -> str:
 
 def CalcularExpiracionRefreshToken() -> datetime:
     return datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+
+
+
+
+
+
+
+
+
 
 
 
@@ -156,6 +193,9 @@ def VerificarClave(clave_hash, clave_plana):
 
 
 
+
+
+
 import time
 import logging
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -186,6 +226,10 @@ class LoggingErrorMiddleware(BaseHTTPMiddleware):
             f"{request.method} {request.url.path} -> {response.status_code} ({duracion_ms} ms)"
         )
         return response
+
+
+
+
 
 
 
@@ -225,90 +269,9 @@ class DbCaller:
 
 
 
+    
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from pydantic import BaseModel, Field
-from datetime import datetime
-from typing import Optional
-
-
-
-class LoginRequest(BaseModel):
-    Ci: str
-    Clave: str
-
-
-class LoginResponse(BaseModel):
-    AccessToken: str
-    TokenType: str = "bearer"
-
-
-class RefreshResponse(BaseModel):
-    AccessToken: str
-    TokenType: str = "bearer"
-
-
-class ValidacionRefreshToken(BaseModel):
-    Valido: bool
-    IdUsuario: Optional[int] = None
-    IdRefreshToken: Optional[int] = None
-    Motivo: str
-
-
-
-class CrearRefreshTokenData(BaseModel):
-    IdUsuario: int
-    TokenHash: str
-    FechaExpiracion: datetime
-    IpOrigen: Optional[str] = None
-    UserAgent: Optional[str] = None
-
-
-class RotarRefreshTokenData(BaseModel):
-    IdRefreshTokenViejo: int
-    IdUsuario: int
-    TokenHashNuevo: str
-    FechaExpiracionNueva: datetime
-    IpOrigen: Optional[str] = None
-    UserAgent: Optional[str] = None
-
-
-
-class LogoutResponse(BaseModel):
-    Revocado: bool
-
-
-class LogoutTodosResponse(BaseModel):
-    SesionesRevocadas: int
 
 
 from sqlalchemy.orm import Session
@@ -349,16 +312,9 @@ class AuthRepository:
         '''
         return self.caller.LlamarUnRegistro(consulta, params)
 
-    def RotarRefreshToken(self, params: dict) -> dict | None:
+    def RevocarRefreshToken(self, params: dict) -> dict | None:
         consulta = '''
-            SELECT "RotarRefreshToken"(
-                p_IdRefreshTokenViejo => :p_IdRefreshTokenViejo,
-                p_IdUsuario => :p_IdUsuario,
-                p_TokenHashNuevo => :p_TokenHashNuevo,
-                p_FechaExpiracionNueva => :p_FechaExpiracionNueva,
-                p_IpOrigen => :p_IpOrigen,
-                p_UserAgent => :p_UserAgent
-            ) AS "IdRefreshToken"
+            SELECT "RevocarRefreshToken"(p_TokenHash => :p_TokenHash) AS "Revocado"
         '''
         return self.caller.LlamarUnRegistro(consulta, params)
 
@@ -367,15 +323,6 @@ class AuthRepository:
             SELECT "RevocarCadenaRefreshToken"(p_IdUsuario => :p_IdUsuario) AS "SesionesRevocadas"
         '''
         return self.caller.LlamarUnRegistro(consulta, params)
-
-    def RevocarRefreshToken(self, params: dict) -> dict | None:
-        consulta = '''
-            SELECT "RevocarRefreshToken"(p_TokenHash => :p_TokenHash) AS "Revocado"
-        '''
-        return self.caller.LlamarUnRegistro(consulta, params)
-
-
-
 
 
 
@@ -440,28 +387,16 @@ class AuthService:
 
         return {"AccessToken": access_token, "RefreshTokenCrudo": refresh_token_crudo}
 
-    def RefreshAccessToken(
-        self,
-        refresh_token_crudo: str,
-        ip: str | None,
-        user_agent: str | None,
-    ) -> dict:
+    def RefreshAccessToken(self, refresh_token_crudo: str) -> dict:
         validacion = self.repository.ValidarRefreshToken({
             "p_TokenHash": HashRefreshToken(refresh_token_crudo)
         })
 
-        if validacion is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token inválido")
-
-        if validacion["Motivo"] == "Reuso detectado":
-            self.repository.RevocarCadenaRefreshToken({"p_IdUsuario": validacion["IdUsuarioOut"]})
+        if validacion is None or not validacion["Valido"]:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Sesión comprometida, se cerraron todas las sesiones"
+                detail="Refresh token inválido"
             )
-
-        if not validacion["Valido"]:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token inválido")
 
         usuario = self.repository.ObtenerUsuarioPorId({"p_IdUsuario": validacion["IdUsuarioOut"]})
 
@@ -475,24 +410,13 @@ class AuthService:
                 detail=f"Usuario {usuario['NombreEstadoUsuario']}, sesión cerrada"
             )
 
-        nuevo_refresh_token_crudo = GenerarRefreshTokenCrudo()
-
-        self.repository.RotarRefreshToken({
-            "p_IdRefreshTokenViejo": validacion["IdRefreshTokenOut"],
-            "p_IdUsuario": usuario["IdUsuario"],
-            "p_TokenHashNuevo": HashRefreshToken(nuevo_refresh_token_crudo),
-            "p_FechaExpiracionNueva": CalcularExpiracionRefreshToken(),
-            "p_IpOrigen": ip,
-            "p_UserAgent": user_agent,
-        })
-
         nuevo_access_token = crear_token_acceso({
             "sub": str(usuario["IdUsuario"]),
             "rol_id": usuario["IdRol"],
             "rol": usuario["NombreRol"],
         })
 
-        return {"AccessToken": nuevo_access_token, "RefreshTokenCrudo": nuevo_refresh_token_crudo}
+        return {"AccessToken": nuevo_access_token}
 
     def Logout(self, refresh_token_crudo: str) -> bool:
         resultado = self.repository.RevocarRefreshToken({
@@ -503,6 +427,77 @@ class AuthService:
     def LogoutTodasLasSesiones(self, id_usuario: int) -> int:
         resultado = self.repository.RevocarCadenaRefreshToken({"p_IdUsuario": id_usuario})
         return resultado["SesionesRevocadas"] if resultado else 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from pydantic import BaseModel, Field
+from datetime import datetime
+from typing import Optional
+
+
+class LoginRequest(BaseModel):
+    Ci: str
+    Clave: str
+
+
+class LoginResponse(BaseModel):
+    AccessToken: str
+    TokenType: str = "bearer"
+
+
+class RefreshResponse(BaseModel):
+    AccessToken: str
+    TokenType: str = "bearer"
+
+
+class ValidacionRefreshToken(BaseModel):
+    Valido: bool
+    IdUsuarioOut: Optional[int] = None
+    IdRefreshTokenOut: Optional[int] = None
+    Motivo: str
+
+
+class CrearRefreshTokenData(BaseModel):
+    IdUsuario: int
+    TokenHash: str
+    FechaExpiracion: datetime
+    IpOrigen: Optional[str] = None
+    UserAgent: Optional[str] = None
+
+
+class LogoutResponse(BaseModel):
+    Revocado: bool
+
+
+class LogoutTodosResponse(BaseModel):
+    SesionesRevocadas: int
+
 
 
 
@@ -531,7 +526,7 @@ AuthRouter = APIRouter(prefix="/auth", tags=["Autenticación"])
 NOMBRE_COOKIE_REFRESH = "refresh_token"
 ENTORNO = os.getenv("ENTORNO")
 COOKIE_SECURE = ENTORNO == "production"
-REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS"))
 REFRESH_TOKEN_MAX_AGE_SEGUNDOS = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
 
 
@@ -552,12 +547,14 @@ def _BorrarCookieRefreshToken(response: Response) -> None:
 
 
 def _ObtenerIp(request: Request) -> str | None:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
     return request.client.host if request.client else None
 
 
 def _ObtenerUserAgent(request: Request) -> str | None:
-    return request.headers.get("user-agent")
-
+    return request.headers.get("x-client-user-agent") or request.headers.get("user-agent")
 
 @AuthRouter.post("/login", response_model=LoginResponse)
 @limiter.limit("5/minute")
@@ -584,7 +581,6 @@ def login(
 @limiter.limit("20/minute")
 def refresh(
     request: Request,
-    response: Response,
     db: Session = Depends(get_db),
 ):
     refresh_token_crudo = request.cookies.get(NOMBRE_COOKIE_REFRESH)
@@ -596,18 +592,7 @@ def refresh(
         )
 
     service = AuthService(db)
-
-    try:
-        resultado = service.RefreshAccessToken(
-            refresh_token_crudo=refresh_token_crudo,
-            ip=_ObtenerIp(request),
-            user_agent=_ObtenerUserAgent(request),
-        )
-    except HTTPException:
-        _BorrarCookieRefreshToken(response)
-        raise
-
-    _SetearCookieRefreshToken(response, resultado["RefreshTokenCrudo"])
+    resultado = service.RefreshAccessToken(refresh_token_crudo=refresh_token_crudo)
 
     return RefreshResponse(AccessToken=resultado["AccessToken"])
 
@@ -642,6 +627,3 @@ def logout_todos(
     _BorrarCookieRefreshToken(response)
 
     return LogoutTodosResponse(SesionesRevocadas=sesiones_revocadas)
-
-
-

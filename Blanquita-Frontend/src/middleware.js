@@ -1,7 +1,5 @@
 import { defineMiddleware } from "astro/middleware";
-import { obtenerAccessTokenValido, limpiarSesion, SECRET_KEY } from "./lib/auth-server";
-import { jwtVerify } from "jose";
-import { SesionUsuario } from "./models/Usuario/Auth";
+import { resolverSesion, limpiarSesion } from "./lib/auth-server";
 
 const PREFIJO_POR_ROL = {
   1: "/operador",
@@ -16,22 +14,9 @@ const RUTA_POR_ROL = {
 const RUTAS_PROTEGIDAS = ["/operador", "/encargado"];
 const RUTAS_PUBLICAS_AUTH = ["/"];
 
-async function resolverSesion(context) {
-  const accessToken = await obtenerAccessTokenValido(context.cookies);
-  if (!accessToken) return null;
-
-  try {
-    const { payload } = await jwtVerify(accessToken, SECRET_KEY);
-    const sesion = SesionUsuario(payload);
-    if (!sesion.IdRol || !sesion.IdUsuario) return null;
-    return sesion;
-  } catch {
-    return null;
-  }
-}
-
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
+
   const esRutaProtegida = RUTAS_PROTEGIDAS.some((prefijo) =>
     pathname.startsWith(prefijo)
   );
@@ -41,7 +26,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  const sesion = await resolverSesion(context);
+  const sesion = await resolverSesion(context.cookies);
 
   if (esRutaPublicaAuth) {
     if (sesion) {

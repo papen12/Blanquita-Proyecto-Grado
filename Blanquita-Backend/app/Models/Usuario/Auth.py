@@ -1,6 +1,4 @@
-from pydantic import BaseModel, Field
-from datetime import datetime
-from typing import Optional
+from pydantic import BaseModel
 
 
 class LoginRequest(BaseModel):
@@ -8,34 +6,21 @@ class LoginRequest(BaseModel):
     Clave: str
 
 
+class RefreshRequest(BaseModel):
+    RefreshToken: str
+
+
 class LoginResponse(BaseModel):
     AccessToken: str
+    RefreshToken: str
     TokenType: str = "bearer"
 
 
 class RefreshResponse(BaseModel):
     AccessToken: str
+    RefreshToken: str
     TokenType: str = "bearer"
-
-
-class ValidacionRefreshToken(BaseModel):
-    Valido: bool
-    IdUsuarioOut: Optional[int] = None
-    IdRefreshTokenOut: Optional[int] = None
-    Motivo: str
-
-
-class CrearRefreshTokenData(BaseModel):
-    IdUsuario: int
-    TokenHash: str
-    FechaExpiracion: datetime
-    IpOrigen: Optional[str] = None
-    UserAgent: Optional[str] = None
 
 
 class LogoutResponse(BaseModel):
     Revocado: bool
-
-
-class LogoutTodosResponse(BaseModel):
-    SesionesRevocadas: int
