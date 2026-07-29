@@ -16,3 +16,11 @@ class BobinaPapelRepository:
             )
         """
         return self.caller.LlamarUnRegistro(sql, params)
+
+    def ObtenerTipoBobinaPapel(self) -> list[dict]:
+        sql = """
+            SELECT "IdTipoBobina", "NombreTipoBobina"
+            FROM "TipoBobina"
+            ORDER BY "NombreTipoBobina"
+        """
+        return self.caller.LlamarFuncion(sql, {})

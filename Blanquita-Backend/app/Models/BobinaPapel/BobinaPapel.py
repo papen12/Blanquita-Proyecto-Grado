@@ -35,3 +35,9 @@ class IngresoModelo(BaseModel):
 class IngresoLoteBobinaPapelResponse(BaseModel):
     FechaRecepcion: date
     CantidadBobinas: int
+
+
+
+class TipoBobinaPapelIngreso(BaseModel):
+    IdTipoBobina: int
+    NombreTipoBobina: str

@@ -7,9 +7,11 @@ from app.Services.BobinaPapel.BobinaPapelService import BobinaPapelService
 from app.Auth.Dependencies import require_role
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 
+from typing import List
 from app.Models.BobinaPapel.BobinaPapel import (
     IngresoModelo,
     IngresoLoteBobinaPapelResponse,
+    TipoBobinaPapelIngreso
 )
 
 
@@ -33,3 +35,14 @@ def CargarLoteBobinaPapel(
     service: BobinaPapelService = Depends(bobina_papel_service),
 ):
     return service.InsertarBobinasPapel(data, usuario_actual["IdUsuario"])
+
+@BobinaPapelRouter.get(
+    "/obtenertipos",
+    response_model=List[TipoBobinaPapelIngreso],
+    status_code=200,
+)
+def ObtenerTiposBobina(
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: BobinaPapelService = Depends(bobina_papel_service),
+):
+    return service.ObtenerTiposBobinaPapel()

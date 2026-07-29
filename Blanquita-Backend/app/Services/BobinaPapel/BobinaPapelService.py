@@ -2,12 +2,14 @@ import json
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
+from typing import List
 from app.Repository.BobinaPapel.BobinaPapelRepository import BobinaPapelRepository
 from app.Models.BobinaPapel.BobinaPapel import (
     ListaBobinasPapel,
     BobinaPapelIngresoItem,
     IngresoModelo,
     IngresoLoteBobinaPapelResponse,
+    TipoBobinaPapelIngreso
 )
 
 
@@ -54,3 +56,16 @@ class BobinaPapelService:
             )
 
         return IngresoLoteBobinaPapelResponse(**resultado)
+
+    def ObtenerTiposBobinaPapel(self) -> List[TipoBobinaPapelIngreso]:
+        try:
+            resultado = self.repository.ObtenerTipoBobinaPapel()
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudieron obtener los tipos de bobina"
+            )
+        if not resultado:
+            return []
+
+        return [TipoBobinaPapelIngreso(**tipo) for tipo in resultado]
