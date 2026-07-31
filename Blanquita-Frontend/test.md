@@ -1,391 +1,56 @@
-import { defineMiddleware } from "astro/middleware";
-import { obtenerAccessTokenValido, limpiarSesion, SECRET_KEY } from "./lib/auth-server";
-import { jwtVerify } from "jose";
-import { SesionUsuario } from "./models/Usuario/Auth";
-
-const PREFIJO_POR_ROL = {
-  1: "/operador",
-  2: "/encargado"
-};
-
-const RUTA_POR_ROL = {
-  1: "/operador/inicio",
-  2: "/encargado/inicio"
-};
-
-const RUTAS_PROTEGIDAS = ["/operador", "/encargado"];
-const RUTAS_PUBLICAS_AUTH = ["/"];
-
-async function resolverSesion(context) {
-  const accessToken = await obtenerAccessTokenValido(context.cookies);
-  if (!accessToken) return null;
-
-  try {
-    const { payload } = await jwtVerify(accessToken, SECRET_KEY);
-    const sesion = SesionUsuario(payload);
-    if (!sesion.IdRol || !sesion.IdUsuario) return null;
-    return sesion;
-  } catch {
-    return null;
-  }
-}
-
-export const onRequest = defineMiddleware(async (context, next) => {
-  const { pathname } = context.url;
-  const esRutaProtegida = RUTAS_PROTEGIDAS.some((prefijo) =>
-    pathname.startsWith(prefijo)
-  );
-  const esRutaPublicaAuth = RUTAS_PUBLICAS_AUTH.includes(pathname);
-
-  if (!esRutaProtegida && !esRutaPublicaAuth) {
-    return next();
-  }
-
-  const sesion = await resolverSesion(context);
-
-  if (esRutaPublicaAuth) {
-    if (sesion) {
-      return context.redirect(RUTA_POR_ROL[sesion.IdRol] || "/");
-    }
-    limpiarSesion(context.cookies);
-    return next();
-  }
-
-  if (!sesion) {
-    limpiarSesion(context.cookies);
-    return context.redirect("/");
-  }
-
-  const prefijoPermitido = PREFIJO_POR_ROL[sesion.IdRol];
-
-  if (!prefijoPermitido || !pathname.startsWith(prefijoPermitido)) {
-    return context.redirect(RUTA_POR_ROL[sesion.IdRol] || "/");
-  }
-
-  context.locals.usuario = sesion;
-
-  return next();
-}); 
-
-
-
-
-
-export const LoginRequest = (ci, clave) => ({
-  Ci: ci,
-  Clave: clave
+export const BobinaPapel = (data) => ({
+  IdBobinaPapel: data.IdBobinaPapel ?? null,
+  CodigoBobina: data.CodigoBobina,
+  IdTipoBobina: data.IdTipoBobina,
+  IdLoteBobina: data.IdLoteBobina,
+  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
+  PesoBrutoKg: data.PesoBrutoKg ?? null,
+  Gramaje: data.Gramaje ?? null,
+  PesoNetoKg: data.PesoNetoKg ?? null,
 });
 
-export const LoginResponse = (data) => ({
-  AccessToken: data.AccessToken,
-  TokenType: data.TokenType
+export const ListaBobinasPapel = (data) => ({
+  Bobinas: (data.Bobinas ?? []).map(BobinaPapel),
 });
 
-export const RefreshResponse = (data) => ({
-  AccessToken: data.AccessToken,
-  TokenType: data.TokenType
+export const BobinaPapelIngresoItem = (data) => ({
+  CodigoBobina: data.CodigoBobina,
+  PesoBrutoKg: data.PesoBrutoKg ?? null,
+  Gramaje: data.Gramaje ?? null,
+  PesoNetoKg: data.PesoNetoKg ?? null,
 });
 
-export const LogoutResponse = (data) => ({
-  Revocado: data.Revocado
+export const IngresoModelo = (data) => ({
+  IdProveedor: data.IdProveedor,
+  IdTipoBobina: data.IdTipoBobina,
+  Bobinas: (data.Bobinas ?? []).map(BobinaPapelIngresoItem),
 });
 
-export const LogoutTodosResponse = (data) => ({
-  SesionesRevocadas: data.SesionesRevocadas
+export const IngresoLoteBobinaPapelResponse = (data) => ({
+  FechaRecepcion: data.FechaRecepcion,
+  CantidadBobinas: data.CantidadBobinas,
 });
 
-export const SesionUsuario = (payload) => ({
-  IdUsuario: Number(payload.sub),
-  IdRol: Number(payload.rol_id),
-  NombreRol: payload.rol
+export const TipoBobinaPapelIngreso = (data) => ({
+  IdTipoBobina: data.IdTipoBobina,
+  NombreTipoBobina: data.NombreTipoBobina,
 });
 
 
 
 
-
-
-
-
-export const prerender = false;
-
-import { obtenerAccessTokenValido, limpiarSesion } from "../../lib/auth-server";
-
-const BACKEND_URL = import.meta.env.BACKEND_URL;
-
-export const ALL = async ({ request, params, cookies }) => {
-  const accessToken = await obtenerAccessTokenValido(cookies);
-
-  if (!accessToken) {
-    limpiarSesion(cookies);
-    return new Response(
-      JSON.stringify({ detail: "No autenticado" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  const url = new URL(request.url);
-  const targetUrl = `${BACKEND_URL}/${params.path}${url.search}`;
-
-  const headers = {
-    Authorization: `Bearer ${accessToken}`
-  };
-
-  const contentType = request.headers.get("content-type");
-  if (contentType) headers["Content-Type"] = contentType;
-
-  const init = {
-    method: request.method,
-    headers
-  };
-
-  if (!["GET", "HEAD"].includes(request.method)) {
-    init.body = await request.text();
-  }
-
-  const backendResponse = await fetch(targetUrl, init);
-  const data = await backendResponse.text();
-
-  return new Response(data, {
-    status: backendResponse.status,
-    headers: {
-      "Content-Type": backendResponse.headers.get("content-type") || "application/json"
-    }
-  });
-};
-
-
-
-
-
-
-export const prerender = false;
-
-import { jwtVerify } from "jose";
-import { login } from "../../../services/Usuario/Auth";
-import { SesionUsuario } from "../../../models/Usuario/Auth";
-
-const SECRET_KEY = new TextEncoder().encode(import.meta.env.SECRET_KEY);
-const ACCESS_TOKEN_MAX_AGE_SEGUNDOS = 60 * 15;
-
-const RUTA_POR_ROL = {
-  1: "/operador/inicio",
-  2: "/encargado/inicio"
-};
-
-function obtenerIpReal(request, clientAddress) {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) return forwardedFor.split(",")[0].trim();
-
-  try {
-    return clientAddress ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export async function POST({ request, cookies, clientAddress }) {
-  let Ci, Clave;
-
-  try {
-    ({ Ci, Clave } = await request.json());
-  } catch {
-    return new Response(
-      JSON.stringify({ detail: "Cuerpo de la petición inválido" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  if (!Ci || !Clave) {
-    return new Response(
-      JSON.stringify({ detail: "Ci y Clave son requeridos" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  const ip = obtenerIpReal(request, clientAddress);
-  const userAgent = request.headers.get("user-agent");
-
-  let resultado;
-  try {
-    resultado = await login(Ci, Clave, ip, userAgent);
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ detail: error.message || "Error al iniciar sesión" }),
-      { status: error.status || 500, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  const { AccessToken, SetCookie } = resultado;
-
-  let payload;
-  try {
-    ({ payload } = await jwtVerify(AccessToken, SECRET_KEY));
-  } catch {
-    return new Response(
-      JSON.stringify({ detail: "Token recibido inválido" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  const sesion = SesionUsuario(payload);
-
-  cookies.set("token", AccessToken, {
-    httpOnly: true,
-    secure: import.meta.env.PROD,
-    sameSite: "strict",
-    path: "/",
-    maxAge: ACCESS_TOKEN_MAX_AGE_SEGUNDOS
-  });
-
-  const response = new Response(
-    JSON.stringify({
-      ...sesion,
-      rutaRedirect: RUTA_POR_ROL[sesion.IdRol] || "/"
-    }),
-    { status: 200, headers: { "Content-Type": "application/json" } }
-  );
-
-  if (SetCookie) {
-    response.headers.append("Set-Cookie", SetCookie);
-  }
-
-  return response;
-}
-
-
-
-
-
-
-
-export const prerender = false;
-
-import { obtenerAccessTokenValido, limpiarSesion } from "../../../lib/auth-server";
-import { logoutTodos } from "../../../services/Usuario/Auth";
-
-export async function POST({ cookies }) {
-  const accessToken = await obtenerAccessTokenValido(cookies);
-
-  if (!accessToken) {
-    limpiarSesion(cookies);
-    return new Response(
-      JSON.stringify({ detail: "No hay sesión activa" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  try {
-    const resultado = await logoutTodos(accessToken);
-    limpiarSesion(cookies);
-    return new Response(
-      JSON.stringify(resultado),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    limpiarSesion(cookies);
-    return new Response(
-      JSON.stringify({ detail: error.message || "Error al cerrar sesión" }),
-      { status: error.status || 500, headers: { "Content-Type": "application/json" } }
-    );
-  }
-}
-
-
-
-
-
-
-
-
-export const prerender = false;
-
-import { jwtVerify } from "jose";
-import { refresh } from "../../../services/Usuario/Auth";
-import { SesionUsuario } from "../../../models/Usuario/Auth";
-
-const SECRET_KEY = new TextEncoder().encode(import.meta.env.SECRET_KEY);
-const ACCESS_TOKEN_MAX_AGE_SEGUNDOS = 60 * 15;
-
-export async function POST({ cookies }) {
-  const refreshTokenCrudo = cookies.get("refresh_token")?.value;
-
-  if (!refreshTokenCrudo) {
-    return new Response(
-      JSON.stringify({ detail: "No hay sesión activa" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  let resultado;
-  try {
-    resultado = await refresh(refreshTokenCrudo);
-  } catch (error) {
-    cookies.delete("token", { path: "/" });
-    cookies.delete("refresh_token", { path: "/" });
-
-    return new Response(
-      JSON.stringify({ detail: error.message || "No se pudo renovar la sesión" }),
-      { status: error.status || 401, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  const { AccessToken } = resultado;
-
-  let payload;
-  try {
-    ({ payload } = await jwtVerify(AccessToken, SECRET_KEY));
-  } catch {
-    return new Response(
-      JSON.stringify({ detail: "Token recibido inválido" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  const sesion = SesionUsuario(payload);
-
-  cookies.set("token", AccessToken, {
-    httpOnly: true,
-    secure: import.meta.env.PROD,
-    sameSite: "strict",
-    path: "/",
-    maxAge: ACCESS_TOKEN_MAX_AGE_SEGUNDOS
-  });
-
-  return new Response(
-    JSON.stringify(sesion),
-    { status: 200, headers: { "Content-Type": "application/json" } }
-  );
-}
-
-
-
-
-
-
-
-
-
-import {
-  LoginRequest,
-  LoginResponse,
-  RefreshResponse,
-  LogoutResponse,
-  LogoutTodosResponse
-} from "../../models/Usuario/Auth";
+import { IngresoModelo, IngresoLoteBobinaPapelResponse,TipoBobinaPapelIngreso } from "../../models/BobinaPapel/BobinaPapel";
 import { manejarErrorBackend } from "@/utils/Error";
-const BACKEND_URL = import.meta.env.BACKEND_URL;
+export async function cargarLoteBobinaPapel(idProveedor, idTipoBobina, bobinas) {
+  const payload = IngresoModelo({
+    IdProveedor: idProveedor,
+    IdTipoBobina: idTipoBobina,
+    Bobinas: bobinas
+  });
 
-export async function login(ci, clave, ip, userAgent) {
-  const payload = LoginRequest(ci, clave);
-
-  const headers = { "Content-Type": "application/json" };
-  if (ip) headers["X-Forwarded-For"] = ip;
-  if (userAgent) headers["X-Client-User-Agent"] = userAgent;
-
-  const response = await fetch(`${BACKEND_URL}/auth/login`, {
+  const response = await fetch("/api/bobinapapel/cargarlote", {
     method: "POST",
-    headers,
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 
@@ -395,59 +60,864 @@ export async function login(ci, clave, ip, userAgent) {
 
   const data = await response.json();
 
-  return {
-    ...LoginResponse(data),
-    SetCookie: response.headers.get("set-cookie")
+  return IngresoLoteBobinaPapelResponse(data);
+}
+
+
+export async function ObtenerTiposPapelBobina(){
+  const response= await fetch("/api/bobinapapel/obtenertipos")
+  if (!response.ok){
+    await manejarErrorBackend(response)
+  }
+  const data = await response.json();
+  return data.map(TipoBobinaPapelIngreso)
+}
+
+
+
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    }
+  html {
+    @apply font-sans;
+    }
+}
+
+
+@font-face {
+    font-family: "Ekamai";
+    src: url("/fonts/Ekamai.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Montserrat";
+    src: url("/fonts/Montserrat-VariableFont_wght.ttf") format("truetype-variations");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@theme {
+    /* Fuentes */
+    --font-sans: "Montserrat", sans-serif;
+    --font-ekamai: "Ekamai", sans-serif;
+
+    /* Colores principales */
+    --color-c1: #62C1E5;
+    --color-c2: #A0D9EF;
+    --color-c3: #1C96C5;
+    --color-c4: #20A7DB;
+
+    /* Eco-Pack */
+    --color-eco1: #BE106A;
+    --color-eco2: #942065;
+
+    /* Luxury */
+    --color-lux1: #99518E;
+    --color-lux2: #592D6A;
+
+    /* Mega Pack */
+    --color-mega1: #922D89;
+    --color-mega2: #E33D8E;
+
+    /* Servilletas */
+    --color-serv1: #E43214;
+    --color-serv2: #E6923A;
+    --color-serv3: #4E9293;
+}
+
+@layer base {
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+}
+
+
+import { useState, useEffect } from "react";
+import { Plus, X, ArrowRight, Loader2, Search } from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  verResumenInventarioBobinaPapel,
+  verDetalleInventarioBobinaPapel,
+  verBobinasPapelFueraInventario,
+  reingresarBobinaInventario,
+  darDeBajaBobina,
+} from "../../../services/BobinaPapel/Inventario";
+import { iniciarProduccion } from "../../../services/BobinaPapel/Produccion";
+import { dateFormatter } from "@/utils/dateFormater";
+
+import { ACENTOS, fmt } from "./constantes";
+import { RolloIcono } from "./Iconos";
+import { TarjetaTipo } from "./TarjetaTipo";
+import { TarjetaFueraInventario } from "./TarjetaFueraInventario";
+import { TablaBobinas } from "./TablaBobinas";
+import { ListaMovilBobinas } from "./ListaMovilBobinas";
+
+export default function InventarioBobinasPapel({ usuario }) {
+  const [tipos, setTipos] = useState([]);
+  const [loadingTipos, setLoadingTipos] = useState(true);
+  const [errorTipos, setErrorTipos] = useState("");
+
+  const [sel, setSel] = useState(null);
+  const [bobinasSel, setBobinasSel] = useState([]);
+  const [loadingDetalle, setLoadingDetalle] = useState(false);
+  const [errorDetalle, setErrorDetalle] = useState("");
+  const [busquedaCodigo, setBusquedaCodigo] = useState("");
+
+  const [marcadas, setMarcadas] = useState([]);
+  const [modal, setModal] = useState(false);
+
+  const [formTipo, setFormTipo] = useState(null);
+  const [formCodigo, setFormCodigo] = useState("");
+  const [formPeso, setFormPeso] = useState("");
+  const [formGramaje, setFormGramaje] = useState("");
+  const [formError, setFormError] = useState("");
+
+  const [enviando, setEnviando] = useState(false);
+
+  const [mostrarFuera, setMostrarFuera] = useState(false);
+  const [fueraInventario, setFueraInventario] = useState([]);
+  const [loadingFuera, setLoadingFuera] = useState(false);
+  const [errorFuera, setErrorFuera] = useState("");
+  const [procesandoId, setProcesandoId] = useState(null);
+
+  useEffect(() => {
+    cargarResumen();
+    cargarFueraInventario();
+  }, []);
+
+  const cargarResumen = async () => {
+    setLoadingTipos(true);
+    setErrorTipos("");
+    try {
+      const data = await verResumenInventarioBobinaPapel();
+      const conMeta = data.map((t, i) => ({
+        ...t,
+        ...ACENTOS[i % ACENTOS.length],
+        badge:
+          t.CantidadBobinas === 0
+            ? "Sin stock"
+            : t.CantidadBobinas < 6
+              ? "Stock bajo"
+              : "Disponible",
+      }));
+      setTipos(conMeta);
+      if (conMeta.length && formTipo === null)
+        setFormTipo(conMeta[0].IdTipoBobina);
+    } catch (e) {
+      setErrorTipos(e.message);
+    } finally {
+      setLoadingTipos(false);
+    }
   };
-}
 
-export async function refresh(refreshTokenCrudo) {
-  const response = await fetch(`${BACKEND_URL}/auth/refresh`, {
-    method: "POST",
-    headers: {
-      Cookie: `refresh_token=${refreshTokenCrudo}`
+  const cargarDetalle = async (idTipoBobina) => {
+    setLoadingDetalle(true);
+    setErrorDetalle("");
+    try {
+      const data = await verDetalleInventarioBobinaPapel(idTipoBobina);
+      setBobinasSel(data);
+    } catch (e) {
+      setErrorDetalle(e.message);
+      setBobinasSel([]);
+    } finally {
+      setLoadingDetalle(false);
     }
-  });
+  };
 
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
+  const tipoSel = sel ? tipos.find((t) => t.IdTipoBobina === sel) : null;
+  const esServilleta = tipoSel
+    ? tipoSel.NombreTipoBobina.toLowerCase().includes("servilleta")
+    : false;
+  const requeridas = esServilleta ? 1 : 2;
 
-  const data = await response.json();
+  const totalBobinas = tipos.reduce((s, t) => s + t.CantidadBobinas, 0);
+  const totalPesoFmt = fmt(
+    tipos.reduce((s, t) => s + Number(t.PesoNetoTotalKg || 0), 0),
+  );
+  const listas = marcadas.length === requeridas;
 
-  return RefreshResponse(data);
-}
+  const bobinasFiltradas = busquedaCodigo.trim()
+    ? bobinasSel.filter((b) =>
+        b.CodigoBobina.toLowerCase().includes(busquedaCodigo.trim().toLowerCase()),
+      )
+    : bobinasSel;
 
-export async function logout(refreshTokenCrudo) {
-  const response = await fetch(`${BACKEND_URL}/auth/logout`, {
-    method: "POST",
-    headers: refreshTokenCrudo
-      ? { Cookie: `refresh_token=${refreshTokenCrudo}` }
-      : {}
-  });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
-
-  return LogoutResponse(data);
-}
-
-export async function logoutTodos(accessToken) {
-  const response = await fetch(`${BACKEND_URL}/auth/logout-todos`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`
+  const seleccionarTipo = (id) => {
+    if (sel === id) {
+      setSel(null);
+      setBobinasSel([]);
+      setMarcadas([]);
+      setBusquedaCodigo("");
+      return;
     }
-  });
+    setSel(id);
+    setMarcadas([]);
+    setBusquedaCodigo("");
+    cargarDetalle(id);
+  };
 
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
+  const cerrarDetalle = () => {
+    setSel(null);
+    setBobinasSel([]);
+    setMarcadas([]);
+    setBusquedaCodigo("");
+  };
 
-  const data = await response.json();
+  const toggleBobina = (codigo) => {
+    setMarcadas((prev) => {
+      if (prev.includes(codigo)) return prev.filter((c) => c !== codigo);
+      if (prev.length < requeridas) return [...prev, codigo];
+      if (requeridas === 1) return [codigo];
+      return prev;
+    });
+  };
 
-  return LogoutTodosResponse(data);
+  const quitarChip = (codigo) =>
+    setMarcadas((prev) => prev.filter((c) => c !== codigo));
+
+  const enviarProduccion = async () => {
+    if (!listas || esServilleta) return;
+
+    const bobina1 = bobinasSel.find((b) => b.CodigoBobina === marcadas[0]);
+    const bobina2 = bobinasSel.find((b) => b.CodigoBobina === marcadas[1]);
+    if (!bobina1 || !bobina2) return;
+
+    setEnviando(true);
+    try {
+      await iniciarProduccion(bobina1.IdBobinaPapel, bobina2.IdBobinaPapel);
+
+      setBobinasSel((prev) =>
+        prev.filter((b) => !marcadas.includes(b.CodigoBobina)),
+      );
+      toast.success(`${marcadas.join(" + ")} → En producción`);
+      setMarcadas([]);
+      cargarResumen();
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const cargarFueraInventario = async () => {
+    setLoadingFuera(true);
+    setErrorFuera("");
+    try {
+      const data = await verBobinasPapelFueraInventario();
+      setFueraInventario(data);
+    } catch (e) {
+      setErrorFuera(e.message);
+      setFueraInventario([]);
+    } finally {
+      setLoadingFuera(false);
+    }
+  };
+
+  const toggleFueraInventario = () => {
+    const nuevoEstado = !mostrarFuera;
+    setMostrarFuera(nuevoEstado);
+    if (nuevoEstado) {
+      cargarFueraInventario();
+    }
+  };
+
+  const handleReingresar = async (idBobinaPapel, codigoBobina) => {
+    setProcesandoId(idBobinaPapel);
+    try {
+      await reingresarBobinaInventario(idBobinaPapel);
+      toast.success(`Bobina ${codigoBobina} reingresada al inventario`);
+      setFueraInventario((prev) =>
+        prev.filter((b) => b.IdBobinaPapel !== idBobinaPapel),
+      );
+      cargarResumen();
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setProcesandoId(null);
+    }
+  };
+
+  const handleDarDeBaja = async (idBobinaPapel, codigoBobina) => {
+    setProcesandoId(idBobinaPapel);
+    try {
+      await darDeBajaBobina(idBobinaPapel);
+      toast.success(`Bobina ${codigoBobina} retirada definitivamente`);
+      setFueraInventario((prev) =>
+        prev.filter((b) => b.IdBobinaPapel !== idBobinaPapel),
+      );
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setProcesandoId(null);
+    }
+  };
+
+  const abrirIngreso = () => {
+    setFormError("");
+    setModal(true);
+  };
+
+  const guardarIngreso = () => {
+    if (!formCodigo.trim()) {
+      setFormError("Ingresa el código de la bobina.");
+      return;
+    }
+    if (!formPeso || +formPeso <= 0) {
+      setFormError("Ingresa un peso bruto válido.");
+      return;
+    }
+    setModal(false);
+    const codigo = formCodigo.trim();
+    setFormCodigo("");
+    setFormPeso("");
+    setFormGramaje("");
+    toast.success(`Bobina ${codigo} registrada`);
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900 mt-30" >
+      <header className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-c3 to-c4 px-5 py-4 text-white sm:px-7">
+        <div className="flex flex-col gap-0.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-white/80">
+            Almacén · Materia Prima
+          </div>
+          <div className="text-xl font-extrabold">
+            Inventario de Bobinas de Papel
+          </div>
+        </div>
+        <Button
+          onClick={abrirIngreso}
+          className="h-11 gap-2 bg-white font-bold text-c3 shadow-md hover:bg-slate-100"
+        >
+          <Plus size={16} strokeWidth={2.75} />
+          Registrar ingreso
+        </Button>
+      </header>
+
+      <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+          <div className="text-sm font-bold text-slate-700">
+            Catálogo por tipo de bobina
+          </div>
+          <div className="text-sm text-slate-500">
+            Solo bobinas <strong className="text-slate-700">en almacén</strong>{" "}
+            · {totalBobinas} bobinas · {totalPesoFmt} kg netos
+          </div>
+        </div>
+
+        {loadingTipos && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-52 rounded-2xl" />
+            ))}
+          </div>
+        )}
+        {errorTipos && (
+          <div className="rounded-xl bg-red-50 p-5 text-center text-sm font-semibold text-red-600">
+            {errorTipos}
+          </div>
+        )}
+
+        {!loadingTipos && !errorTipos && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {tipos.map((t) => (
+              <TarjetaTipo
+                key={t.IdTipoBobina}
+                tipo={t}
+                activo={sel === t.IdTipoBobina}
+                onClick={() => seleccionarTipo(t.IdTipoBobina)}
+              />
+            ))}
+            <TarjetaFueraInventario
+              cantidad={fueraInventario.length}
+              activo={mostrarFuera}
+              onClick={toggleFueraInventario}
+            />
+          </div>
+        )}
+
+        {tipoSel && (
+          <div className="mt-7 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+            <div
+              className={cn(
+                "flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4",
+                tipoSel.soft,
+              )}
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <RolloIcono className={cn("h-7 w-7 shrink-0", tipoSel.text)} />
+                <div className={cn("text-base font-extrabold", tipoSel.text)}>
+                  Bobinas · {tipoSel.NombreTipoBobina}
+                </div>
+                <div className="text-sm font-semibold text-slate-500">
+                  {tipoSel.CantidadBobinas} en almacén
+                </div>
+                <Badge
+                  variant="outline"
+                  className={cn("border font-bold", tipoSel.text, tipoSel.border)}
+                >
+                  {esServilleta ? "Se envía 1 bobina" : "Se envían de a 2 bobinas"}
+                </Badge>
+              </div>
+              <Button
+                variant="ghost"
+                onClick={cerrarDetalle}
+                className="h-11 gap-1.5 font-bold text-slate-500 hover:text-slate-900"
+              >
+                <X size={15} strokeWidth={2.75} />
+                Cerrar
+              </Button>
+            </div>
+
+            {!loadingDetalle && !errorDetalle && bobinasSel.length > 0 && (
+              <div className="border-b border-slate-100 px-5 py-3.5">
+                <div className="relative max-w-xs">
+                  <Search
+                    size={16}
+                    strokeWidth={2.5}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <Input
+                    value={busquedaCodigo}
+                    onChange={(e) => setBusquedaCodigo(e.target.value)}
+                    placeholder="Buscar por código..."
+                    className="h-10 pl-9"
+                  />
+                  {busquedaCodigo && (
+                    <button
+                      onClick={() => setBusquedaCodigo("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                    >
+                      <X size={15} strokeWidth={2.75} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {loadingDetalle && (
+              <div className="space-y-2 p-5">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            )}
+            {errorDetalle && (
+              <div className="p-5 text-center text-sm font-semibold text-red-600">
+                {errorDetalle}
+              </div>
+            )}
+            {!loadingDetalle && !errorDetalle && bobinasSel.length === 0 && (
+              <div className="p-8 text-center text-sm text-slate-400">
+                No hay bobinas en almacén para este tipo.
+              </div>
+            )}
+            {!loadingDetalle &&
+              !errorDetalle &&
+              bobinasSel.length > 0 &&
+              bobinasFiltradas.length === 0 && (
+                <div className="p-8 text-center text-sm text-slate-400">
+                  Ninguna bobina coincide con "{busquedaCodigo}".
+                </div>
+              )}
+
+            {!loadingDetalle && !errorDetalle && bobinasFiltradas.length > 0 && (
+              <>
+                <div className="hidden md:block">
+                  <TablaBobinas
+                    bobinas={bobinasFiltradas}
+                    tipoSel={tipoSel}
+                    marcadas={marcadas}
+                    onToggle={toggleBobina}
+                  />
+                </div>
+                <div className="md:hidden">
+                  <ListaMovilBobinas
+                    bobinas={bobinasFiltradas}
+                    tipoSel={tipoSel}
+                    marcadas={marcadas}
+                    onToggle={toggleBobina}
+                  />
+                </div>
+              </>
+            )}
+
+            {marcadas.length > 0 && (
+              <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 bg-slate-900 px-5 py-3.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {marcadas.map((codigo) => (
+                    <div
+                      key={codigo}
+                      className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 font-mono text-sm font-bold text-white"
+                    >
+                      {codigo}
+                      <button
+                        onClick={() => quitarChip(codigo)}
+                        className="opacity-70 hover:opacity-100"
+                      >
+                        <X size={13} strokeWidth={3} />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="text-sm font-semibold text-slate-400">
+                    {listas
+                      ? "Listo para enviar"
+                      : `Selecciona ${requeridas - marcadas.length} más`}
+                  </div>
+                </div>
+                <Button
+                  onClick={enviarProduccion}
+                  disabled={!listas || enviando}
+                  className={cn(
+                    "h-11 gap-2 bg-white/15 font-extrabold text-white hover:bg-white/15",
+                    listas &&
+                      "bg-gradient-to-r from-c3 to-c4 hover:opacity-90",
+                  )}
+                >
+                  {enviando ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      Enviar a producción
+                      <ArrowRight size={16} strokeWidth={2.75} />
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+        {mostrarFuera && (
+          <div className="mt-7 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-amber-50 px-5 py-4">
+              <div className="text-base font-extrabold text-amber-700">
+                Bobinas fuera de inventario
+              </div>
+              <Button
+                variant="ghost"
+                onClick={() => setMostrarFuera(false)}
+                className="h-11 gap-1.5 font-bold text-slate-500 hover:text-slate-900"
+              >
+                <X size={15} strokeWidth={2.75} />
+                Cerrar
+              </Button>
+            </div>
+
+            {loadingFuera && (
+              <div className="space-y-2 p-5">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            )}
+            {errorFuera && (
+              <div className="p-5 text-center text-sm font-semibold text-red-600">
+                {errorFuera}
+              </div>
+            )}
+            {!loadingFuera && !errorFuera && fueraInventario.length === 0 && (
+              <div className="p-8 text-center text-sm text-slate-400">
+                No hay bobinas fuera de inventario.
+              </div>
+            )}
+
+            {!loadingFuera && !errorFuera && fueraInventario.length > 0 && (
+              <div className="flex flex-col gap-3 p-5">
+                {fueraInventario.map((b) => (
+                  <div
+                    key={b.IdBobinaPapel}
+                    className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-[15px] font-extrabold text-slate-900">
+                          {b.CodigoBobina}
+                        </span>
+                        <Badge variant="outline" className="border-slate-300 font-bold text-slate-600">
+                          {b.NombreTipoBobina}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
+                        <span>{b.NombreProveedor}</span>
+                        <span>Recepción: {dateFormatter(b.FechaRecepcion)}</span>
+                        <span>Bruto: {fmt(b.PesoBrutoKg)} kg</span>
+                        <span>Gramaje: {fmt(b.Gramaje)} g/m²</span>
+                      </div>
+                      {b.UltimaObservacion && (
+                        <div className="text-[12.5px] italic text-slate-500">
+                          "{b.UltimaObservacion}"
+                        </div>
+                      )}
+                      {b.FechaUltimoMovimiento && (
+                        <div className="text-[11px] text-slate-400">
+                          Último movimiento: {dateFormatter(b.FechaUltimoMovimiento)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleReingresar(b.IdBobinaPapel, b.CodigoBobina)}
+                        disabled={procesandoId === b.IdBobinaPapel}
+                        className="h-10 gap-2 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
+                      >
+                        {procesandoId === b.IdBobinaPapel ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          "Reingresar"
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => handleDarDeBaja(b.IdBobinaPapel, b.CodigoBobina)}
+                        disabled={procesandoId === b.IdBobinaPapel}
+                        variant="outline"
+                        className="h-10 gap-2 border-red-300 font-bold text-red-600 hover:bg-red-50"
+                      >
+                        {procesandoId === b.IdBobinaPapel ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          "Retirar"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+
+      <Dialog open={modal} onOpenChange={setModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Registrar ingreso de bobina</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Tipo de bobina
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {tipos.map((t) => (
+                  <button
+                    key={t.IdTipoBobina}
+                    type="button"
+                    onClick={() => setFormTipo(t.IdTipoBobina)}
+                    className={cn(
+                      "h-11 rounded-lg border-2 text-sm font-bold transition-colors",
+                      formTipo === t.IdTipoBobina
+                        ? cn(t.text, t.soft, t.border)
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                    )}
+                  >
+                    {t.NombreTipoBobina}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="codigo-bobina" className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Código de bobina
+              </Label>
+              <Input
+                id="codigo-bobina"
+                value={formCodigo}
+                onChange={(e) => setFormCodigo(e.target.value)}
+                placeholder="Ej. HIG-2026-0148"
+                className="h-11"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="peso-bruto" className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                  Peso bruto (kg)
+                </Label>
+                <Input
+                  id="peso-bruto"
+                  value={formPeso}
+                  onChange={(e) => setFormPeso(e.target.value)}
+                  placeholder="0.0"
+                  type="number"
+                  className="h-11"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="gramaje" className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                  Gramaje (g/m²)
+                </Label>
+                <Input
+                  id="gramaje"
+                  value={formGramaje}
+                  onChange={(e) => setFormGramaje(e.target.value)}
+                  placeholder="0.0"
+                  type="number"
+                  className="h-11"
+                />
+              </div>
+            </div>
+
+            {formError && (
+              <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
+                {formError}
+              </div>
+            )}
+
+            <Button
+              onClick={guardarIngreso}
+              className="h-12 bg-gradient-to-r from-c3 to-c4 text-base font-extrabold hover:opacity-90"
+            >
+              Guardar ingreso
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }

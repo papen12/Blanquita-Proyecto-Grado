@@ -1,4 +1,4 @@
-import { IngresoModelo, IngresoLoteBobinaPapelResponse } from "../../models/BobinaPapel/BobinaPapel";
+import { IngresoModelo, IngresoLoteBobinaPapelResponse,TipoBobinaPapelIngreso } from "../../models/BobinaPapel/BobinaPapel";
 import { manejarErrorBackend } from "@/utils/Error";
 export async function cargarLoteBobinaPapel(idProveedor, idTipoBobina, bobinas) {
   const payload = IngresoModelo({
@@ -20,4 +20,14 @@ export async function cargarLoteBobinaPapel(idProveedor, idTipoBobina, bobinas) 
   const data = await response.json();
 
   return IngresoLoteBobinaPapelResponse(data);
+}
+
+
+export async function ObtenerTiposPapelBobina(){
+  const response= await fetch("/api/bobinapapel/obtenertipos")
+  if (!response.ok){
+    await manejarErrorBackend(response)
+  }
+  const data = await response.json();
+  return data.map(TipoBobinaPapelIngreso)
 }

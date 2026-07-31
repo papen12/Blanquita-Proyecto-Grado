@@ -1,0 +1,9 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+const { usuario } = Astro.locals;
+import NavBar from '@/components/layout/NavBar';
+---
+
+<Layout>
+	<NavBar client:load idRol={usuario.IdRol} />
+</Layout>
