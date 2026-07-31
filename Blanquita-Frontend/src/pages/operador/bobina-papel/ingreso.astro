@@ -2,8 +2,10 @@
 import Layout from '../../../layouts/Layout.astro';
 const { usuario } = Astro.locals;
 import NavBar from '@/components/layout/NavBar';
+import IngresoBobinasPapel from '@/components/PapelBobina/InsertarLote/Ingresobobinaspapel';
 ---
 
 <Layout>
 	<NavBar client:load idRol={usuario.IdRol} />
+	<IngresoBobinasPapel client:load usuario={usuario}/>
 </Layout>

@@ -4,15 +4,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   verResumenInventarioBobinaPapel,
   verDetalleInventarioBobinaPapel,
@@ -29,6 +22,7 @@ import { TarjetaTipo } from "./TarjetaTipo";
 import { TarjetaFueraInventario } from "./TarjetaFueraInventario";
 import { TablaBobinas } from "./TablaBobinas";
 import { ListaMovilBobinas } from "./ListaMovilBobinas";
+import Header from "@/components/layout/Header";
 
 export default function InventarioBobinasPapel({ usuario }) {
   const [tipos, setTipos] = useState([]);
@@ -42,14 +36,6 @@ export default function InventarioBobinasPapel({ usuario }) {
   const [busquedaCodigo, setBusquedaCodigo] = useState("");
 
   const [marcadas, setMarcadas] = useState([]);
-  const [modal, setModal] = useState(false);
-
-  const [formTipo, setFormTipo] = useState(null);
-  const [formCodigo, setFormCodigo] = useState("");
-  const [formPeso, setFormPeso] = useState("");
-  const [formGramaje, setFormGramaje] = useState("");
-  const [formError, setFormError] = useState("");
-
   const [enviando, setEnviando] = useState(false);
 
   const [mostrarFuera, setMostrarFuera] = useState(false);
@@ -79,8 +65,6 @@ export default function InventarioBobinasPapel({ usuario }) {
               : "Disponible",
       }));
       setTipos(conMeta);
-      if (conMeta.length && formTipo === null)
-        setFormTipo(conMeta[0].IdTipoBobina);
     } catch (e) {
       setErrorTipos(e.message);
     } finally {
@@ -116,7 +100,9 @@ export default function InventarioBobinasPapel({ usuario }) {
 
   const bobinasFiltradas = busquedaCodigo.trim()
     ? bobinasSel.filter((b) =>
-        b.CodigoBobina.toLowerCase().includes(busquedaCodigo.trim().toLowerCase()),
+        b.CodigoBobina.toLowerCase().includes(
+          busquedaCodigo.trim().toLowerCase(),
+        ),
       )
     : bobinasSel;
 
@@ -230,47 +216,17 @@ export default function InventarioBobinasPapel({ usuario }) {
     }
   };
 
-  const abrirIngreso = () => {
-    setFormError("");
-    setModal(true);
-  };
-
-  const guardarIngreso = () => {
-    if (!formCodigo.trim()) {
-      setFormError("Ingresa el código de la bobina.");
-      return;
-    }
-    if (!formPeso || +formPeso <= 0) {
-      setFormError("Ingresa un peso bruto válido.");
-      return;
-    }
-    setModal(false);
-    const codigo = formCodigo.trim();
-    setFormCodigo("");
-    setFormPeso("");
-    setFormGramaje("");
-    toast.success(`Bobina ${codigo} registrada`);
-  };
-
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900 mt-30" >
-      <header className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-c3 to-c4 px-5 py-4 text-white sm:px-7">
-        <div className="flex flex-col gap-0.5">
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-white/80">
-            Almacén · Materia Prima
-          </div>
-          <div className="text-xl font-extrabold">
-            Inventario de Bobinas de Papel
-          </div>
-        </div>
-        <Button
-          onClick={abrirIngreso}
-          className="h-11 gap-2 bg-white font-bold text-c3 shadow-md hover:bg-slate-100"
-        >
-          <Plus size={16} strokeWidth={2.75} />
-          Registrar ingreso
-        </Button>
-      </header>
+    <div className="mt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
+      <Header
+        titulo="Almacén · Materia Prima"
+        subtitulo="Inventario de Bobinas de Papel"
+        accion={{
+          texto: "Registrar ingreso",
+          icono: Plus,
+          href: "/operador/bobina-papel/ingreso",
+        }}
+      />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
@@ -332,9 +288,15 @@ export default function InventarioBobinasPapel({ usuario }) {
                 </div>
                 <Badge
                   variant="outline"
-                  className={cn("border font-bold", tipoSel.text, tipoSel.border)}
+                  className={cn(
+                    "border font-bold",
+                    tipoSel.text,
+                    tipoSel.border,
+                  )}
                 >
-                  {esServilleta ? "Se envía 1 bobina" : "Se envían de a 2 bobinas"}
+                  {esServilleta
+                    ? "Se envía 1 bobina"
+                    : "Se envían de a 2 bobinas"}
                 </Badge>
               </div>
               <Button
@@ -399,26 +361,28 @@ export default function InventarioBobinasPapel({ usuario }) {
                 </div>
               )}
 
-            {!loadingDetalle && !errorDetalle && bobinasFiltradas.length > 0 && (
-              <>
-                <div className="hidden md:block">
-                  <TablaBobinas
-                    bobinas={bobinasFiltradas}
-                    tipoSel={tipoSel}
-                    marcadas={marcadas}
-                    onToggle={toggleBobina}
-                  />
-                </div>
-                <div className="md:hidden">
-                  <ListaMovilBobinas
-                    bobinas={bobinasFiltradas}
-                    tipoSel={tipoSel}
-                    marcadas={marcadas}
-                    onToggle={toggleBobina}
-                  />
-                </div>
-              </>
-            )}
+            {!loadingDetalle &&
+              !errorDetalle &&
+              bobinasFiltradas.length > 0 && (
+                <>
+                  <div className="hidden md:block">
+                    <TablaBobinas
+                      bobinas={bobinasFiltradas}
+                      tipoSel={tipoSel}
+                      marcadas={marcadas}
+                      onToggle={toggleBobina}
+                    />
+                  </div>
+                  <div className="md:hidden">
+                    <ListaMovilBobinas
+                      bobinas={bobinasFiltradas}
+                      tipoSel={tipoSel}
+                      marcadas={marcadas}
+                      onToggle={toggleBobina}
+                    />
+                  </div>
+                </>
+              )}
 
             {marcadas.length > 0 && (
               <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 bg-slate-900 px-5 py-3.5">
@@ -448,8 +412,7 @@ export default function InventarioBobinasPapel({ usuario }) {
                   disabled={!listas || enviando}
                   className={cn(
                     "h-11 gap-2 bg-white/15 font-extrabold text-white hover:bg-white/15",
-                    listas &&
-                      "bg-gradient-to-r from-c3 to-c4 hover:opacity-90",
+                    listas && "bg-gradient-to-r from-c3 to-c4 hover:opacity-90",
                   )}
                 >
                   {enviando ? (
@@ -468,6 +431,7 @@ export default function InventarioBobinasPapel({ usuario }) {
             )}
           </div>
         )}
+
         {mostrarFuera && (
           <div className="mt-7 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-amber-50 px-5 py-4">
@@ -513,7 +477,10 @@ export default function InventarioBobinasPapel({ usuario }) {
                         <span className="font-mono text-[15px] font-extrabold text-slate-900">
                           {b.CodigoBobina}
                         </span>
-                        <Badge variant="outline" className="border-slate-300 font-bold text-slate-600">
+                        <Badge
+                          variant="outline"
+                          className="border-slate-300 font-bold text-slate-600"
+                        >
                           {b.NombreTipoBobina}
                         </Badge>
                       </div>
@@ -530,13 +497,16 @@ export default function InventarioBobinasPapel({ usuario }) {
                       )}
                       {b.FechaUltimoMovimiento && (
                         <div className="text-[11px] text-slate-400">
-                          Último movimiento: {dateFormatter(b.FechaUltimoMovimiento)}
+                          Último movimiento:{" "}
+                          {dateFormatter(b.FechaUltimoMovimiento)}
                         </div>
                       )}
                     </div>
                     <div className="flex gap-2">
                       <Button
-                        onClick={() => handleReingresar(b.IdBobinaPapel, b.CodigoBobina)}
+                        onClick={() =>
+                          handleReingresar(b.IdBobinaPapel, b.CodigoBobina)
+                        }
                         disabled={procesandoId === b.IdBobinaPapel}
                         className="h-10 gap-2 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
                       >
@@ -547,7 +517,9 @@ export default function InventarioBobinasPapel({ usuario }) {
                         )}
                       </Button>
                       <Button
-                        onClick={() => handleDarDeBaja(b.IdBobinaPapel, b.CodigoBobina)}
+                        onClick={() =>
+                          handleDarDeBaja(b.IdBobinaPapel, b.CodigoBobina)
+                        }
                         disabled={procesandoId === b.IdBobinaPapel}
                         variant="outline"
                         className="h-10 gap-2 border-red-300 font-bold text-red-600 hover:bg-red-50"
@@ -566,94 +538,6 @@ export default function InventarioBobinasPapel({ usuario }) {
           </div>
         )}
       </main>
-
-      <Dialog open={modal} onOpenChange={setModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Registrar ingreso de bobina</DialogTitle>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Tipo de bobina
-              </Label>
-              <div className="grid grid-cols-2 gap-2">
-                {tipos.map((t) => (
-                  <button
-                    key={t.IdTipoBobina}
-                    type="button"
-                    onClick={() => setFormTipo(t.IdTipoBobina)}
-                    className={cn(
-                      "h-11 rounded-lg border-2 text-sm font-bold transition-colors",
-                      formTipo === t.IdTipoBobina
-                        ? cn(t.text, t.soft, t.border)
-                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
-                    )}
-                  >
-                    {t.NombreTipoBobina}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="codigo-bobina" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Código de bobina
-              </Label>
-              <Input
-                id="codigo-bobina"
-                value={formCodigo}
-                onChange={(e) => setFormCodigo(e.target.value)}
-                placeholder="Ej. HIG-2026-0148"
-                className="h-11"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="peso-bruto" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                  Peso bruto (kg)
-                </Label>
-                <Input
-                  id="peso-bruto"
-                  value={formPeso}
-                  onChange={(e) => setFormPeso(e.target.value)}
-                  placeholder="0.0"
-                  type="number"
-                  className="h-11"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="gramaje" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                  Gramaje (g/m²)
-                </Label>
-                <Input
-                  id="gramaje"
-                  value={formGramaje}
-                  onChange={(e) => setFormGramaje(e.target.value)}
-                  placeholder="0.0"
-                  type="number"
-                  className="h-11"
-                />
-              </div>
-            </div>
-
-            {formError && (
-              <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
-                {formError}
-              </div>
-            )}
-
-            <Button
-              onClick={guardarIngreso}
-              className="h-12 bg-gradient-to-r from-c3 to-c4 text-base font-extrabold hover:opacity-90"
-            >
-              Guardar ingreso
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
