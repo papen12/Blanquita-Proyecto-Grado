@@ -1,4 +1,12 @@
-import { Home, Boxes, Factory, PackagePlus } from "lucide-react";
+import { Boxes, Factory } from "lucide-react";
+
+function unirRutas(...segmentos) {
+  const limpios = segmentos
+    .filter((s) => typeof s === "string" && s.trim() !== "")
+    .map((s) => s.replace(/^\/+|\/+$/g, ""))
+    .filter((s) => s !== "");
+  return "/" + limpios.join("/");
+}
 
 export class BottomBarRoutes {
   constructor(rutaBase, subRuta) {
@@ -7,12 +15,12 @@ export class BottomBarRoutes {
       {
         titulo: "Inventario",
         icono: Boxes,
-        ruta: `${rutaBase}/${subRuta}/inventario`,
+        ruta: unirRutas(rutaBase, subRuta, "inventario"),
       },
       {
         titulo: "Produccion",
-        icono: Boxes,
-        ruta: `${rutaBase}/${subRuta}/produccion`,
+        icono: Factory,
+        ruta: unirRutas(rutaBase, subRuta, "produccion"),
       },
     ];
   }
