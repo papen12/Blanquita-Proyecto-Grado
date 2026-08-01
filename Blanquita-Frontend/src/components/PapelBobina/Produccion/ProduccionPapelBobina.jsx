@@ -18,13 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +36,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import SelectForModal from "@/components/layout/SelectForModal";
 import {
   verProduccionBobinaTubo,
   verPausasProduccionBobinaTuboActivas,
@@ -54,11 +49,12 @@ import {
 import { movimientosOperador } from "../../../constants/MovimientoOperador";
 import { dateFormatter } from "@/utils/dateFormater";
 import Header from "../../layout/Header";
-const LIMITE_CANTIDAD_LOGS = 50;
-const ID_TIPO_INGRESO = 1;
-
 import CardActiva from "./CardActiva";
 import CardPausada from "./CardPausada";
+
+const LIMITE_CANTIDAD_LOGS = 50;
+const ID_TIPO_INGRESO = 1;
+const SEPARADOR = ". ";
 
 export default function ProduccionBobinaTubo({ usuario }) {
   const [vista, setVista] = useState("activas");
@@ -190,6 +186,25 @@ export default function ProduccionBobinaTubo({ usuario }) {
           : []),
       ]
     : motivosPausa;
+
+  const motivoEstaEnTexto = (motivo) => formMotivoPausa.includes(motivo);
+
+  const alternarMotivo = (motivo) => {
+    setFormMotivoPausa((actual) => {
+      if (actual.includes(motivo)) {
+        return actual
+          .replace(motivo, "")
+          .replace(/\.\s*\.\s*/g, ". ")
+          .replace(/^\s*\.\s*/, "")
+          .trimStart();
+      }
+      const texto = actual.trimEnd();
+      if (!texto) return motivo;
+      return texto.endsWith(".")
+        ? `${texto} ${motivo}`
+        : `${texto}${SEPARADOR}${motivo}`;
+    });
+  };
 
   const confirmarPausar = async () => {
     setEnviandoPausar(true);
@@ -381,26 +396,17 @@ export default function ProduccionBobinaTubo({ usuario }) {
               </div>
             )}
 
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Tipo de movimiento
-              </Label>
-              <Select value={formTipoMovimiento} onValueChange={setFormTipoMovimiento}>
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Selecciona un tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(movimientosOperador ?? []).map((m) => (
-                    <SelectItem
-                      key={m.IdTipoMovimientoOperadorLogs}
-                      value={String(m.IdTipoMovimientoOperadorLogs)}
-                    >
-                      {m.NombreMovimiento}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <SelectForModal
+              id="tipo-movimiento"
+              etiqueta="Tipo de movimiento"
+              opciones={movimientosOperador}
+              campoValor="IdTipoMovimientoOperadorLogs"
+              campoEtiqueta="NombreMovimiento"
+              campoDescripcion="DescripcionTipoMovimientoOperadorLogs"
+              valor={formTipoMovimiento}
+              onCambio={setFormTipoMovimiento}
+              placeholder="Selecciona un tipo"
+            />
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="cantidad-logs" className="text-xs font-bold uppercase tracking-wide text-slate-600">
@@ -476,25 +482,29 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
             <div className="flex flex-col gap-1.5">
               <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Motivo rápido
+                Motivos frecuentes
               </Label>
-              <Select value="" onValueChange={(value) => setFormMotivoPausa(value)}>
-                <SelectTrigger className="h-11 w-full">
-                  <SelectValue placeholder="Selecciona un motivo" />
-                </SelectTrigger>
-                <SelectContent className="w-[--radix-select-trigger-width] max-w-none">
-                  {opcionesPausa.map((motivo) => (
-                    <SelectItem key={motivo} value={motivo} className="whitespace-normal">
-                      {motivo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ToggleGroup
+                type="multiple"
+                value={opcionesPausa.filter(motivoEstaEnTexto)}
+                className="flex flex-wrap justify-start gap-2"
+              >
+                {opcionesPausa.map((motivo) => (
+                  <ToggleGroupItem
+                    key={motivo}
+                    value={motivo}
+                    onClick={() => alternarMotivo(motivo)}
+                    className="h-auto whitespace-normal rounded-full border-2 border-slate-200 px-3.5 py-2 text-left text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+                  >
+                    {motivo}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
             </div>
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="motivo-pausa" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Motivo de la pausa (opcional)
+                Detalle de la pausa (opcional)
               </Label>
               <Textarea
                 id="motivo-pausa"
@@ -596,4 +606,3 @@ export default function ProduccionBobinaTubo({ usuario }) {
     </div>
   );
 }
-

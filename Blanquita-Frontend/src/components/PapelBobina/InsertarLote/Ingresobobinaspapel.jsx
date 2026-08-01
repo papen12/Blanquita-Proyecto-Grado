@@ -431,7 +431,7 @@ export default function IngresoBobinasPapel({ usuario }) {
                             if (e.key === "Enter" && i === filas.length - 1)
                               agregarFila();
                           }}
-                          placeholder="Ej. HIG-2026-0148"
+                          placeholder="Ej. 963-R20"
                           className={cn(
                             "h-10 font-mono",
                             err && "border-red-300 focus-visible:ring-red-300",
