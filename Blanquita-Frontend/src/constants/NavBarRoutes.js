@@ -1,7 +1,5 @@
-
 import { Home, Boxes, Factory,Database } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
-
 export const RutasNavBar = [
   {
     titulo: "Inicio",
@@ -29,7 +27,3 @@ export const RutasNavBar = [
   },
 ];
 
-export const PREFIJO_POR_ROL = {
-  1: "operador",
-  2: "encargado",
-};

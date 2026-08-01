@@ -1,4 +1,4 @@
-import { RutasNavBar, PREFIJO_POR_ROL } from "@/constants/NavBarRoutes";
+import { RutasNavBar } from "@/constants/NavBarRoutes";
 import { Icon } from "lucide-react";
 import {
   NavigationMenu,
@@ -8,6 +8,7 @@ import {
   NavigationMenuContent,
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
+import { PREFIJO_POR_ROL } from "@/constants/Roles";
 
 function IconoItem({ item }) {
   if (item.esIconoLab) {
