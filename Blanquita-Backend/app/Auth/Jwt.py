@@ -3,7 +3,8 @@ import os
 import jwt
 from fastapi import HTTPException, status
 from jwt import PyJWKClient
-
+from dotenv import load_dotenv
+load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL").rstrip("/")
 
 JWKS_URL = f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json"

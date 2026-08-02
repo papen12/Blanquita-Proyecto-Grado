@@ -1,5 +1,5 @@
 import { RutasNavBar } from "@/constants/NavBarRoutes";
-import { Icon } from "lucide-react";
+import { Icon, Menu, ChevronDown } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -8,14 +8,28 @@ import {
   NavigationMenuContent,
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetClose,
+} from "@/components/ui/sheet";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 import { PREFIJO_POR_ROL } from "@/constants/Roles";
 
-function IconoItem({ item }) {
+function IconoItem({ item, size = 18 }) {
   if (item.esIconoLab) {
-    return <Icon iconNode={item.icono} size={18} />;
+    return <Icon iconNode={item.icono} size={size} />;
   }
   const IconoComp = item.icono;
-  return <IconoComp size={18} />;
+  return <IconoComp size={size} />;
 }
 
 function ItemNav({ item, basePath }) {
@@ -62,12 +76,59 @@ function ItemNav({ item, basePath }) {
   );
 }
 
-export default function NavBar({ idRol  }) {
+function ItemNavMovil({ item, basePath }) {
+  const rutaCompleta = `${basePath}/${item.ruta}`;
+
+  if (!item.subrutas) {
+    return (
+      <SheetClose asChild>
+        <a
+          href={`/${rutaCompleta}`}
+          className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-white hover:bg-[#20A7DB] focus-visible:bg-[#20A7DB] focus-visible:outline-none"
+        >
+          <IconoItem item={item} size={20} />
+          {item.titulo}
+        </a>
+      </SheetClose>
+    );
+  }
+
+  return (
+    <AccordionItem value={item.ruta} className="border-none">
+      <AccordionTrigger className="rounded-lg px-4 py-3 text-base font-medium text-white hover:bg-[#20A7DB] hover:no-underline focus-visible:bg-[#20A7DB] focus-visible:outline-none [&>svg]:hidden">
+        <span className="flex items-center gap-3">
+          <IconoItem item={item} size={20} />
+          {item.titulo}
+        </span>
+        <ChevronDown size={18} className="shrink-0 transition-transform duration-200" />
+      </AccordionTrigger>
+      <AccordionContent className="pb-1">
+        <ul className="ml-5 flex flex-col gap-1 border-l-2 border-[#A0D9EF] pl-3">
+          {item.subrutas.map((sub) => (
+            <li key={sub.ruta}>
+              <SheetClose asChild>
+                <a
+                  href={`/${rutaCompleta}/${sub.ruta}`}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-white hover:bg-[#20A7DB] focus-visible:bg-[#20A7DB] focus-visible:outline-none"
+                >
+                  <IconoItem item={sub} size={18} />
+                  {sub.titulo}
+                </a>
+              </SheetClose>
+            </li>
+          ))}
+        </ul>
+      </AccordionContent>
+    </AccordionItem>
+  );
+}
+
+export default function NavBar({ idRol }) {
   const prefijo = PREFIJO_POR_ROL[idRol];
 
   return (
     <nav
-      className="fixed top-0 left-0 z-30 flex flex-row items-center justify-center w-full px-4 h-30 text-white transition-all duration-300 ease-in-out "
+      className="fixed top-0 left-0 z-30 flex w-full flex-row items-center justify-center px-4 h-20 md:h-30 text-white transition-all duration-300 ease-in-out"
       style={{
         backgroundColor: "#62C1E5",
         backdropFilter: "blur(10px)",
@@ -76,20 +137,52 @@ export default function NavBar({ idRol  }) {
         borderBottom: "2px solid #A0D9EF",
       }}
     >
-      <img
-        src="/LogoBlanquita.webp"
-        alt="Papel Blanquita"
-        className="h-25 w-auto transition-[filter] duration-300 ease-in-out"
-        style={{ filter: "drop-shadow(0 4px 12px rgba(255,255,255,.3))" }}
-      />
+      <Sheet>
+        <SheetTrigger
+          aria-label="Abrir menú"
+          className="md:hidden absolute left-4 flex items-center justify-center rounded-lg p-2 text-white hover:bg-[#20A7DB] focus-visible:bg-[#20A7DB] focus-visible:outline-none"
+        >
+          <Menu size={28} />
+        </SheetTrigger>
+        <SheetContent
+          side="left"
+          className="w-72 max-w-[80%] border-r-2 border-[#A0D9EF] p-0 text-white [&>button]:text-white [&>button]:opacity-100"
+          style={{ backgroundColor: "#62C1E5" }}
+        >
+          <SheetHeader className="h-20 flex-row items-center justify-start border-b-2 border-[#A0D9EF] px-4 py-0 space-y-0">
+            <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
+            <img
+              src="/LogoBlanquita.webp"
+              alt="Papel Blanquita"
+              className="h-14 w-auto"
+              style={{ filter: "drop-shadow(0 4px 12px rgba(255,255,255,.3))" }}
+            />
+          </SheetHeader>
 
-      <NavigationMenu>
-        <NavigationMenuList>
-          {RutasNavBar.map((item) => (
-            <ItemNav key={item.ruta} item={item} basePath={prefijo} />
-          ))}
-        </NavigationMenuList>
-      </NavigationMenu>
+          <Accordion type="single" collapsible className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+            {RutasNavBar.map((item) => (
+              <ItemNavMovil key={item.ruta} item={item} basePath={prefijo} />
+            ))}
+          </Accordion>
+        </SheetContent>
+      </Sheet>
+
+      <div className="flex flex-row items-center justify-center gap-2">
+        <img
+          src="/LogoBlanquita.webp"
+          alt="Papel Blanquita"
+          className="h-16 md:h-25 w-auto transition-[filter] duration-300 ease-in-out"
+          style={{ filter: "drop-shadow(0 4px 12px rgba(255,255,255,.3))" }}
+        />
+
+        <NavigationMenu className="hidden md:flex">
+          <NavigationMenuList>
+            {RutasNavBar.map((item) => (
+              <ItemNav key={item.ruta} item={item} basePath={prefijo} />
+            ))}
+          </NavigationMenuList>
+        </NavigationMenu>
+      </div>
     </nav>
   );
 }
