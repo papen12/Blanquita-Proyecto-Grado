@@ -6,21 +6,17 @@ class UsuarioRepository:
     def __init__(self, db: Session):
         self.caller = DbCaller(db)
 
-    def crear_usuario(self, params: dict) -> dict | None:
-        sql = """
+    def CrearUsuario(self, params: dict) -> dict | None:
+        consulta = '''
             SELECT * FROM "CrearUsuario"(
-                :p_IdRol,
-                :p_IdEstadoUsuario,
-                :p_Ci,
-                :p_Clave,
-                :p_PrimerNombre,
-                :p_SegundoNombre,
-                :p_ApellidoPaterno,
-                :p_ApellidoMaterno
+                p_AuthUserId      => :p_AuthUserId,
+                p_IdRol           => :p_IdRol,
+                p_Ci              => :p_Ci,
+                p_PrimerNombre    => :p_PrimerNombre,
+                p_ApellidoPaterno => :p_ApellidoPaterno,
+                p_Celular         => :p_Celular,
+                p_SegundoNombre   => :p_SegundoNombre,
+                p_ApellidoMaterno => :p_ApellidoMaterno
             )
-        """
-        return self.caller.LlamarUnRegistro(sql, params)
-
-    def verificacion_usuario(self, ci: str) -> dict | None:
-        sql = 'SELECT * FROM "VerificacionUsuario"(:p_ci)'
-        return self.caller.LlamarUnRegistro(sql, {"p_ci": ci}, commit=False)
+        '''
+        return self.caller.LlamarUnRegistro(consulta, params)

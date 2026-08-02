@@ -1,101 +1,115 @@
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
-from fastapi import HTTPException, status
-from app.Repository.Usuario.UsuarioRepository import UsuarioRepository
-from app.Auth.Security import VerificarClave,EstructuraClave,HashPassword
-from app.Auth.Jwt import crear_token_acceso
-from app.Models.Usuario.Usuario import UsuarioCreate, UsuarioResponse
-from app.Models.Usuario.UsuarioLogIn import UsuarioLogin, UsuarioLoginResponse
+import os
 
-ESTADO_ACTIVO = 1
+import httpx
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.Models.Usuario.Usuario import UsuarioCreate
+from app.Repository.Usuario.UsuarioRepository import UsuarioRepository
+
+SUPABASE_URL = os.getenv("SUPABASE_URL").rstrip("/")
+SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+TIMEOUT_ADMIN = 15.0
+DOMINIO_SINTETICO = "papelblanquita.invalid"
+
 
 class UsuarioService:
     def __init__(self, db: Session):
         self.repository = UsuarioRepository(db)
 
-    def crear_usuario(self, data: UsuarioCreate) -> dict:
-        if not EstructuraClave(data.Clave):
+    def _CabecerasAdmin(self) -> dict:
+        return {
+            "apikey": SUPABASE_SECRET_KEY,
+            "Authorization": f"Bearer {SUPABASE_SECRET_KEY}",
+            "Content-Type": "application/json",
+        }
+
+    def _CorreoSintetico(self, ci: str) -> str:
+        return f"{ci}@{DOMINIO_SINTETICO}"
+
+    def _CrearCuentaAuth(self, ci: str, clave: str) -> str:
+        try:
+            respuesta = httpx.post(
+                f"{SUPABASE_URL}/auth/v1/admin/users",
+                headers=self._CabecerasAdmin(),
+                json={
+                    "email": self._CorreoSintetico(ci),
+                    "password": clave,
+                    "email_confirm": True,
+                },
+                timeout=TIMEOUT_ADMIN,
+            )
+        except httpx.RequestError:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="La clave debe tener el formato: 3 letras mayúsculas seguidas de 3 dígitos (ej. ABC123)"
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Servicio de autenticación no disponible"
             )
 
-        clave_hasheada = HashPassword(data.Clave)
+        if respuesta.status_code in (409, 422):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Ya existe una cuenta de acceso para el CI {ci}"
+            )
+
+        if respuesta.status_code >= 400:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="No se pudo crear la cuenta de acceso"
+            )
+
+        cuenta = respuesta.json()
+        auth_user_id = cuenta.get("id")
+
+        if not auth_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Respuesta inválida del servicio de autenticación"
+            )
+
+        return auth_user_id
+
+    def _EliminarCuentaAuth(self, auth_user_id: str) -> None:
+        try:
+            httpx.delete(
+                f"{SUPABASE_URL}/auth/v1/admin/users/{auth_user_id}",
+                headers=self._CabecerasAdmin(),
+                timeout=TIMEOUT_ADMIN,
+            )
+        except httpx.RequestError:
+            pass
+
+    def CrearUsuario(self, datos: UsuarioCreate) -> dict:
+        auth_user_id = self._CrearCuentaAuth(datos.Ci, datos.Clave)
 
         params = {
-            "p_IdRol": data.IdRol,
-            "p_IdEstadoUsuario": data.IdEstadoUsuario,
-            "p_Ci": data.Ci,
-            "p_Clave": clave_hasheada,
-            "p_PrimerNombre": data.PrimerNombre,
-            "p_SegundoNombre": data.SegundoNombre,
-            "p_ApellidoPaterno": data.ApellidoPaterno,
-            "p_ApellidoMaterno": data.ApellidoMaterno,
+            "p_AuthUserId": auth_user_id,
+            "p_IdRol": datos.IdRol,
+            "p_Ci": datos.Ci,
+            "p_PrimerNombre": datos.PrimerNombre,
+            "p_ApellidoPaterno": datos.ApellidoPaterno,
+            "p_Celular": datos.Celular,
+            "p_SegundoNombre": datos.SegundoNombre,
+            "p_ApellidoMaterno": datos.ApellidoMaterno,
         }
 
         try:
-            usuario = self.repository.crear_usuario(params)
-        except SQLAlchemyError as e:
-            mensaje = str(e.orig) if hasattr(e, "orig") else str(e)
-            if "Ya existe un usuario registrado con el CI" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail=f"Ya existe un usuario registrado con el CI {data.Ci}"
-                )
-            if "El rol especificado no existe" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"El rol con id {data.IdRol} no existe"
-                )
-            if "El estado de usuario especificado no existe" in mensaje:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"El estado de usuario con id {data.IdEstadoUsuario} no existe"
-                )
+            usuario = self.repository.CrearUsuario(params)
+        except HTTPException:
+            self._EliminarCuentaAuth(auth_user_id)
+            raise
+        except Exception:
+            self._EliminarCuentaAuth(auth_user_id)
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No se pudo crear el usuario, verifica los datos ingresados"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo registrar el usuario"
             )
 
         if not usuario:
+            self._EliminarCuentaAuth(auth_user_id)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No se pudo crear el usuario"
+                detail="No se pudo registrar el usuario"
             )
 
         return usuario
-    
-    def login(self, data: UsuarioLogin) -> UsuarioLoginResponse:
-        usuario = self.repository.verificacion_usuario(data.Ci)
-        if not usuario:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Credenciales inválidas"
-            )
-
-        if usuario["IdEstadoUsuario"] != ESTADO_ACTIVO:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Usuario {usuario['NombreEstadoUsuario'].lower()}"
-            )
-
-        if not VerificarClave(usuario["Clave"], data.Clave):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Credenciales inválidas"
-            )
-
-        token = crear_token_acceso({
-            "sub": str(usuario["IdUsuario"]),
-            "rol_id": usuario["IdRol"],
-            "rol": usuario["NombreRol"],
-        })
-
-        return UsuarioLoginResponse(
-            access_token=token,
-            IdUsuario=usuario["IdUsuario"],
-            IdRol=usuario["IdRol"],
-            NombreRol=usuario["NombreRol"],
-            PrimerNombre=usuario["PrimerNombre"],
-            ApellidoPaterno=usuario["ApellidoPaterno"],
-        )
