@@ -1,7 +1,7 @@
 import { Plus, Pause, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { dateFormatter } from "@/utils/dateFormater";
+import { dateFormatter } from "@/utils/dates";
 
 export default function CardActiva({ p, onInsertar, onPausar, onFinalizar }) {
   return (

@@ -1,265 +1,66 @@
-export const BobinaPapel = (data) => ({
-  IdBobinaPapel: data.IdBobinaPapel ?? null,
-  CodigoBobina: data.CodigoBobina,
-  IdTipoBobina: data.IdTipoBobina,
-  IdLoteBobina: data.IdLoteBobina,
-  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
-  PesoBrutoKg: data.PesoBrutoKg ?? null,
-  Gramaje: data.Gramaje ?? null,
-  PesoNetoKg: data.PesoNetoKg ?? null,
-});
+export const ACENTOS = [
+  {
+    text: "text-c3",
+    bg: "bg-c4",
+    soft: "bg-c4/8",
+    border: "border-c4/30",
+    ring: "ring-c4/40",
+  },
+  {
+    text: "text-serv3",
+    bg: "bg-serv3",
+    soft: "bg-serv3/8",
+    border: "border-serv3/30",
+    ring: "ring-serv3/40",
+  },
+  {
+    text: "text-lux2",
+    bg: "bg-lux1",
+    soft: "bg-lux1/8",
+    border: "border-lux1/30",
+    ring: "ring-lux1/40",
+  },
+  {
+    text: "text-eco2",
+    bg: "bg-eco1",
+    soft: "bg-eco1/8",
+    border: "border-eco1/30",
+    ring: "ring-eco1/40",
+  }, 
+];
 
-export const ListaBobinasPapel = (data) => ({
-  Bobinas: (data.Bobinas ?? []).map(BobinaPapel),
-});
+export const fmt = (n) =>
+  Number(n || 0).toLocaleString("es-BO", { maximumFractionDigits: 1 }); 
 
-export const BobinaPapelIngresoItem = (data) => ({
-  CodigoBobina: data.CodigoBobina,
-  PesoBrutoKg: data.PesoBrutoKg ?? null,
-  Gramaje: data.Gramaje ?? null,
-  PesoNetoKg: data.PesoNetoKg ?? null,
-});
-
-export const IngresoModelo = (data) => ({
-  IdProveedor: data.IdProveedor,
-  IdTipoBobina: data.IdTipoBobina,
-  Bobinas: (data.Bobinas ?? []).map(BobinaPapelIngresoItem),
-});
-
-export const IngresoLoteBobinaPapelResponse = (data) => ({
-  FechaRecepcion: data.FechaRecepcion,
-  CantidadBobinas: data.CantidadBobinas,
-});
-
-export const TipoBobinaPapelIngreso = (data) => ({
-  IdTipoBobina: data.IdTipoBobina,
-  NombreTipoBobina: data.NombreTipoBobina,
-});
-
-
-
-
-import { IngresoModelo, IngresoLoteBobinaPapelResponse,TipoBobinaPapelIngreso } from "../../models/BobinaPapel/BobinaPapel";
-import { manejarErrorBackend } from "@/utils/Error";
-export async function cargarLoteBobinaPapel(idProveedor, idTipoBobina, bobinas) {
-  const payload = IngresoModelo({
-    IdProveedor: idProveedor,
-    IdTipoBobina: idTipoBobina,
-    Bobinas: bobinas
-  });
-
-  const response = await fetch("/api/bobinapapel/cargarlote", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
-
-  return IngresoLoteBobinaPapelResponse(data);
+export function RolloIcono({ className }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" />
+      <circle cx="16" cy="16" r="6.5" stroke="currentColor" strokeWidth="2.5" />
+      <path
+        d="M16 2.5C16 2.5 26 6 26 16"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        opacity="0.5"
+      />
+    </svg>
+  );
 }
 
-
-export async function ObtenerTiposPapelBobina(){
-  const response= await fetch("/api/bobinapapel/obtenertipos")
-  if (!response.ok){
-    await manejarErrorBackend(response)
-  }
-  const data = await response.json();
-  return data.map(TipoBobinaPapelIngreso)
+export function FueraIcono({ className }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none">
+      <rect x="5" y="9" width="22" height="16" rx="2.5" stroke="currentColor" strokeWidth="2.5" />
+      <path d="M5 13h22" stroke="currentColor" strokeWidth="2.5" />
+      <path d="M12 5.5h8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 
 
 
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
-
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
-    --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
-    --color-border: var(--border);
-    --color-destructive: var(--destructive);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-primary: var(--primary);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
-    --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --color-foreground: var(--foreground);
-    --color-background: var(--background);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
-}
-
-:root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-    }
-  body {
-    @apply bg-background text-foreground;
-    }
-  html {
-    @apply font-sans;
-    }
-}
-
-
-@font-face {
-    font-family: "Ekamai";
-    src: url("/fonts/Ekamai.woff2") format("woff2");
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: "Montserrat";
-    src: url("/fonts/Montserrat-VariableFont_wght.ttf") format("truetype-variations");
-    font-weight: 100 900;
-    font-style: normal;
-    font-display: swap;
-}
-
-@theme {
-    /* Fuentes */
-    --font-sans: "Montserrat", sans-serif;
-    --font-ekamai: "Ekamai", sans-serif;
-
-    /* Colores principales */
-    --color-c1: #62C1E5;
-    --color-c2: #A0D9EF;
-    --color-c3: #1C96C5;
-    --color-c4: #20A7DB;
-
-    /* Eco-Pack */
-    --color-eco1: #BE106A;
-    --color-eco2: #942065;
-
-    /* Luxury */
-    --color-lux1: #99518E;
-    --color-lux2: #592D6A;
-
-    /* Mega Pack */
-    --color-mega1: #922D89;
-    --color-mega2: #E33D8E;
-
-    /* Servilletas */
-    --color-serv1: #E43214;
-    --color-serv2: #E6923A;
-    --color-serv3: #4E9293;
-}
-
-@layer base {
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-}
 
 
 import { useState, useEffect } from "react";
@@ -268,15 +69,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   verResumenInventarioBobinaPapel,
   verDetalleInventarioBobinaPapel,
@@ -285,7 +79,7 @@ import {
   darDeBajaBobina,
 } from "../../../services/BobinaPapel/Inventario";
 import { iniciarProduccion } from "../../../services/BobinaPapel/Produccion";
-import { dateFormatter } from "@/utils/dateFormater";
+import { dateFormatter } from "@/utils/dates";
 
 import { ACENTOS, fmt } from "./constantes";
 import { RolloIcono } from "./Iconos";
@@ -293,6 +87,7 @@ import { TarjetaTipo } from "./TarjetaTipo";
 import { TarjetaFueraInventario } from "./TarjetaFueraInventario";
 import { TablaBobinas } from "./TablaBobinas";
 import { ListaMovilBobinas } from "./ListaMovilBobinas";
+import Header from "@/components/layout/Header";
 
 export default function InventarioBobinasPapel({ usuario }) {
   const [tipos, setTipos] = useState([]);
@@ -306,14 +101,6 @@ export default function InventarioBobinasPapel({ usuario }) {
   const [busquedaCodigo, setBusquedaCodigo] = useState("");
 
   const [marcadas, setMarcadas] = useState([]);
-  const [modal, setModal] = useState(false);
-
-  const [formTipo, setFormTipo] = useState(null);
-  const [formCodigo, setFormCodigo] = useState("");
-  const [formPeso, setFormPeso] = useState("");
-  const [formGramaje, setFormGramaje] = useState("");
-  const [formError, setFormError] = useState("");
-
   const [enviando, setEnviando] = useState(false);
 
   const [mostrarFuera, setMostrarFuera] = useState(false);
@@ -343,8 +130,6 @@ export default function InventarioBobinasPapel({ usuario }) {
               : "Disponible",
       }));
       setTipos(conMeta);
-      if (conMeta.length && formTipo === null)
-        setFormTipo(conMeta[0].IdTipoBobina);
     } catch (e) {
       setErrorTipos(e.message);
     } finally {
@@ -380,7 +165,9 @@ export default function InventarioBobinasPapel({ usuario }) {
 
   const bobinasFiltradas = busquedaCodigo.trim()
     ? bobinasSel.filter((b) =>
-        b.CodigoBobina.toLowerCase().includes(busquedaCodigo.trim().toLowerCase()),
+        b.CodigoBobina.toLowerCase().includes(
+          busquedaCodigo.trim().toLowerCase(),
+        ),
       )
     : bobinasSel;
 
@@ -494,47 +281,17 @@ export default function InventarioBobinasPapel({ usuario }) {
     }
   };
 
-  const abrirIngreso = () => {
-    setFormError("");
-    setModal(true);
-  };
-
-  const guardarIngreso = () => {
-    if (!formCodigo.trim()) {
-      setFormError("Ingresa el código de la bobina.");
-      return;
-    }
-    if (!formPeso || +formPeso <= 0) {
-      setFormError("Ingresa un peso bruto válido.");
-      return;
-    }
-    setModal(false);
-    const codigo = formCodigo.trim();
-    setFormCodigo("");
-    setFormPeso("");
-    setFormGramaje("");
-    toast.success(`Bobina ${codigo} registrada`);
-  };
-
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900 mt-30" >
-      <header className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-c3 to-c4 px-5 py-4 text-white sm:px-7">
-        <div className="flex flex-col gap-0.5">
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-white/80">
-            Almacén · Materia Prima
-          </div>
-          <div className="text-xl font-extrabold">
-            Inventario de Bobinas de Papel
-          </div>
-        </div>
-        <Button
-          onClick={abrirIngreso}
-          className="h-11 gap-2 bg-white font-bold text-c3 shadow-md hover:bg-slate-100"
-        >
-          <Plus size={16} strokeWidth={2.75} />
-          Registrar ingreso
-        </Button>
-      </header>
+    <div className="mt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
+      <Header
+        titulo="Almacén · Materia Prima"
+        subtitulo="Inventario de Bobinas de Papel"
+        accion={{
+          texto: "Registrar ingreso",
+          icono: Plus,
+          href: "/operador/bobina-papel/ingreso",
+        }}
+      />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
@@ -596,9 +353,15 @@ export default function InventarioBobinasPapel({ usuario }) {
                 </div>
                 <Badge
                   variant="outline"
-                  className={cn("border font-bold", tipoSel.text, tipoSel.border)}
+                  className={cn(
+                    "border font-bold",
+                    tipoSel.text,
+                    tipoSel.border,
+                  )}
                 >
-                  {esServilleta ? "Se envía 1 bobina" : "Se envían de a 2 bobinas"}
+                  {esServilleta
+                    ? "Se envía 1 bobina"
+                    : "Se envían de a 2 bobinas"}
                 </Badge>
               </div>
               <Button
@@ -663,26 +426,28 @@ export default function InventarioBobinasPapel({ usuario }) {
                 </div>
               )}
 
-            {!loadingDetalle && !errorDetalle && bobinasFiltradas.length > 0 && (
-              <>
-                <div className="hidden md:block">
-                  <TablaBobinas
-                    bobinas={bobinasFiltradas}
-                    tipoSel={tipoSel}
-                    marcadas={marcadas}
-                    onToggle={toggleBobina}
-                  />
-                </div>
-                <div className="md:hidden">
-                  <ListaMovilBobinas
-                    bobinas={bobinasFiltradas}
-                    tipoSel={tipoSel}
-                    marcadas={marcadas}
-                    onToggle={toggleBobina}
-                  />
-                </div>
-              </>
-            )}
+            {!loadingDetalle &&
+              !errorDetalle &&
+              bobinasFiltradas.length > 0 && (
+                <>
+                  <div className="hidden md:block">
+                    <TablaBobinas
+                      bobinas={bobinasFiltradas}
+                      tipoSel={tipoSel}
+                      marcadas={marcadas}
+                      onToggle={toggleBobina}
+                    />
+                  </div>
+                  <div className="md:hidden">
+                    <ListaMovilBobinas
+                      bobinas={bobinasFiltradas}
+                      tipoSel={tipoSel}
+                      marcadas={marcadas}
+                      onToggle={toggleBobina}
+                    />
+                  </div>
+                </>
+              )}
 
             {marcadas.length > 0 && (
               <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 bg-slate-900 px-5 py-3.5">
@@ -712,8 +477,7 @@ export default function InventarioBobinasPapel({ usuario }) {
                   disabled={!listas || enviando}
                   className={cn(
                     "h-11 gap-2 bg-white/15 font-extrabold text-white hover:bg-white/15",
-                    listas &&
-                      "bg-gradient-to-r from-c3 to-c4 hover:opacity-90",
+                    listas && "bg-gradient-to-r from-c3 to-c4 hover:opacity-90",
                   )}
                 >
                   {enviando ? (
@@ -732,6 +496,7 @@ export default function InventarioBobinasPapel({ usuario }) {
             )}
           </div>
         )}
+
         {mostrarFuera && (
           <div className="mt-7 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-amber-50 px-5 py-4">
@@ -777,7 +542,10 @@ export default function InventarioBobinasPapel({ usuario }) {
                         <span className="font-mono text-[15px] font-extrabold text-slate-900">
                           {b.CodigoBobina}
                         </span>
-                        <Badge variant="outline" className="border-slate-300 font-bold text-slate-600">
+                        <Badge
+                          variant="outline"
+                          className="border-slate-300 font-bold text-slate-600"
+                        >
                           {b.NombreTipoBobina}
                         </Badge>
                       </div>
@@ -794,13 +562,16 @@ export default function InventarioBobinasPapel({ usuario }) {
                       )}
                       {b.FechaUltimoMovimiento && (
                         <div className="text-[11px] text-slate-400">
-                          Último movimiento: {dateFormatter(b.FechaUltimoMovimiento)}
+                          Último movimiento:{" "}
+                          {dateFormatter(b.FechaUltimoMovimiento)}
                         </div>
                       )}
                     </div>
                     <div className="flex gap-2">
                       <Button
-                        onClick={() => handleReingresar(b.IdBobinaPapel, b.CodigoBobina)}
+                        onClick={() =>
+                          handleReingresar(b.IdBobinaPapel, b.CodigoBobina)
+                        }
                         disabled={procesandoId === b.IdBobinaPapel}
                         className="h-10 gap-2 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
                       >
@@ -811,7 +582,9 @@ export default function InventarioBobinasPapel({ usuario }) {
                         )}
                       </Button>
                       <Button
-                        onClick={() => handleDarDeBaja(b.IdBobinaPapel, b.CodigoBobina)}
+                        onClick={() =>
+                          handleDarDeBaja(b.IdBobinaPapel, b.CodigoBobina)
+                        }
                         disabled={procesandoId === b.IdBobinaPapel}
                         variant="outline"
                         className="h-10 gap-2 border-red-300 font-bold text-red-600 hover:bg-red-50"
@@ -830,94 +603,349 @@ export default function InventarioBobinasPapel({ usuario }) {
           </div>
         )}
       </main>
+    </div>
+  );
+} 
 
-      <Dialog open={modal} onOpenChange={setModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Registrar ingreso de bobina</DialogTitle>
-          </DialogHeader>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Tipo de bobina
-              </Label>
-              <div className="grid grid-cols-2 gap-2">
-                {tipos.map((t) => (
-                  <button
-                    key={t.IdTipoBobina}
-                    type="button"
-                    onClick={() => setFormTipo(t.IdTipoBobina)}
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { dateFormatter } from "@/utils/dates";
+import { fmt } from "./constantes";
+import { MiniStat } from "./MiniStat";
+
+export function ListaMovilBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
+  return (
+    <div className="flex flex-col gap-2.5 p-3.5">
+      {bobinas.map((b) => {
+        const on = marcadas.includes(b.CodigoBobina);
+        return (
+          <div
+            key={b.IdBobinaPapel}
+            onClick={() => onToggle(b.CodigoBobina)}
+            className={cn(
+              "flex flex-col gap-2.5 rounded-2xl border-2 p-3.5",
+              on ? tipoSel.soft : "border-slate-200 bg-white",
+              on && tipoSel.border,
+            )}
+          >
+            <div className="flex items-center justify-between gap-2.5">
+              <div className={cn("font-mono text-[15px] font-extrabold", tipoSel.text)}>
+                {b.CodigoBobina}
+              </div>
+              <div
+                className={cn(
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2",
+                  on
+                    ? cn(tipoSel.bg, "border-transparent text-white")
+                    : "border-slate-300",
+                )}
+              >
+                {on && <Check size={14} strokeWidth={3.5} />}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
+              <span>
+                <strong className="text-slate-900">{b.CodigoLote}</strong> ·{" "}
+                {dateFormatter(b.FechaRecepcion)}
+              </span>
+              <span>{b.NombreProveedor}</span>
+            </div>
+            <div className="flex gap-2">
+              <MiniStat label="Bruto" value={`${fmt(b.PesoBrutoKg)} kg`} />
+              <MiniStat label="Neto" value={`${fmt(b.PesoNetoKg)} kg`} />
+              <MiniStat label="Gramaje" value={`${fmt(b.Gramaje)} g/m²`} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+} 
+
+
+
+
+
+
+
+
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { dateFormatter } from "@/utils/dates";
+import { fmt } from "./constantes";
+import { MiniStat } from "./MiniStat";
+
+export function ListaMovilBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
+  return (
+    <div className="flex flex-col gap-2.5 p-3.5">
+      {bobinas.map((b) => {
+        const on = marcadas.includes(b.CodigoBobina);
+        return (
+          <div
+            key={b.IdBobinaPapel}
+            onClick={() => onToggle(b.CodigoBobina)}
+            className={cn(
+              "flex flex-col gap-2.5 rounded-2xl border-2 p-3.5",
+              on ? tipoSel.soft : "border-slate-200 bg-white",
+              on && tipoSel.border,
+            )}
+          >
+            <div className="flex items-center justify-between gap-2.5">
+              <div className={cn("font-mono text-[15px] font-extrabold", tipoSel.text)}>
+                {b.CodigoBobina}
+              </div>
+              <div
+                className={cn(
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2",
+                  on
+                    ? cn(tipoSel.bg, "border-transparent text-white")
+                    : "border-slate-300",
+                )}
+              >
+                {on && <Check size={14} strokeWidth={3.5} />}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
+              <span>
+                <strong className="text-slate-900">{b.CodigoLote}</strong> ·{" "}
+                {dateFormatter(b.FechaRecepcion)}
+              </span>
+              <span>{b.NombreProveedor}</span>
+            </div>
+            <div className="flex gap-2">
+              <MiniStat label="Bruto" value={`${fmt(b.PesoBrutoKg)} kg`} />
+              <MiniStat label="Neto" value={`${fmt(b.PesoNetoKg)} kg`} />
+              <MiniStat label="Gramaje" value={`${fmt(b.Gramaje)} g/m²`} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
+export function MiniStat({ label, value }) {
+  return (
+    <div className="flex-1 rounded-lg border border-slate-200 bg-white/70 px-2.5 py-1.5">
+      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+        {label}
+      </div>
+      <div className="text-sm font-bold tabular-nums text-slate-900">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+
+
+
+
+
+
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import { dateFormatter } from "@/utils/dates";
+import { fmt } from "./constantes";
+
+export function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
+  return (
+    <div className="overflow-x-auto">
+      <Table className="min-w-[640px]">
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="w-11 pl-5" />
+            <TableHead>Código</TableHead>
+            <TableHead>Lote</TableHead>
+            <TableHead>Recepción</TableHead>
+            <TableHead>Proveedor</TableHead>
+            <TableHead className="text-right">Peso bruto</TableHead>
+            <TableHead className="text-right">Peso neto</TableHead>
+            <TableHead className="pr-5 text-right">Gramaje</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {bobinas.map((b) => {
+            const on = marcadas.includes(b.CodigoBobina);
+            return (
+              <TableRow
+                key={b.IdBobinaPapel}
+                onClick={() => onToggle(b.CodigoBobina)}
+                className={cn("cursor-pointer", on && tipoSel.soft)}
+              >
+                <TableCell className="pl-5">
+                  <div
                     className={cn(
-                      "h-11 rounded-lg border-2 text-sm font-bold transition-colors",
-                      formTipo === t.IdTipoBobina
-                        ? cn(t.text, t.soft, t.border)
-                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                      "flex h-5 w-5 items-center justify-center rounded-md border-2",
+                      on
+                        ? cn(tipoSel.bg, "border-transparent text-white")
+                        : "border-slate-300",
                     )}
                   >
-                    {t.NombreTipoBobina}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="codigo-bobina" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Código de bobina
-              </Label>
-              <Input
-                id="codigo-bobina"
-                value={formCodigo}
-                onChange={(e) => setFormCodigo(e.target.value)}
-                placeholder="Ej. HIG-2026-0148"
-                className="h-11"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="peso-bruto" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                  Peso bruto (kg)
-                </Label>
-                <Input
-                  id="peso-bruto"
-                  value={formPeso}
-                  onChange={(e) => setFormPeso(e.target.value)}
-                  placeholder="0.0"
-                  type="number"
-                  className="h-11"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="gramaje" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                  Gramaje (g/m²)
-                </Label>
-                <Input
-                  id="gramaje"
-                  value={formGramaje}
-                  onChange={(e) => setFormGramaje(e.target.value)}
-                  placeholder="0.0"
-                  type="number"
-                  className="h-11"
-                />
-              </div>
-            </div>
-
-            {formError && (
-              <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
-                {formError}
-              </div>
-            )}
-
-            <Button
-              onClick={guardarIngreso}
-              className="h-12 bg-gradient-to-r from-c3 to-c4 text-base font-extrabold hover:opacity-90"
-            >
-              Guardar ingreso
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+                    {on && <Check size={13} strokeWidth={3.5} />}
+                  </div>
+                </TableCell>
+                <TableCell className={cn("font-mono font-bold", tipoSel.text)}>
+                  {b.CodigoBobina}
+                </TableCell>
+                <TableCell className="text-slate-600">{b.CodigoLote}</TableCell>
+                <TableCell className="text-slate-600">
+                  {dateFormatter(b.FechaRecepcion)}
+                </TableCell>
+                <TableCell className="text-slate-600">
+                  {b.NombreProveedor}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-slate-600">
+                  {fmt(b.PesoBrutoKg)} kg
+                </TableCell>
+                <TableCell className="text-right font-bold tabular-nums text-slate-900">
+                  {fmt(b.PesoNetoKg)} kg
+                </TableCell>
+                <TableCell className="pr-5 text-right tabular-nums text-slate-600">
+                  {fmt(b.Gramaje)} g/m²
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
+  );
+}
+
+
+
+
+
+import { ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { FueraIcono } from "./Iconos";
+
+export function TarjetaFueraInventario({ cantidad, activo, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex flex-col gap-3.5 rounded-2xl border-2 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+        activo ? "border-amber-400" : "border-slate-200",
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <FueraIcono className="h-8 w-8 shrink-0 text-amber-600" />
+          <div className="text-[17px] font-extrabold text-slate-900">
+            Fuera de inventario
+          </div>
+        </div>
+        <Badge
+          variant="outline"
+          className="border-0 bg-amber-100 font-bold text-amber-700"
+        >
+          {cantidad === 0 ? "Vacío" : "Requiere acción"}
+        </Badge>
+      </div>
+
+      <div className="flex items-baseline gap-1.5">
+        <div className="text-4xl font-extrabold tabular-nums text-amber-600">
+          {cantidad}
+        </div>
+        <div className="text-sm font-semibold text-slate-500">
+          bobinas dadas de baja o retiradas
+        </div>
+      </div>
+
+      <div className="rounded-lg bg-amber-50 px-3 py-2.5">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+          Acciones disponibles
+        </div>
+        <div className="text-sm font-bold text-slate-900">
+          Reingresar o retirar definitivamente
+        </div>
+      </div>
+
+      <div className="flex items-center justify-end gap-1.5 text-xs font-bold text-amber-600">
+        {activo ? "Ocultar lista" : "Ver bobinas"}
+        <ArrowRight size={14} strokeWidth={2.75} />
+      </div>
+    </button>
+  );
+}
+
+
+
+import { ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { RolloIcono } from "./Iconos";
+import { fmt } from "./constantes";
+
+export function TarjetaTipo({ tipo: t, activo, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex flex-col gap-3.5 rounded-2xl border-2 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+        activo ? t.border : "border-slate-200",
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <RolloIcono className={cn("h-8 w-8 shrink-0", t.text)} />
+          <div className="text-[17px] font-extrabold text-slate-900">
+            {t.NombreTipoBobina}
+          </div>
+        </div>
+        <Badge
+          variant="outline"
+          className={cn("border-0 font-bold", t.soft, t.text)}
+        >
+          {t.badge}
+        </Badge>
+      </div>
+
+      <div className="flex items-baseline gap-1.5">
+        <div className={cn("text-4xl font-extrabold tabular-nums", t.text)}>
+          {t.CantidadBobinas}
+        </div>
+        <div className="text-sm font-semibold text-slate-500">
+          bobinas en almacén
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-lg bg-slate-50 px-3 py-2.5">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            Peso neto
+          </div>
+          <div className="text-sm font-bold tabular-nums text-slate-900">
+            {fmt(t.PesoNetoTotalKg)} kg
+          </div>
+        </div>
+        <div className="rounded-lg bg-slate-50 px-3 py-2.5">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            Gramaje prom.
+          </div>
+          <div className="text-sm font-bold tabular-nums text-slate-900">
+            {fmt(t.GramajePromedio)} g/m²
+          </div>
+        </div>
+      </div>
+
+      <div className={cn("flex items-center justify-end gap-1.5 text-xs font-bold", t.text)}>
+        Ver bobinas
+        <ArrowRight size={14} strokeWidth={2.75} />
+      </div>
+    </button>
   );
 }

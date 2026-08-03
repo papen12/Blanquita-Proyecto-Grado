@@ -1,7 +1,7 @@
 import { Plus, Pause, Play, Ban, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { dateFormatter } from "@/utils/dateFormater";
+import { dateFormatter } from "@/utils/dates";
 
 export default function CardPausada({ p, procesando, onInsertar, onReanudar, onCancelar }) {
   return (

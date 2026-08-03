@@ -14,7 +14,7 @@ import {
   darDeBajaBobina,
 } from "../../../services/BobinaPapel/Inventario";
 import { iniciarProduccion } from "../../../services/BobinaPapel/Produccion";
-import { dateFormatter } from "@/utils/dateFormater";
+import { dateFormatter } from "@/utils/dates";
 
 import { ACENTOS, fmt } from "./constantes";
 import { RolloIcono } from "./Iconos";

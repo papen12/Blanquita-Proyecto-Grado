@@ -2,7 +2,7 @@ import {
   IngresoPalletRequest,
   IngresoPalletResponse
 } from "../../models/Pallet/Pallet";
-import { manejarErrorBackend } from "@/utils/Error";
+import { manejarErrorBackend } from "@/utils/validators";
 
 
 export async function cargarLotePallet(idProveedor, idTipoPallet, pallets) {

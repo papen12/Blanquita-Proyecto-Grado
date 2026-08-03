@@ -7,7 +7,7 @@ import {
   DarDeBajaPalletResponse,
   PalletFueraInventarioResponse
 } from "../../models/Pallet/Inventario";
-import { manejarErrorBackend } from "@/utils/Error";
+import { manejarErrorBackend } from "@/utils/validators";
 
 export async function verResumenInventarioPallet() {
   const response = await fetch("/api/pallet/inventario/resumen");

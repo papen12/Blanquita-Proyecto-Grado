@@ -47,7 +47,7 @@ import {
   insertarMovimientoLog,
 } from "../../../services/BobinaPapel/Produccion";
 import { movimientosOperador } from "../../../constants/MovimientoOperador";
-import { dateFormatter } from "@/utils/dateFormater";
+import { dateFormatter } from "@/utils/dates";
 import Header from "../../layout/Header";
 import CardActiva from "./CardActiva";
 import CardPausada from "./CardPausada";

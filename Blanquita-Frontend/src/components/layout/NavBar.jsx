@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { RutasNavBar } from "@/constants/NavBarRoutes";
 import { Icon, Menu, ChevronDown } from "lucide-react";
 import {
@@ -14,7 +15,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetClose,
 } from "@/components/ui/sheet";
 import {
   Accordion,
@@ -76,20 +76,19 @@ function ItemNav({ item, basePath }) {
   );
 }
 
-function ItemNavMovil({ item, basePath }) {
+function ItemNavMovil({ item, basePath, alNavegar }) {
   const rutaCompleta = `${basePath}/${item.ruta}`;
 
   if (!item.subrutas) {
     return (
-      <SheetClose asChild>
-        <a
-          href={`/${rutaCompleta}`}
-          className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-white hover:bg-[#20A7DB] focus-visible:bg-[#20A7DB] focus-visible:outline-none"
-        >
-          <IconoItem item={item} size={20} />
-          {item.titulo}
-        </a>
-      </SheetClose>
+      <a
+        href={`/${rutaCompleta}`}
+        onClick={alNavegar}
+        className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-white hover:bg-[#20A7DB] focus-visible:bg-[#20A7DB] focus-visible:outline-none"
+      >
+        <IconoItem item={item} size={20} />
+        {item.titulo}
+      </a>
     );
   }
 
@@ -100,21 +99,23 @@ function ItemNavMovil({ item, basePath }) {
           <IconoItem item={item} size={20} />
           {item.titulo}
         </span>
-        <ChevronDown size={18} className="shrink-0 transition-transform duration-200" />
+        <ChevronDown
+          size={18}
+          className="shrink-0 transition-transform duration-200 group-data-[panel-open]:rotate-180"
+        />
       </AccordionTrigger>
       <AccordionContent className="pb-1">
         <ul className="ml-5 flex flex-col gap-1 border-l-2 border-[#A0D9EF] pl-3">
           {item.subrutas.map((sub) => (
             <li key={sub.ruta}>
-              <SheetClose asChild>
-                <a
-                  href={`/${rutaCompleta}/${sub.ruta}`}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-white hover:bg-[#20A7DB] focus-visible:bg-[#20A7DB] focus-visible:outline-none"
-                >
-                  <IconoItem item={sub} size={18} />
-                  {sub.titulo}
-                </a>
-              </SheetClose>
+              <a
+                href={`/${rutaCompleta}/${sub.ruta}`}
+                onClick={alNavegar}
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-white hover:bg-[#20A7DB] focus-visible:bg-[#20A7DB] focus-visible:outline-none"
+              >
+                <IconoItem item={sub} size={18} />
+                {sub.titulo}
+              </a>
             </li>
           ))}
         </ul>
@@ -125,6 +126,7 @@ function ItemNavMovil({ item, basePath }) {
 
 export default function NavBar({ idRol }) {
   const prefijo = PREFIJO_POR_ROL[idRol];
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
   return (
     <nav
@@ -137,7 +139,7 @@ export default function NavBar({ idRol }) {
         borderBottom: "2px solid #A0D9EF",
       }}
     >
-      <Sheet>
+      <Sheet open={menuAbierto} onOpenChange={setMenuAbierto}>
         <SheetTrigger
           aria-label="Abrir menú"
           className="md:hidden absolute left-4 flex items-center justify-center rounded-lg p-2 text-white hover:bg-[#20A7DB] focus-visible:bg-[#20A7DB] focus-visible:outline-none"
@@ -159,9 +161,17 @@ export default function NavBar({ idRol }) {
             />
           </SheetHeader>
 
-          <Accordion type="single" collapsible className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+          <Accordion
+            openMultiple={false}
+            className="flex flex-1 flex-col gap-1 overflow-y-auto p-3"
+          >
             {RutasNavBar.map((item) => (
-              <ItemNavMovil key={item.ruta} item={item} basePath={prefijo} />
+              <ItemNavMovil
+                key={item.ruta}
+                item={item}
+                basePath={prefijo}
+                alNavegar={() => setMenuAbierto(false)}
+              />
             ))}
           </Accordion>
         </SheetContent>

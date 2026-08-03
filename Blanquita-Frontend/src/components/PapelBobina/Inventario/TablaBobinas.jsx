@@ -8,7 +8,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { dateFormatter } from "@/utils/dateFormater";
+import { dateFormatter } from "@/utils/dates";
 import { fmt } from "./constantes";
 
 export function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle }) {

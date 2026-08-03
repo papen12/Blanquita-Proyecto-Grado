@@ -30,7 +30,7 @@ import {
   reingresarPalletInventario,
   darDeBajaPallet,
 } from "../../services/Pallet/Inventario";
-import { dateFormatter } from "@/utils/dateFormater";
+import { dateFormatter } from "@/utils/dates";
 
 export const ACENTOS = [
   {

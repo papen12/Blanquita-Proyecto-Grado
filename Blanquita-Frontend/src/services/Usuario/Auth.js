@@ -5,7 +5,7 @@ import {
   RefreshResponse,
   LogoutResponse
 } from "../../models/Usuario/Auth";
-import { manejarErrorBackend } from "@/utils/Error";
+import { manejarErrorBackend } from "@/utils/validators";
 
 const BACKEND_URL = import.meta.env.BACKEND_URL;
 

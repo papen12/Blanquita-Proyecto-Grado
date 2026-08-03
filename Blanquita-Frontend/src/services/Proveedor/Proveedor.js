@@ -1,5 +1,5 @@
 import { ProveedorForm } from "../../models/Proveedor/Proveedor";
-import { manejarErrorBackend } from "@/utils/Error";
+import { manejarErrorBackend } from "@/utils/validators";
 
 export async function ObtenerProveedoresForm() {
   const response = await fetch("/api/proveedor/formulario");

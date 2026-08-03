@@ -57,7 +57,7 @@ class InventarioBobinaPapelService:
         if not resultado:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No hay bobinas en almacén para el tipo de bobina con id {data.IdTipoBobina}"
+                detail=f"No hay bobinas en almacén."
             )
 
         return [VerDetalleInventarioBobinaPapelResponse(**fila) for fila in resultado]

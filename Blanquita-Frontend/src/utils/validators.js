@@ -1,4 +1,7 @@
- export async function manejarErrorBackend(response) {
+import { Roles } from "@/constants/Roles";
+
+
+export async function manejarErrorBackend(response) {
   const data = await response.json().catch(() => ({}));
 
   if (response.status === 401) {
@@ -11,3 +14,6 @@
   error.status = response.status;
   throw error;
 }
+
+
+export const EsEncargado=(idRol)=> idRol===Roles.Encargado

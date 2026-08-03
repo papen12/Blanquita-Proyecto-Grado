@@ -21,7 +21,7 @@ import {
   cargarLoteBobinaPapel,
 } from "../../../services/BobinaPapel/BobinaPapel";
 import { ObtenerProveedoresForm } from "../../../services/Proveedor/Proveedor";
-import { dateFormatter } from "@/utils/dateFormater";
+import { dateFormatter } from "@/utils/dates";
 
 const fmt = (n) =>
   Number(n || 0).toLocaleString("es-BO", {

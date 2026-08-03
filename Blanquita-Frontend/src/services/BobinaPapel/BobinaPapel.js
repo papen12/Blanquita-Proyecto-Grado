@@ -1,5 +1,5 @@
 import { IngresoModelo, IngresoLoteBobinaPapelResponse,TipoBobinaPapelIngreso } from "../../models/BobinaPapel/BobinaPapel";
-import { manejarErrorBackend } from "@/utils/Error";
+import { manejarErrorBackend } from "@/utils/validators";
 export async function cargarLoteBobinaPapel(idProveedor, idTipoBobina, bobinas) {
   const payload = IngresoModelo({
     IdProveedor: idProveedor,

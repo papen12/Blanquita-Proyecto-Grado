@@ -14,7 +14,7 @@ import {
   VerProduccionBobinaTuboResponse,
   VerPausasProduccionBobinaTuboActivasResponse
 } from "../../models/BobinaPapel/Produccion";
-import { manejarErrorBackend } from "@/utils/Error";
+import { manejarErrorBackend } from "@/utils/validators";
 
 
 export async function iniciarProduccion(idBobina1, idBobina2) {

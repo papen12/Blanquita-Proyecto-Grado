@@ -7,7 +7,7 @@ import {
   DarDeBajaBobinaResponse,
   VerBobinasPapelFueraInventarioResponse
 } from "../../models/BobinaPapel/Inventario";
-import { manejarErrorBackend } from "@/utils/Error";
+import { manejarErrorBackend } from "@/utils/validators";
 
 
 export async function verResumenInventarioBobinaPapel() {

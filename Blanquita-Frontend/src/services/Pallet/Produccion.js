@@ -15,7 +15,7 @@ import {
   VerPausasProduccionPalletActivasResponse
 } from "../../models/Pallet/ProduccionPallet";
 
-import { manejarErrorBackend } from "@/utils/Error";
+import { manejarErrorBackend } from "@/utils/validators";
 
 export async function iniciarProduccionPallet(idPallet) {
   const payload = IniciarProduccionPalletRequest(idPallet);
