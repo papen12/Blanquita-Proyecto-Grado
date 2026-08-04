@@ -62,7 +62,7 @@ def IniciarProduccion(
 )
 def FinalizarProduccion(
     data: FinalizarProduccionBobinaTuboRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.FinalizarProduccion(data, usuario_actual["IdUsuario"])
@@ -75,7 +75,7 @@ def FinalizarProduccion(
 )
 def PausarProduccion(
     data: PausarProduccionBobinaTuboRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.PausarProduccion(data, usuario_actual["IdUsuario"])
@@ -88,7 +88,7 @@ def PausarProduccion(
 )
 def ReanudarProduccion(
     data: ReanudarProduccionBobinaTuboRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.ReanudarProduccion(data, usuario_actual["IdUsuario"])
@@ -101,7 +101,7 @@ def ReanudarProduccion(
 )
 def CancelarProduccion(
     data: CancelarProduccionBobinaTuboRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.CancelarProduccion(data, usuario_actual["IdUsuario"])

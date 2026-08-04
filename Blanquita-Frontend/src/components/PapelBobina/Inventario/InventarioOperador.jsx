@@ -217,7 +217,7 @@ export default function InventarioBobinasPapel({ usuario }) {
   };
 
   return (
-    <div className="mt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
+    <div className="mt-20 md:mt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <Header
         titulo="Almacén · Materia Prima"
         subtitulo="Inventario de Bobinas de Papel"

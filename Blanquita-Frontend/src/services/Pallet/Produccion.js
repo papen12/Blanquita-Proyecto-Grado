@@ -13,7 +13,7 @@ import {
   VerProduccionPalletResponse,
   VerPausasProduccionPalletActivasRequest,
   VerPausasProduccionPalletActivasResponse
-} from "../../models/Pallet/ProduccionPallet";
+} from "../../models/Pallet/Produccion";
 
 import { manejarErrorBackend } from "@/utils/validators";
 
@@ -116,8 +116,8 @@ export async function verProduccionPallet(idTipoPallet) {
 
   const query = params.toString();
   const url = query
-    ? `/api/pallet/produccion/ver?${query}`
-    : "/api/pallet/produccion/ver";
+    ? `/api/pallet/produccion/activas?${query}`
+    : "/api/pallet/produccion/activas";
 
   const response = await fetch(url);
 
@@ -139,8 +139,8 @@ export async function verPausasProduccionPalletActivas(idTipoPallet) {
 
   const query = params.toString();
   const url = query
-    ? `/api/pallet/produccion/pausas-activas?${query}`
-    : "/api/pallet/produccion/pausas-activas";
+    ? `/api/pallet/produccion/pausadas?${query}`
+    : "/api/pallet/produccion/pausadas";
 
   const response = await fetch(url);
 

@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
+
+
 const CLASES_ACCION =
   "h-11 gap-2 bg-white font-bold text-c3 shadow-md hover:bg-slate-100";
 

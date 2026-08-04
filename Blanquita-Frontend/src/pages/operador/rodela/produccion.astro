@@ -1,0 +1,13 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import ProduccionPalletTubo from '@/components/Pallet/Produccion';
+const { usuario } = Astro.locals;
+import NavBar from '@/components/layout/NavBar';
+import BottomBar from '@/components/layout/BottomBar';
+---
+
+<Layout>
+	<NavBar client:load idRol={usuario.IdRol} />
+	<ProduccionPalletTubo client:load usuario={usuario}/>
+	<BottomBar idRol={usuario.IdRol} subRuta={"rodela"} client:load/>
+</Layout>

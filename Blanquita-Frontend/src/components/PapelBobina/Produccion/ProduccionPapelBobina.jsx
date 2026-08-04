@@ -279,7 +279,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900 mt-30">
+    <div className="pt-20 md:pt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <Header titulo={"Producción"} subtitulo={"Producción de Bobina Tubo"} />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">

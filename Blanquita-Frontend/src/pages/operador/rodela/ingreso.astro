@@ -1,13 +1,13 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import  InventarioPallets from '@/components/Pallet/Inventario'
 const { usuario } = Astro.locals;
 import NavBar from '@/components/layout/NavBar';
+import IngresoBobinasPapel from '@/components/PapelBobina/InsertarLote/Ingresobobinaspapel';
 import BottomBar from '@/components/layout/BottomBar';
 ---
 
 <Layout>
 	<NavBar client:load idRol={usuario.IdRol} />
-	<InventarioPallets client:load usuario={usuario}/>
+	<IngresoBobinasPapel client:load usuario={usuario}/>
 	<BottomBar idRol={usuario.IdRol} subRuta={"rodela"} client:load/>
 </Layout>

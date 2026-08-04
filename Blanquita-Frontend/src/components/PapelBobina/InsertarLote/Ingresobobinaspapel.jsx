@@ -201,7 +201,7 @@ export default function IngresoBobinasPapel({ usuario }) {
   const tipoActual = tipos.find((t) => t.IdTipoBobina === idTipoBobina);
 
   return (
-    <div className="mt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
+    <div className="pt-20 md:pt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <Header
         volver
         titulo="Almacén · Materia Prima"

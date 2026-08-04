@@ -22,7 +22,9 @@ export async function verResumenInventarioPallet() {
 }
 
 export async function verDetalleInventarioPallet(idTipoPallet) {
-  const response = await fetch(`/api/pallet/inventario/detalle/${idTipoPallet}`);
+  const params = new URLSearchParams({ IdTipoPallet: idTipoPallet });
+
+  const response = await fetch(`/api/pallet/inventario/detalle?${params.toString()}`);
 
   if (!response.ok) {
     await manejarErrorBackend(response);
