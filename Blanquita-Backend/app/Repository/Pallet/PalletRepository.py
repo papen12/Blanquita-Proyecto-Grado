@@ -17,4 +17,8 @@ class PalletRepository:
         """
         return self.caller.LlamarUnRegistro(sql, params)
     
-    
+    def ObtenerTipoPallet(self)->list[dict]:
+        sql="""
+            select "IdTipoPallet","NumeroRodelas" from "TipoPallet"
+        """
+        return self.caller.LlamarFuncion(sql,{})

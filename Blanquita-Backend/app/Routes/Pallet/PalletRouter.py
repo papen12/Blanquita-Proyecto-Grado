@@ -4,11 +4,15 @@ from app.Config.supabase import get_db
 
 from app.Services.Pallet.PalletService import PalletService
 
-
+from typing import List
 from app.Auth.Dependencies import require_role
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR
 
-from app.Models.Pallet.Pallet import IngresoPalletRequest, IngresoPalletResponse
+from app.Models.Pallet.Pallet import (
+    IngresoPalletRequest, 
+    IngresoPalletResponse,
+    TipoPapllet
+)
 
 
 PalletRouter = APIRouter(prefix="/pallet", tags=["Pallet CRUD y Ingreso"])
@@ -31,5 +35,15 @@ def CargarLotePallet(
     service: PalletService = Depends(pallet_service)
 ):
     return service.InsertarPallets(data, usuario_actual["IdUsuario"])
+
+@PalletRouter.get(
+    "/obtenertipos",
+    response_model=List[TipoPapllet],
+    status_code=200
+)
+def ObtenerTiposPallet(
+    usuario_actual:dict=Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR])),
+    service:PalletService=Depends(pallet_service)
+):  return service.ObtenerTiposPallet()
 
 

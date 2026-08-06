@@ -16,3 +16,9 @@ class IngresoPalletRequest(BaseModel):
 class IngresoPalletResponse(BaseModel):
     FechaRecepcion: date
     CantidadPallets: int
+
+
+
+class TipoPapllet(BaseModel):
+    IdTipoPallet:int
+    NombreTipoPallet:str

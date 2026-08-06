@@ -1,10 +1,14 @@
 import json
-
+from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 from app.Repository.Pallet.PalletRepository import PalletRepository
-from app.Models.Pallet.Pallet import IngresoPalletRequest, IngresoPalletResponse
+from app.Models.Pallet.Pallet import (
+    IngresoPalletRequest, 
+    IngresoPalletResponse,
+    TipoPapllet
+)
 
 
 class PalletService:
@@ -40,3 +44,15 @@ class PalletService:
             )
 
         return IngresoPalletResponse(**resultado)
+
+    def ObtenerTiposPallet(self)->List[TipoPapllet]:
+        try:
+            resultado=self.repository.ObtenerTipoPallet()
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail= "No se pudieron obtener los tipos de pallet"
+            )
+        if not resultado:
+            return []
+        return [TipoPapllet(**tipo) for tipo in resultado]

@@ -11,7 +11,8 @@ from app.Models.Pallet.InventarioPallet import (
     ReingresarPalletInventarioResponse,
     DarDeBajaPalletRequest,
     DarDeBajaPalletResponse,
-    PalletFueraInventarioResponse
+    PalletFueraInventarioResponse,
+    
 )
 
 
