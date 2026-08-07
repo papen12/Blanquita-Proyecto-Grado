@@ -56,8 +56,10 @@ const ACENTOS = [
   },
 ];
 
-const fmt = (n) =>
-  Number(n || 0).toLocaleString("es-BO", { maximumFractionDigits: 1 });
+const etiquetaRodelas = (n) => {
+  const cantidad = Number(n || 0);
+  return `${cantidad} ${cantidad === 1 ? "rodela" : "rodelas"}`;
+};
 
 function PalletIcono({ className }) {
   return (
@@ -95,19 +97,6 @@ function FueraIcono({ className }) {
   );
 }
 
-function MiniStat({ label, value }) {
-  return (
-    <div className="flex-1 rounded-lg border border-slate-200 bg-white/70 px-2.5 py-1.5">
-      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-        {label}
-      </div>
-      <div className="text-sm font-bold tabular-nums text-slate-900">
-        {value}
-      </div>
-    </div>
-  );
-}
-
 function TarjetaTipo({ tipo: t, activo, onClick }) {
   return (
     <button
@@ -141,22 +130,12 @@ function TarjetaTipo({ tipo: t, activo, onClick }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-lg bg-slate-50 px-3 py-2.5">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Peso neto
-          </div>
-          <div className="text-sm font-bold tabular-nums text-slate-900">
-            {fmt(t.PesoNetoTotalKg)} kg
-          </div>
+      <div className="rounded-lg bg-slate-50 px-3 py-2.5">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          Tipo de rodela
         </div>
-        <div className="rounded-lg bg-slate-50 px-3 py-2.5">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Peso prom.
-          </div>
-          <div className="text-sm font-bold tabular-nums text-slate-900">
-            {fmt(t.PesoPromedioKg)} kg
-          </div>
+        <div className="text-sm font-bold text-slate-900">
+          {etiquetaRodelas(t.NumeroRodelas)}
         </div>
       </div>
 
@@ -221,17 +200,14 @@ function TarjetaFueraInventario({ cantidad, activo, onClick }) {
 function TablaPallets({ pallets, tipoSel, marcadas, onToggle }) {
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-[640px]">
+      <Table className="min-w-[520px]">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-11 pl-5" />
             <TableHead>Código</TableHead>
             <TableHead>Lote</TableHead>
             <TableHead>Recepción</TableHead>
-            <TableHead>Proveedor</TableHead>
-            <TableHead className="text-right">Cantidad tubos</TableHead>
-            <TableHead className="text-right">Peso bruto</TableHead>
-            <TableHead className="pr-5 text-right">Peso neto</TableHead>
+            <TableHead className="pr-5">Proveedor</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -262,17 +238,8 @@ function TablaPallets({ pallets, tipoSel, marcadas, onToggle }) {
                 <TableCell className="text-slate-600">
                   {dateFormatter(p.FechaRecepcion)}
                 </TableCell>
-                <TableCell className="text-slate-600">
+                <TableCell className="pr-5 text-slate-600">
                   {p.NombreProveedor}
-                </TableCell>
-                <TableCell className="text-right tabular-nums text-slate-600">
-                  {fmt(p.CantidadTubos)}
-                </TableCell>
-                <TableCell className="text-right tabular-nums text-slate-600">
-                  {fmt(p.PesoBrutoKg)} kg
-                </TableCell>
-                <TableCell className="pr-5 text-right font-bold tabular-nums text-slate-900">
-                  {fmt(p.PesoNetoKg)} kg
                 </TableCell>
               </TableRow>
             );
@@ -319,11 +286,6 @@ function ListaMovilPallets({ pallets, tipoSel, marcadas, onToggle }) {
                 {dateFormatter(p.FechaRecepcion)}
               </span>
               <span>{p.NombreProveedor}</span>
-            </div>
-            <div className="flex gap-2">
-              <MiniStat label="Tubos" value={fmt(p.CantidadTubos)} />
-              <MiniStat label="Bruto" value={`${fmt(p.PesoBrutoKg)} kg`} />
-              <MiniStat label="Neto" value={`${fmt(p.PesoNetoKg)} kg`} />
             </div>
           </div>
         );
@@ -399,9 +361,6 @@ export default function InventarioPallets({ usuario }) {
   const tipoSel = sel ? tipos.find((t) => t.IdTipoPallet === sel) : null;
 
   const totalPallets = tipos.reduce((s, t) => s + t.CantidadPallets, 0);
-  const totalPesoFmt = fmt(
-    tipos.reduce((s, t) => s + Number(t.PesoNetoTotalKg || 0), 0),
-  );
   const listas = marcadas.length === requeridas;
 
   const palletsFiltrados = busquedaCodigo.trim()
@@ -535,7 +494,7 @@ export default function InventarioPallets({ usuario }) {
           </div>
           <div className="text-sm text-slate-500">
             Solo pallets <strong className="text-slate-700">en almacén</strong>{" "}
-            · {totalPallets} pallets · {totalPesoFmt} kg netos
+            · {totalPallets} pallets
           </div>
         </div>
 
@@ -584,7 +543,8 @@ export default function InventarioPallets({ usuario }) {
                   Pallets · {tipoSel.NombreTipoPallet}
                 </div>
                 <div className="text-sm font-semibold text-slate-500">
-                  {tipoSel.CantidadPallets} en almacén
+                  {tipoSel.CantidadPallets} en almacén ·{" "}
+                  {etiquetaRodelas(tipoSel.NumeroRodelas)}
                 </div>
                 <Badge
                   variant="outline"
@@ -783,8 +743,6 @@ export default function InventarioPallets({ usuario }) {
                       <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
                         <span>{p.NombreProveedor}</span>
                         <span>Recepción: {dateFormatter(p.FechaRecepcion)}</span>
-                        <span>Bruto: {fmt(p.PesoBrutoKg)} kg</span>
-                        <span>Tubos: {fmt(p.CantidadTubos)}</span>
                       </div>
                       {p.UltimaObservacion && (
                         <div className="text-[12.5px] italic text-slate-500">
