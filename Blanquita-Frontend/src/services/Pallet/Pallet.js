@@ -1,7 +1,8 @@
 import {
   IngresoPalletRequest,
-  IngresoPalletResponse
-} from "../../models/Pallet/Pallet";
+  IngresoPalletResponse,
+  TipoPalletIngreso
+} from "../../models/Pallet/Palet";
 import { manejarErrorBackend } from "@/utils/validators";
 
 
@@ -21,4 +22,13 @@ export async function cargarLotePallet(idProveedor, idTipoPallet, pallets) {
   const data = await response.json();
 
   return IngresoPalletResponse(data);
+}
+
+export async function ObtenerTiposPallet(){
+  const response= await fetch("/api/pallet/obtenertipos")
+  if(!response.ok){
+    await manejarErrorBackend(response)
+  }
+  const data = await response.json()
+  return data.map(TipoPalletIngreso)
 }

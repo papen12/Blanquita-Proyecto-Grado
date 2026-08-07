@@ -12,3 +12,9 @@ export const IngresoPalletResponse = (data) => ({
   FechaRecepcion: data.FechaRecepcion,
   CantidadPallets: data.CantidadPallets
 });
+
+
+export const TipoPalletIngreso=(data)=>({
+  IdTipoPallet:data.IdTipoPallet,
+  NumeroRodelas:data.NumeroRodelas
+})

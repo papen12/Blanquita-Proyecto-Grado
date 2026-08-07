@@ -483,7 +483,7 @@ export default function InventarioPallets({ usuario }) {
         accion={{
           texto: "Registrar ingreso",
           icono: Plus,
-          href: "/rodela/ingreso",
+          href: "/operador/rodela/ingreso",
         }}
       />
 

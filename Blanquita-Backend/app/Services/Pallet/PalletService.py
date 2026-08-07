@@ -7,7 +7,7 @@ from app.Repository.Pallet.PalletRepository import PalletRepository
 from app.Models.Pallet.Pallet import (
     IngresoPalletRequest, 
     IngresoPalletResponse,
-    TipoPapllet
+    TipoPallet
 )
 
 
@@ -45,7 +45,7 @@ class PalletService:
 
         return IngresoPalletResponse(**resultado)
 
-    def ObtenerTiposPallet(self)->List[TipoPapllet]:
+    def ObtenerTiposPallet(self)->List[TipoPallet]:
         try:
             resultado=self.repository.ObtenerTipoPallet()
         except SQLAlchemyError:
@@ -55,4 +55,4 @@ class PalletService:
             )
         if not resultado:
             return []
-        return [TipoPapllet(**tipo) for tipo in resultado]
+        return [TipoPallet(**tipo) for tipo in resultado]

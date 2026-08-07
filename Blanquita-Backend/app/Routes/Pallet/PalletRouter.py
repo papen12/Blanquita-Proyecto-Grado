@@ -11,7 +11,7 @@ from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR
 from app.Models.Pallet.Pallet import (
     IngresoPalletRequest, 
     IngresoPalletResponse,
-    TipoPapllet
+    TipoPallet
 )
 
 
@@ -38,7 +38,7 @@ def CargarLotePallet(
 
 @PalletRouter.get(
     "/obtenertipos",
-    response_model=List[TipoPapllet],
+    response_model=List[TipoPallet],
     status_code=200
 )
 def ObtenerTiposPallet(

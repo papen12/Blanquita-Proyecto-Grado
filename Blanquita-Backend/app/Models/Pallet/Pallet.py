@@ -1,5 +1,4 @@
 from datetime import date
-
 from pydantic import BaseModel
 
 
@@ -19,6 +18,6 @@ class IngresoPalletResponse(BaseModel):
 
 
 
-class TipoPapllet(BaseModel):
-    IdTipoPallet:int
-    NombreTipoPallet:str
+class TipoPallet(BaseModel):
+    IdTipoPallet: int
+    NumeroRodelas: int
