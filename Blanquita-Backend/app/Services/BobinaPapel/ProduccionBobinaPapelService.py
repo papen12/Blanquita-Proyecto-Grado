@@ -236,6 +236,11 @@ class ProduccionBobinaPapelService:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="CantidadLogs debe ser un valor positivo",
                 )
+            if "La cantiddad máxima de ingreso es de 50" in mensaje:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail="La cantiddad máxima de ingreso es de 50"
+                )
             if "No existe la producción" in mensaje:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,

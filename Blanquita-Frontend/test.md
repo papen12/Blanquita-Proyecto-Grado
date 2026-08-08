@@ -1,485 +1,416 @@
-import { ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Plus, Pause, CheckCircle2, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RolloIcono } from "./Iconos";
-import { fmt } from "./constantes";
-
-export function TarjetaTipo({ tipo: t, activo, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex flex-col gap-3.5 rounded-2xl border-2 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
-        activo ? t.border : "border-slate-200",
-      )}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <RolloIcono className={cn("h-8 w-8 shrink-0", t.text)} />
-          <div className="text-[17px] font-extrabold text-slate-900">
-            {t.NombreTipoBobina}
-          </div>
-        </div>
-        <Badge
-          variant="outline"
-          className={cn("border-0 font-bold", t.soft, t.text)}
-        >
-          {t.badge}
-        </Badge>
-      </div>
-
-      <div className="flex items-baseline gap-1.5">
-        <div className={cn("text-4xl font-extrabold tabular-nums", t.text)}>
-          {t.CantidadBobinas}
-        </div>
-        <div className="text-sm font-semibold text-slate-500">
-          bobinas en almacén
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-lg bg-slate-50 px-3 py-2.5">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Peso neto
-          </div>
-          <div className="text-sm font-bold tabular-nums text-slate-900">
-            {fmt(t.PesoNetoTotalKg)} kg
-          </div>
-        </div>
-        <div className="rounded-lg bg-slate-50 px-3 py-2.5">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Gramaje prom.
-          </div>
-          <div className="text-sm font-bold tabular-nums text-slate-900">
-            {fmt(t.GramajePromedio)} g/m²
-          </div>
-        </div>
-      </div>
-
-      <div className={cn("flex items-center justify-end gap-1.5 text-xs font-bold", t.text)}>
-        Ver bobinas
-        <ArrowRight size={14} strokeWidth={2.75} />
-      </div>
-    </button>
-  );
-}
-
-import { ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { FueraIcono } from "./Iconos";
-
-export function TarjetaFueraInventario({ cantidad, activo, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex flex-col gap-3.5 rounded-2xl border-2 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
-        activo ? "border-amber-400" : "border-slate-200",
-      )}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <FueraIcono className="h-8 w-8 shrink-0 text-amber-600" />
-          <div className="text-[17px] font-extrabold text-slate-900">
-            Fuera de inventario
-          </div>
-        </div>
-        <Badge
-          variant="outline"
-          className="border-0 bg-amber-100 font-bold text-amber-700"
-        >
-          {cantidad === 0 ? "Vacío" : "Requiere acción"}
-        </Badge>
-      </div>
-
-      <div className="flex items-baseline gap-1.5">
-        <div className="text-4xl font-extrabold tabular-nums text-amber-600">
-          {cantidad}
-        </div>
-        <div className="text-sm font-semibold text-slate-500">
-          bobinas dadas de baja o retiradas
-        </div>
-      </div>
-
-      <div className="rounded-lg bg-amber-50 px-3 py-2.5">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
-          Acciones disponibles
-        </div>
-        <div className="text-sm font-bold text-slate-900">
-          Reingresar o retirar definitivamente
-        </div>
-      </div>
-
-      <div className="flex items-center justify-end gap-1.5 text-xs font-bold text-amber-600">
-        {activo ? "Ocultar lista" : "Ver bobinas"}
-        <ArrowRight size={14} strokeWidth={2.75} />
-      </div>
-    </button>
-  );
-}
-
-
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
 import { dateFormatter } from "@/utils/dates";
-import { fmt } from "./constantes";
 
-export function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
+export default function CardActiva({ p, onInsertar, onPausar, onFinalizar }) {
   return (
-    <div className="overflow-x-auto">
-      <Table className="min-w-[640px]">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="w-11 pl-5" />
-            <TableHead>Código</TableHead>
-            <TableHead>Lote</TableHead>
-            <TableHead>Recepción</TableHead>
-            <TableHead>Proveedor</TableHead>
-            <TableHead className="text-right">Peso bruto</TableHead>
-            <TableHead className="text-right">Peso neto</TableHead>
-            <TableHead className="pr-5 text-right">Gramaje</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {bobinas.map((b) => {
-            const on = marcadas.includes(b.CodigoBobina);
-            return (
-              <TableRow
-                key={b.IdBobinaPapel}
-                onClick={() => onToggle(b.CodigoBobina)}
-                className={cn("cursor-pointer", on && tipoSel.soft)}
-              >
-                <TableCell className="pl-5">
-                  <div
-                    className={cn(
-                      "flex h-5 w-5 items-center justify-center rounded-md border-2",
-                      on
-                        ? cn(tipoSel.bg, "border-transparent text-white")
-                        : "border-slate-300",
-                    )}
-                  >
-                    {on && <Check size={13} strokeWidth={3.5} />}
-                  </div>
-                </TableCell>
-                <TableCell className={cn("font-mono font-bold", tipoSel.text)}>
-                  {b.CodigoBobina}
-                </TableCell>
-                <TableCell className="text-slate-600">{b.CodigoLote}</TableCell>
-                <TableCell className="text-slate-600">
-                  {dateFormatter(b.FechaRecepcion)}
-                </TableCell>
-                <TableCell className="text-slate-600">
-                  {b.NombreProveedor}
-                </TableCell>
-                <TableCell className="text-right tabular-nums text-slate-600">
-                  {fmt(b.PesoBrutoKg)} kg
-                </TableCell>
-                <TableCell className="text-right font-bold tabular-nums text-slate-900">
-                  {fmt(b.PesoNetoKg)} kg
-                </TableCell>
-                <TableCell className="pr-5 text-right tabular-nums text-slate-600">
-                  {fmt(b.Gramaje)} g/m²
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
-  );
-}
-
-
-
-export function MiniStat({ label, value }) {
-  return (
-    <div className="flex-1 rounded-lg border border-slate-200 bg-white/70 px-2.5 py-1.5">
-      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-        {label}
+    <div className="flex flex-col gap-3.5 rounded-2xl border-2 border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-1">
+          <div className="text-[17px] font-extrabold text-slate-900">
+            {p.NombreTipoBobina}
+          </div>
+          <div className="font-mono text-sm font-bold text-c3">
+            {p.CodigoBobina1} + {p.CodigoBobina2}
+          </div>
+        </div>
+        <Badge className="border-0 bg-emerald-100 font-bold text-emerald-700">
+          {p.NombreEstadoProduccion}
+        </Badge>
       </div>
-      <div className="text-sm font-bold tabular-nums text-slate-900">
-        {value}
+
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
+        <span className="flex items-center gap-1">
+          <Clock size={13} strokeWidth={2.75} />
+          {dateFormatter(p.FechaInicioProduccion)}
+        </span>
+        <span>Turno: {p.NombreTurno}</span>
+      </div>
+
+      <div className="rounded-lg bg-slate-50 px-3 py-2.5">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          Logs registrados
+        </div>
+        <div className="text-2xl font-extrabold tabular-nums text-slate-900">
+          {p.CantidadLogsActual}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-around gap-2">
+        <Button
+          onClick={onInsertar}
+          className="h-11 min-w-[100px] flex-1 basis-[30%] justify-center gap-1.5 bg-gradient-to-r from-c3 to-c4 font-bold hover:opacity-90"
+        >
+          <Plus size={15} strokeWidth={2.75} />
+          Insertar
+        </Button>
+        <Button
+          onClick={onPausar}
+          variant="outline"
+          className="h-11 min-w-[100px] flex-1 basis-[30%] justify-center gap-1.5 border-amber-300 font-bold text-amber-600 hover:bg-amber-50"
+        >
+          <Pause size={15} strokeWidth={2.75} />
+          Pausar
+        </Button>
+        <Button
+          onClick={onFinalizar}
+          variant="outline"
+          className="h-11 min-w-[100px] flex-1 basis-[30%] justify-center gap-1.5 border-emerald-300 font-bold text-emerald-600 hover:bg-emerald-50"
+        >
+          <CheckCircle2 size={15} strokeWidth={2.75} />
+          Finalizar
+        </Button>
       </div>
     </div>
   );
 }
 
 
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Plus, Pause, Play, Ban, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { dateFormatter } from "@/utils/dates";
-import { fmt } from "./constantes";
-import { MiniStat } from "./MiniStat";
 
-export function ListaMovilBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
+export default function CardPausada({ p, procesando, onInsertar, onReanudar, onCancelar }) {
   return (
-    <div className="flex flex-col gap-2.5 p-3.5">
-      {bobinas.map((b) => {
-        const on = marcadas.includes(b.CodigoBobina);
-        return (
-          <div
-            key={b.IdBobinaPapel}
-            onClick={() => onToggle(b.CodigoBobina)}
-            className={cn(
-              "flex flex-col gap-2.5 rounded-2xl border-2 p-3.5",
-              on ? tipoSel.soft : "border-slate-200 bg-white",
-              on && tipoSel.border,
-            )}
-          >
-            <div className="flex items-center justify-between gap-2.5">
-              <div className={cn("font-mono text-[15px] font-extrabold", tipoSel.text)}>
-                {b.CodigoBobina}
-              </div>
-              <div
-                className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2",
-                  on
-                    ? cn(tipoSel.bg, "border-transparent text-white")
-                    : "border-slate-300",
-                )}
-              >
-                {on && <Check size={14} strokeWidth={3.5} />}
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
-              <span>
-                <strong className="text-slate-900">{b.CodigoLote}</strong> ·{" "}
-                {dateFormatter(b.FechaRecepcion)}
-              </span>
-              <span>{b.NombreProveedor}</span>
-            </div>
-            <div className="flex gap-2">
-              <MiniStat label="Bruto" value={`${fmt(b.PesoBrutoKg)} kg`} />
-              <MiniStat label="Neto" value={`${fmt(b.PesoNetoKg)} kg`} />
-              <MiniStat label="Gramaje" value={`${fmt(b.Gramaje)} g/m²`} />
-            </div>
+    <div className="flex flex-col gap-3.5 rounded-2xl border-2 border-amber-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-1">
+          <div className="font-mono text-[15px] font-extrabold text-slate-900">
+            {p.CodigoBobina1} + {p.CodigoBobina2}
           </div>
-        );
-      })}
+        </div>
+        <Badge className="border-0 bg-amber-100 font-bold text-amber-700">
+          {p.NombreEstadoProduccion}
+        </Badge>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
+        <span className="flex items-center gap-1">
+          <Pause size={13} strokeWidth={2.75} />
+          Pausada: {dateFormatter(p.FechaHoraPausa)}
+        </span>
+      </div>
+
+      <div className="rounded-lg bg-slate-50 px-3 py-2.5">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          Logs registrados
+        </div>
+        <div className="text-2xl font-extrabold tabular-nums text-slate-900">
+          {p.CantidadLogsActual}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-around gap-2">
+        <Button
+          onClick={onInsertar}
+          className="h-11 min-w-[100px] flex-1 basis-[30%] justify-center gap-1.5 bg-gradient-to-r from-c3 to-c4 font-bold hover:opacity-90"
+        >
+          <Plus size={15} strokeWidth={2.75} />
+          Insertar
+        </Button>
+        <Button
+          onClick={onReanudar}
+          disabled={procesando}
+          variant="outline"
+          className="h-11 min-w-[100px] flex-1 basis-[30%] justify-center gap-1.5 border-c3/30 font-bold text-c3 hover:bg-c4/8"
+        >
+          {procesando ? (
+            <Loader2 size={15} className="animate-spin" />
+          ) : (
+            <>
+              <Play size={15} strokeWidth={2.75} />
+              Reanudar
+            </>
+          )}
+        </Button>
+        <Button
+          onClick={onCancelar}
+          variant="outline"
+          className="h-11 min-w-[100px] flex-1 basis-[30%] justify-center gap-1.5 border-red-300 font-bold text-red-600 hover:bg-red-50"
+        >
+          <Ban size={15} strokeWidth={2.75} />
+          Cancelar
+        </Button>
+      </div>
     </div>
   );
 }
 
 import { useState, useEffect } from "react";
-import { Plus, X, ArrowRight, Loader2, Search } from "lucide-react";
+import {
+  Plus,
+  Pause,
+  CheckCircle2,
+  Play,
+  Ban,
+  Loader2,
+  Clock,
+  Layers,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
-  verResumenInventarioBobinaPapel,
-  verDetalleInventarioBobinaPapel,
-  verBobinasPapelFueraInventario,
-  reingresarBobinaInventario,
-  darDeBajaBobina,
-} from "../../../services/BobinaPapel/Inventario";
-import { iniciarProduccion } from "../../../services/BobinaPapel/Produccion";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import SelectForModal from "@/components/layout/SelectForModal";
+import {
+  verProduccionBobinaTubo,
+  verPausasProduccionBobinaTuboActivas,
+  pausarProduccion,
+  reanudarProduccion,
+  finalizarProduccion,
+  cancelarProduccion,
+  insertarMovimientoLog,
+} from "../../../services/BobinaPapel/Produccion";
+import { movimientosOperador } from "../../../constants/MovimientoOperador";
 import { dateFormatter } from "@/utils/dates";
+import Header from "../../layout/Header";
+import CardActiva from "./CardActiva";
+import CardPausada from "./CardPausada";
 
-import { ACENTOS, fmt } from "./constantes";
-import { RolloIcono } from "./Iconos";
-import { TarjetaTipo } from "./TarjetaTipo";
-import { TarjetaFueraInventario } from "./TarjetaFueraInventario";
-import { TablaBobinas } from "./TablaBobinas";
-import { ListaMovilBobinas } from "./ListaMovilBobinas";
-import Header from "@/components/layout/Header";
+const LIMITE_CANTIDAD_LOGS = 50;
+const ID_TIPO_INGRESO = 1;
+const SEPARADOR = ". ";
 
-export default function InventarioBobinasPapel({ usuario }) {
-  const [tipos, setTipos] = useState([]);
-  const [loadingTipos, setLoadingTipos] = useState(true);
-  const [errorTipos, setErrorTipos] = useState("");
+export default function ProduccionBobinaTubo({ usuario }) {
+  const [vista, setVista] = useState("activas");
 
-  const [sel, setSel] = useState(null);
-  const [bobinasSel, setBobinasSel] = useState([]);
-  const [loadingDetalle, setLoadingDetalle] = useState(false);
-  const [errorDetalle, setErrorDetalle] = useState("");
-  const [busquedaCodigo, setBusquedaCodigo] = useState("");
+  const motivosPausa = [
+    "Falta de pegamento",
+    "Falta de personal para continuar la producción",
+  ];
 
-  const [marcadas, setMarcadas] = useState([]);
-  const [enviando, setEnviando] = useState(false);
+  const [activas, setActivas] = useState([]);
+  const [loadingActivas, setLoadingActivas] = useState(true);
+  const [errorActivas, setErrorActivas] = useState("");
 
-  const [mostrarFuera, setMostrarFuera] = useState(false);
-  const [fueraInventario, setFueraInventario] = useState([]);
-  const [loadingFuera, setLoadingFuera] = useState(false);
-  const [errorFuera, setErrorFuera] = useState("");
+  const [pausadas, setPausadas] = useState([]);
+  const [loadingPausadas, setLoadingPausadas] = useState(true);
+  const [errorPausadas, setErrorPausadas] = useState("");
+
   const [procesandoId, setProcesandoId] = useState(null);
 
+  const [modalInsertar, setModalInsertar] = useState({ open: false, produccion: null });
+  const [formTipoMovimiento, setFormTipoMovimiento] = useState("");
+  const [formCantidadLogs, setFormCantidadLogs] = useState("");
+  const [formObservacionLog, setFormObservacionLog] = useState("");
+  const [errorInsertar, setErrorInsertar] = useState("");
+  const [enviandoInsertar, setEnviandoInsertar] = useState(false);
+
+  const [modalPausar, setModalPausar] = useState({ open: false, produccion: null });
+  const [formMotivoPausa, setFormMotivoPausa] = useState("");
+  const [enviandoPausar, setEnviandoPausar] = useState(false);
+
+  const [modalCancelar, setModalCancelar] = useState({ open: false, produccion: null });
+  const [formMotivoCancelacion, setFormMotivoCancelacion] = useState("");
+  const [enviandoCancelar, setEnviandoCancelar] = useState(false);
+
+  const [alertFinalizar, setAlertFinalizar] = useState({ open: false, produccion: null });
+  const [enviandoFinalizar, setEnviandoFinalizar] = useState(false);
+
   useEffect(() => {
-    cargarResumen();
-    cargarFueraInventario();
+    cargarActivas();
+    cargarPausadas();
   }, []);
 
-  const cargarResumen = async () => {
-    setLoadingTipos(true);
-    setErrorTipos("");
+  const cargarActivas = async () => {
+    setLoadingActivas(true);
+    setErrorActivas("");
     try {
-      const data = await verResumenInventarioBobinaPapel();
-      const conMeta = data.map((t, i) => ({
-        ...t,
-        ...ACENTOS[i % ACENTOS.length],
-        badge:
-          t.CantidadBobinas === 0
-            ? "Sin stock"
-            : t.CantidadBobinas < 6
-              ? "Stock bajo"
-              : "Disponible",
-      }));
-      setTipos(conMeta);
+      const data = await verProduccionBobinaTubo();
+      setActivas(data);
     } catch (e) {
-      setErrorTipos(e.message);
+      setErrorActivas(e.message);
+      setActivas([]);
     } finally {
-      setLoadingTipos(false);
+      setLoadingActivas(false);
     }
   };
 
-  const cargarDetalle = async (idTipoBobina) => {
-    setLoadingDetalle(true);
-    setErrorDetalle("");
+  const cargarPausadas = async () => {
+    setLoadingPausadas(true);
+    setErrorPausadas("");
     try {
-      const data = await verDetalleInventarioBobinaPapel(idTipoBobina);
-      setBobinasSel(data);
+      const data = await verPausasProduccionBobinaTuboActivas();
+      setPausadas(data);
     } catch (e) {
-      setErrorDetalle(e.message);
-      setBobinasSel([]);
+      setErrorPausadas(e.message);
+      setPausadas([]);
     } finally {
-      setLoadingDetalle(false);
+      setLoadingPausadas(false);
     }
   };
 
-  const tipoSel = sel ? tipos.find((t) => t.IdTipoBobina === sel) : null;
-  const esServilleta = tipoSel
-    ? tipoSel.NombreTipoBobina.toLowerCase().includes("servilleta")
-    : false;
-  const requeridas = esServilleta ? 1 : 2;
+  const requiereObservacion =
+    formTipoMovimiento !== "" && Number(formTipoMovimiento) !== ID_TIPO_INGRESO;
 
-  const totalBobinas = tipos.reduce((s, t) => s + t.CantidadBobinas, 0);
-  const totalPesoFmt = fmt(
-    tipos.reduce((s, t) => s + Number(t.PesoNetoTotalKg || 0), 0),
-  );
-  const listas = marcadas.length === requeridas;
+  const abrirInsertar = (produccion) => {
+    setFormTipoMovimiento("");
+    setFormCantidadLogs("");
+    setFormObservacionLog("");
+    setErrorInsertar("");
+    setModalInsertar({ open: true, produccion });
+  };
 
-  const bobinasFiltradas = busquedaCodigo.trim()
-    ? bobinasSel.filter((b) =>
-        b.CodigoBobina.toLowerCase().includes(
-          busquedaCodigo.trim().toLowerCase(),
-        ),
-      )
-    : bobinasSel;
-
-  const seleccionarTipo = (id) => {
-    if (sel === id) {
-      setSel(null);
-      setBobinasSel([]);
-      setMarcadas([]);
-      setBusquedaCodigo("");
+  const confirmarInsertar = async () => {
+    if (!formTipoMovimiento) {
+      setErrorInsertar("Selecciona el tipo de movimiento.");
       return;
     }
-    setSel(id);
-    setMarcadas([]);
-    setBusquedaCodigo("");
-    cargarDetalle(id);
+    const cantidad = Number(formCantidadLogs);
+    if (!formCantidadLogs || cantidad <= 0) {
+      setErrorInsertar("Ingresa una cantidad de logs válida.");
+      return;
+    }
+    if (cantidad > LIMITE_CANTIDAD_LOGS) {
+      setErrorInsertar(`La cantidad no puede superar ${LIMITE_CANTIDAD_LOGS} logs.`);
+      return;
+    }
+
+    setEnviandoInsertar(true);
+    try {
+      await insertarMovimientoLog(
+        modalInsertar.produccion.IdProduccionBobinaTubo,
+        Number(formTipoMovimiento),
+        cantidad,
+        requiereObservacion ? formObservacionLog.trim() || null : null,
+      );
+      toast.success("Movimiento de logs registrado");
+      setModalInsertar({ open: false, produccion: null });
+      cargarActivas();
+      cargarPausadas();
+    } catch (e) {
+      setErrorInsertar(e.message);
+    } finally {
+      setEnviandoInsertar(false);
+    }
   };
 
-  const cerrarDetalle = () => {
-    setSel(null);
-    setBobinasSel([]);
-    setMarcadas([]);
-    setBusquedaCodigo("");
+  const abrirPausar = (produccion) => {
+    setFormMotivoPausa("");
+    setModalPausar({ open: true, produccion });
   };
 
-  const toggleBobina = (codigo) => {
-    setMarcadas((prev) => {
-      if (prev.includes(codigo)) return prev.filter((c) => c !== codigo);
-      if (prev.length < requeridas) return [...prev, codigo];
-      if (requeridas === 1) return [codigo];
-      return prev;
+  const opcionesPausa = modalPausar.produccion
+    ? [
+        ...motivosPausa,
+        ...(modalPausar.produccion.CodigoBobina1
+          ? [`Empalme en la Bobina: ${modalPausar.produccion.CodigoBobina1}`]
+          : []),
+        ...(modalPausar.produccion.CodigoBobina2
+          ? [`Empalme en la Bobina: ${modalPausar.produccion.CodigoBobina2}`]
+          : []),
+      ]
+    : motivosPausa;
+
+  const motivoEstaEnTexto = (motivo) => formMotivoPausa.includes(motivo);
+
+  const alternarMotivo = (motivo) => {
+    setFormMotivoPausa((actual) => {
+      if (actual.includes(motivo)) {
+        return actual
+          .replace(motivo, "")
+          .replace(/\.\s*\.\s*/g, ". ")
+          .replace(/^\s*\.\s*/, "")
+          .trimStart();
+      }
+      const texto = actual.trimEnd();
+      if (!texto) return motivo;
+      return texto.endsWith(".")
+        ? `${texto} ${motivo}`
+        : `${texto}${SEPARADOR}${motivo}`;
     });
   };
 
-  const quitarChip = (codigo) =>
-    setMarcadas((prev) => prev.filter((c) => c !== codigo));
-
-  const enviarProduccion = async () => {
-    if (!listas || esServilleta) return;
-
-    const bobina1 = bobinasSel.find((b) => b.CodigoBobina === marcadas[0]);
-    const bobina2 = bobinasSel.find((b) => b.CodigoBobina === marcadas[1]);
-    if (!bobina1 || !bobina2) return;
-
-    setEnviando(true);
+  const confirmarPausar = async () => {
+    setEnviandoPausar(true);
     try {
-      await iniciarProduccion(bobina1.IdBobinaPapel, bobina2.IdBobinaPapel);
-
-      setBobinasSel((prev) =>
-        prev.filter((b) => !marcadas.includes(b.CodigoBobina)),
+      await pausarProduccion(
+        modalPausar.produccion.IdProduccionBobinaTubo,
+        formMotivoPausa.trim() || null,
       );
-      toast.success(`${marcadas.join(" + ")} → En producción`);
-      setMarcadas([]);
-      cargarResumen();
+      toast.success("Producción pausada");
+      setModalPausar({ open: false, produccion: null });
+      cargarActivas();
+      cargarPausadas();
     } catch (e) {
       toast.error(e.message);
     } finally {
-      setEnviando(false);
+      setEnviandoPausar(false);
     }
   };
 
-  const cargarFueraInventario = async () => {
-    setLoadingFuera(true);
-    setErrorFuera("");
+  const abrirCancelar = (produccion) => {
+    setFormMotivoCancelacion("");
+    setModalCancelar({ open: true, produccion });
+  };
+
+  const confirmarCancelar = async () => {
+    setEnviandoCancelar(true);
     try {
-      const data = await verBobinasPapelFueraInventario();
-      setFueraInventario(data);
-    } catch (e) {
-      setErrorFuera(e.message);
-      setFueraInventario([]);
-    } finally {
-      setLoadingFuera(false);
-    }
-  };
-
-  const toggleFueraInventario = () => {
-    const nuevoEstado = !mostrarFuera;
-    setMostrarFuera(nuevoEstado);
-    if (nuevoEstado) {
-      cargarFueraInventario();
-    }
-  };
-
-  const handleReingresar = async (idBobinaPapel, codigoBobina) => {
-    setProcesandoId(idBobinaPapel);
-    try {
-      await reingresarBobinaInventario(idBobinaPapel);
-      toast.success(`Bobina ${codigoBobina} reingresada al inventario`);
-      setFueraInventario((prev) =>
-        prev.filter((b) => b.IdBobinaPapel !== idBobinaPapel),
+      await cancelarProduccion(
+        modalCancelar.produccion.IdProduccionBobinaTubo,
+        formMotivoCancelacion.trim() || null,
       );
-      cargarResumen();
+      toast.success("Producción cancelada");
+      setModalCancelar({ open: false, produccion: null });
+      cargarPausadas();
     } catch (e) {
       toast.error(e.message);
     } finally {
-      setProcesandoId(null);
+      setEnviandoCancelar(false);
     }
   };
 
-  const handleDarDeBaja = async (idBobinaPapel, codigoBobina) => {
-    setProcesandoId(idBobinaPapel);
+  const abrirFinalizar = (produccion) => {
+    setAlertFinalizar({ open: true, produccion });
+  };
+
+  const confirmarFinalizar = async () => {
+    setEnviandoFinalizar(true);
     try {
-      await darDeBajaBobina(idBobinaPapel);
-      toast.success(`Bobina ${codigoBobina} retirada definitivamente`);
-      setFueraInventario((prev) =>
-        prev.filter((b) => b.IdBobinaPapel !== idBobinaPapel),
-      );
+      await finalizarProduccion(alertFinalizar.produccion.IdProduccionBobinaTubo);
+      toast.success("Producción finalizada");
+      setAlertFinalizar({ open: false, produccion: null });
+      cargarActivas();
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setEnviandoFinalizar(false);
+    }
+  };
+
+  const handleReanudar = async (produccion) => {
+    setProcesandoId(produccion.IdProduccionBobinaTubo);
+    try {
+      await reanudarProduccion(produccion.IdProduccionBobinaTubo);
+      toast.success("Producción reanudada");
+      cargarActivas();
+      cargarPausadas();
     } catch (e) {
       toast.error(e.message);
     } finally {
@@ -488,390 +419,330 @@ export default function InventarioBobinasPapel({ usuario }) {
   };
 
   return (
-    <div className="mt-20 md:mt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
-      <Header
-        titulo="Almacén · Materia Prima"
-        subtitulo="Inventario de Bobinas de Papel"
-        accion={{
-          texto: "Registrar ingreso",
-          icono: Plus,
-          href: "/operador/bobina-papel/ingreso",
-        }}
-      />
+    <div className="pt-20 md:pt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
+      <Header titulo={"Producción"} subtitulo={"Producción de Bobina Tubo"} />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
-        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-          <div className="text-sm font-bold text-slate-700">
-            Catálogo por tipo de bobina
-          </div>
-          <div className="text-sm text-slate-500">
-            Solo bobinas <strong className="text-slate-700">en almacén</strong>{" "}
-            · {totalBobinas} bobinas · {totalPesoFmt} kg netos
-          </div>
-        </div>
-
-        {loadingTipos && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2].map((i) => (
-              <Skeleton key={i} className="h-52 rounded-2xl" />
-            ))}
-          </div>
-        )}
-        {errorTipos && (
-          <div className="rounded-xl bg-red-50 p-5 text-center text-sm font-semibold text-red-600">
-            {errorTipos}
-          </div>
-        )}
-
-        {!loadingTipos && !errorTipos && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {tipos.map((t) => (
-              <TarjetaTipo
-                key={t.IdTipoBobina}
-                tipo={t}
-                activo={sel === t.IdTipoBobina}
-                onClick={() => seleccionarTipo(t.IdTipoBobina)}
-              />
-            ))}
-            <TarjetaFueraInventario
-              cantidad={fueraInventario.length}
-              activo={mostrarFuera}
-              onClick={toggleFueraInventario}
-            />
-          </div>
-        )}
-
-        {tipoSel && (
-          <div className="mt-7 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-            <div
-              className={cn(
-                "flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4",
-                tipoSel.soft,
-              )}
-            >
-              <div className="flex flex-wrap items-center gap-3">
-                <RolloIcono className={cn("h-7 w-7 shrink-0", tipoSel.text)} />
-                <div className={cn("text-base font-extrabold", tipoSel.text)}>
-                  Bobinas · {tipoSel.NombreTipoBobina}
-                </div>
-                <div className="text-sm font-semibold text-slate-500">
-                  {tipoSel.CantidadBobinas} en almacén
-                </div>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "border font-bold",
-                    tipoSel.text,
-                    tipoSel.border,
-                  )}
-                >
-                  {esServilleta
-                    ? "Se envía 1 bobina"
-                    : "Se envían de a 2 bobinas"}
+        <Tabs value={vista} onValueChange={setVista} className="mb-5">
+          <TabsList className="grid w-full grid-cols-2 sm:w-80">
+            <TabsTrigger value="activas" className="gap-1.5 font-bold">
+              <Layers size={15} strokeWidth={2.75} />
+              Activas
+              {activas.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 justify-center px-1.5">
+                  {activas.length}
                 </Badge>
-              </div>
-              <Button
-                variant="ghost"
-                onClick={cerrarDetalle}
-                className="h-11 gap-1.5 font-bold text-slate-500 hover:text-slate-900"
-              >
-                <X size={15} strokeWidth={2.75} />
-                Cerrar
-              </Button>
-            </div>
-
-            {!loadingDetalle && !errorDetalle && bobinasSel.length > 0 && (
-              <div className="border-b border-slate-100 px-5 py-3.5">
-                <div className="relative max-w-xs">
-                  <Search
-                    size={16}
-                    strokeWidth={2.5}
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <Input
-                    value={busquedaCodigo}
-                    onChange={(e) => setBusquedaCodigo(e.target.value)}
-                    placeholder="Buscar por código..."
-                    className="h-10 pl-9"
-                  />
-                  {busquedaCodigo && (
-                    <button
-                      onClick={() => setBusquedaCodigo("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-                    >
-                      <X size={15} strokeWidth={2.75} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {loadingDetalle && (
-              <div className="space-y-2 p-5">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            )}
-            {errorDetalle && (
-              <div className="p-5 text-center text-sm font-semibold text-red-600">
-                {errorDetalle}
-              </div>
-            )}
-            {!loadingDetalle && !errorDetalle && bobinasSel.length === 0 && (
-              <div className="p-8 text-center text-sm text-slate-400">
-                No hay bobinas en almacén para este tipo.
-              </div>
-            )}
-            {!loadingDetalle &&
-              !errorDetalle &&
-              bobinasSel.length > 0 &&
-              bobinasFiltradas.length === 0 && (
-                <div className="p-8 text-center text-sm text-slate-400">
-                  Ninguna bobina coincide con "{busquedaCodigo}".
-                </div>
               )}
-
-            {!loadingDetalle &&
-              !errorDetalle &&
-              bobinasFiltradas.length > 0 && (
-                <>
-                  <div className="hidden md:block">
-                    <TablaBobinas
-                      bobinas={bobinasFiltradas}
-                      tipoSel={tipoSel}
-                      marcadas={marcadas}
-                      onToggle={toggleBobina}
-                    />
-                  </div>
-                  <div className="md:hidden">
-                    <ListaMovilBobinas
-                      bobinas={bobinasFiltradas}
-                      tipoSel={tipoSel}
-                      marcadas={marcadas}
-                      onToggle={toggleBobina}
-                    />
-                  </div>
-                </>
+            </TabsTrigger>
+            <TabsTrigger value="pausadas" className="gap-1.5 font-bold">
+              <Pause size={15} strokeWidth={2.75} />
+              Pausadas
+              {pausadas.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 justify-center px-1.5">
+                  {pausadas.length}
+                </Badge>
               )}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-            {marcadas.length > 0 && (
-              <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 bg-slate-900 px-5 py-3.5">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  {marcadas.map((codigo) => (
-                    <div
-                      key={codigo}
-                      className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 font-mono text-sm font-bold text-white"
-                    >
-                      {codigo}
-                      <button
-                        onClick={() => quitarChip(codigo)}
-                        className="opacity-70 hover:opacity-100"
-                      >
-                        <X size={13} strokeWidth={3} />
-                      </button>
-                    </div>
-                  ))}
-                  <div className="text-sm font-semibold text-slate-400">
-                    {listas
-                      ? "Listo para enviar"
-                      : `Selecciona ${requeridas - marcadas.length} más`}
-                  </div>
-                </div>
-                <Button
-                  onClick={enviarProduccion}
-                  disabled={!listas || enviando}
-                  className={cn(
-                    "h-11 gap-2 bg-white/15 font-extrabold text-white hover:bg-white/15",
-                    listas && "bg-gradient-to-r from-c3 to-c4 hover:opacity-90",
-                  )}
-                >
-                  {enviando ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      Enviar a producción
-                      <ArrowRight size={16} strokeWidth={2.75} />
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {mostrarFuera && (
-          <div className="mt-7 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-amber-50 px-5 py-4">
-              <div className="text-base font-extrabold text-amber-700">
-                Bobinas fuera de inventario
-              </div>
-              <Button
-                variant="ghost"
-                onClick={() => setMostrarFuera(false)}
-                className="h-11 gap-1.5 font-bold text-slate-500 hover:text-slate-900"
-              >
-                <X size={15} strokeWidth={2.75} />
-                Cerrar
-              </Button>
-            </div>
-
-            {loadingFuera && (
-              <div className="space-y-2 p-5">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-              </div>
-            )}
-            {errorFuera && (
-              <div className="p-5 text-center text-sm font-semibold text-red-600">
-                {errorFuera}
-              </div>
-            )}
-            {!loadingFuera && !errorFuera && fueraInventario.length === 0 && (
-              <div className="p-8 text-center text-sm text-slate-400">
-                No hay bobinas fuera de inventario.
-              </div>
-            )}
-
-            {!loadingFuera && !errorFuera && fueraInventario.length > 0 && (
-              <div className="flex flex-col gap-3 p-5">
-                {fueraInventario.map((b) => (
-                  <div
-                    key={b.IdBobinaPapel}
-                    className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-[15px] font-extrabold text-slate-900">
-                          {b.CodigoBobina}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className="border-slate-300 font-bold text-slate-600"
-                        >
-                          {b.NombreTipoBobina}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
-                        <span>{b.NombreProveedor}</span>
-                        <span>Recepción: {dateFormatter(b.FechaRecepcion)}</span>
-                        <span>Bruto: {fmt(b.PesoBrutoKg)} kg</span>
-                        <span>Gramaje: {fmt(b.Gramaje)} g/m²</span>
-                      </div>
-                      {b.UltimaObservacion && (
-                        <div className="text-[12.5px] italic text-slate-500">
-                          "{b.UltimaObservacion}"
-                        </div>
-                      )}
-                      {b.FechaUltimoMovimiento && (
-                        <div className="text-[11px] text-slate-400">
-                          Último movimiento:{" "}
-                          {dateFormatter(b.FechaUltimoMovimiento)}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() =>
-                          handleReingresar(b.IdBobinaPapel, b.CodigoBobina)
-                        }
-                        disabled={procesandoId === b.IdBobinaPapel}
-                        className="h-10 gap-2 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
-                      >
-                        {procesandoId === b.IdBobinaPapel ? (
-                          <Loader2 size={15} className="animate-spin" />
-                        ) : (
-                          "Reingresar"
-                        )}
-                      </Button>
-                      <Button
-                        onClick={() =>
-                          handleDarDeBaja(b.IdBobinaPapel, b.CodigoBobina)
-                        }
-                        disabled={procesandoId === b.IdBobinaPapel}
-                        variant="outline"
-                        className="h-10 gap-2 border-red-300 font-bold text-red-600 hover:bg-red-50"
-                      >
-                        {procesandoId === b.IdBobinaPapel ? (
-                          <Loader2 size={15} className="animate-spin" />
-                        ) : (
-                          "Retirar"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
+        {vista === "activas" && (
+          <>
+            {loadingActivas && (
+              <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-64 rounded-2xl" />
                 ))}
               </div>
             )}
-          </div>
+            {errorActivas && (
+              <div className="rounded-xl bg-red-50 p-5 text-center text-sm font-semibold text-red-600">
+                {errorActivas}
+              </div>
+            )}
+            {!loadingActivas && !errorActivas && activas.length === 0 && (
+              <div className="rounded-2xl bg-white p-10 text-center text-sm text-slate-400 ring-1 ring-slate-200">
+                No hay producciones activas.
+              </div>
+            )}
+            {!loadingActivas && !errorActivas && activas.length > 0 && (
+              <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {(activas ?? []).map((p) => (
+                  <CardActiva
+                    key={p.IdProduccionBobinaTubo}
+                    p={p}
+                    onInsertar={() => abrirInsertar(p)}
+                    onPausar={() => abrirPausar(p)}
+                    onFinalizar={() => abrirFinalizar(p)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {vista === "pausadas" && (
+          <>
+            {loadingPausadas && (
+              <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-64 rounded-2xl" />
+                ))}
+              </div>
+            )}
+            {errorPausadas && (
+              <div className="rounded-xl bg-red-50 p-5 text-center text-sm font-semibold text-red-600">
+                {errorPausadas}
+              </div>
+            )}
+            {!loadingPausadas && !errorPausadas && pausadas.length === 0 && (
+              <div className="rounded-2xl bg-white p-10 text-center text-sm text-slate-400 ring-1 ring-slate-200">
+                No hay producciones pausadas.
+              </div>
+            )}
+            {!loadingPausadas && !errorPausadas && pausadas.length > 0 && (
+              <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {(pausadas ?? []).map((p) => (
+                  <CardPausada
+                    key={p.IdPausaProduccionBobinaTubo}
+                    p={p}
+                    procesando={procesandoId === p.IdProduccionBobinaTubo}
+                    onInsertar={() => abrirInsertar(p)}
+                    onReanudar={() => handleReanudar(p)}
+                    onCancelar={() => abrirCancelar(p)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
+
+      <Dialog
+        open={modalInsertar.open}
+        onOpenChange={(open) => setModalInsertar({ open, produccion: open ? modalInsertar.produccion : null })}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Insertar movimiento de logs</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4">
+            {modalInsertar.produccion && (
+              <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
+                <span className="font-mono font-bold text-slate-900">
+                  {modalInsertar.produccion.CodigoBobina1} + {modalInsertar.produccion.CodigoBobina2}
+                </span>
+              </div>
+            )}
+
+            <SelectForModal
+              id="tipo-movimiento"
+              etiqueta="Tipo de movimiento"
+              opciones={movimientosOperador}
+              campoValor="IdTipoMovimientoOperadorLogs"
+              campoEtiqueta="NombreMovimiento"
+              campoDescripcion="DescripcionTipoMovimientoOperadorLogs"
+              valor={formTipoMovimiento}
+              onCambio={setFormTipoMovimiento}
+              placeholder="Selecciona un tipo"
+            />
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cantidad-logs" className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Cantidad de logs (máx. {LIMITE_CANTIDAD_LOGS})
+              </Label>
+              <Input
+                id="cantidad-logs"
+                value={formCantidadLogs}
+                onChange={(e) => setFormCantidadLogs(e.target.value)}
+                placeholder="0"
+                type="number"
+                min={1}
+                max={LIMITE_CANTIDAD_LOGS}
+                className="h-11"
+              />
+            </div>
+
+            {requiereObservacion && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="observacion-log" className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                  Observación
+                </Label>
+                <Textarea
+                  id="observacion-log"
+                  value={formObservacionLog}
+                  onChange={(e) => setFormObservacionLog(e.target.value)}
+                  placeholder="Motivo de la corrección..."
+                  className="min-h-20"
+                />
+              </div>
+            )}
+
+            {errorInsertar && (
+              <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
+                {errorInsertar}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={confirmarInsertar}
+              disabled={enviandoInsertar}
+              className="h-11 w-full gap-2 bg-gradient-to-r from-c3 to-c4 font-extrabold hover:opacity-90 sm:w-auto"
+            >
+              {enviandoInsertar ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                "Registrar movimiento"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={modalPausar.open}
+        onOpenChange={(open) => setModalPausar({ open, produccion: open ? modalPausar.produccion : null })}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Pausar producción</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4">
+            {modalPausar.produccion && (
+              <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
+                <span className="font-mono font-bold text-slate-900">
+                  {modalPausar.produccion.CodigoBobina1} + {modalPausar.produccion.CodigoBobina2}
+                </span>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Motivos frecuentes
+              </Label>
+              <ToggleGroup
+                type="multiple"
+                value={opcionesPausa.filter(motivoEstaEnTexto)}
+                className="flex flex-wrap justify-start gap-2"
+              >
+                {opcionesPausa.map((motivo) => (
+                  <ToggleGroupItem
+                    key={motivo}
+                    value={motivo}
+                    onClick={() => alternarMotivo(motivo)}
+                    className="h-auto whitespace-normal rounded-full border-2 border-slate-200 px-3.5 py-2 text-left text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+                  >
+                    {motivo}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="motivo-pausa" className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Detalle de la pausa (opcional)
+              </Label>
+              <Textarea
+                id="motivo-pausa"
+                value={formMotivoPausa}
+                onChange={(e) => setFormMotivoPausa(e.target.value)}
+                placeholder="Ej. Falla de máquina, cambio de turno..."
+                className="min-h-20"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={confirmarPausar}
+              disabled={enviandoPausar}
+              className="h-11 w-full gap-2 bg-amber-500 font-extrabold text-white hover:bg-amber-600 sm:w-auto"
+            >
+              {enviandoPausar ? <Loader2 size={16} className="animate-spin" /> : "Pausar producción"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={modalCancelar.open}
+        onOpenChange={(open) => setModalCancelar({ open, produccion: open ? modalCancelar.produccion : null })}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancelar producción</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4">
+            {modalCancelar.produccion && (
+              <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
+                <span className="font-mono font-bold text-slate-900">
+                  {modalCancelar.produccion.CodigoBobina1} + {modalCancelar.produccion.CodigoBobina2}
+                </span>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="motivo-cancelacion" className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Motivo de cancelación (opcional)
+              </Label>
+              <Textarea
+                id="motivo-cancelacion"
+                value={formMotivoCancelacion}
+                onChange={(e) => setFormMotivoCancelacion(e.target.value)}
+                placeholder="Ej. Bobina dañada, error de registro..."
+                className="min-h-20"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={confirmarCancelar}
+              disabled={enviandoCancelar}
+              className="h-11 w-full gap-2 bg-red-600 font-extrabold text-white hover:bg-red-700 sm:w-auto"
+            >
+              {enviandoCancelar ? <Loader2 size={16} className="animate-spin" /> : "Cancelar producción"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={alertFinalizar.open}
+        onOpenChange={(open) => setAlertFinalizar({ open, produccion: open ? alertFinalizar.produccion : null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Finalizar esta producción?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {alertFinalizar.produccion && (
+                <>
+                  Se marcará como finalizada la producción de{" "}
+                  <span className="font-mono font-bold text-slate-900">
+                    {alertFinalizar.produccion.CodigoBobina1} + {alertFinalizar.produccion.CodigoBobina2}
+                  </span>
+                  . Esta acción no se puede deshacer.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={enviandoFinalizar}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarFinalizar}
+              disabled={enviandoFinalizar}
+              className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+            >
+              {enviandoFinalizar ? <Loader2 size={16} className="animate-spin" /> : "Finalizar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
-
-
-
-export function RolloIcono({ className }) {
-  return (
-    <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" />
-      <circle cx="16" cy="16" r="6.5" stroke="currentColor" strokeWidth="2.5" />
-      <path
-        d="M16 2.5C16 2.5 26 6 26 16"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        opacity="0.5"
-      />
-    </svg>
-  );
-}
-
-export function FueraIcono({ className }) {
-  return (
-    <svg viewBox="0 0 32 32" className={className} fill="none">
-      <rect x="5" y="9" width="22" height="16" rx="2.5" stroke="currentColor" strokeWidth="2.5" />
-      <path d="M5 13h22" stroke="currentColor" strokeWidth="2.5" />
-      <path d="M12 5.5h8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-
-export const ACENTOS = [
-  {
-    text: "text-c3",
-    bg: "bg-c4",
-    soft: "bg-c4/8",
-    border: "border-c4/30",
-    ring: "ring-c4/40",
-  },
-  {
-    text: "text-serv3",
-    bg: "bg-serv3",
-    soft: "bg-serv3/8",
-    border: "border-serv3/30",
-    ring: "ring-serv3/40",
-  },
-  {
-    text: "text-lux2",
-    bg: "bg-lux1",
-    soft: "bg-lux1/8",
-    border: "border-lux1/30",
-    ring: "ring-lux1/40",
-  },
-  {
-    text: "text-eco2",
-    bg: "bg-eco1",
-    soft: "bg-eco1/8",
-    border: "border-eco1/30",
-    ring: "ring-eco1/40",
-  },
-];
-
-export const fmt = (n) =>
-  Number(n || 0).toLocaleString("es-BO", { maximumFractionDigits: 1 });

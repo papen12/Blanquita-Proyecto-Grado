@@ -1,16 +1,6 @@
 import { useState, useEffect } from "react";
-import {
-  Plus,
-  Pause,
-  CheckCircle2,
-  Play,
-  Ban,
-  Loader2,
-  Clock,
-  Layers,
-} from "lucide-react";
+import { Pause, Loader2, Clock, Layers } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,11 +38,11 @@ import {
 } from "../../../services/BobinaPapel/Produccion";
 import { movimientosOperador } from "../../../constants/MovimientoOperador";
 import { dateFormatter } from "@/utils/dates";
+import { extraerMensajeError } from "@/utils/validators";
 import Header from "../../layout/Header";
 import CardActiva from "./CardActiva";
 import CardPausada from "./CardPausada";
 
-const LIMITE_CANTIDAD_LOGS = 50;
 const ID_TIPO_INGRESO = 1;
 const SEPARADOR = ". ";
 
@@ -104,7 +94,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
       const data = await verProduccionBobinaTubo();
       setActivas(data);
     } catch (e) {
-      setErrorActivas(e.message);
+      setErrorActivas(extraerMensajeError(e, e.message));
       setActivas([]);
     } finally {
       setLoadingActivas(false);
@@ -118,7 +108,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
       const data = await verPausasProduccionBobinaTuboActivas();
       setPausadas(data);
     } catch (e) {
-      setErrorPausadas(e.message);
+      setErrorPausadas(extraerMensajeError(e, e.message));
       setPausadas([]);
     } finally {
       setLoadingPausadas(false);
@@ -146,10 +136,6 @@ export default function ProduccionBobinaTubo({ usuario }) {
       setErrorInsertar("Ingresa una cantidad de logs válida.");
       return;
     }
-    if (cantidad > LIMITE_CANTIDAD_LOGS) {
-      setErrorInsertar(`La cantidad no puede superar ${LIMITE_CANTIDAD_LOGS} logs.`);
-      return;
-    }
 
     setEnviandoInsertar(true);
     try {
@@ -164,7 +150,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
       cargarActivas();
       cargarPausadas();
     } catch (e) {
-      setErrorInsertar(e.message);
+      setErrorInsertar(extraerMensajeError(e, e.message));
     } finally {
       setEnviandoInsertar(false);
     }
@@ -218,7 +204,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
       cargarActivas();
       cargarPausadas();
     } catch (e) {
-      toast.error(e.message);
+      toast.error(extraerMensajeError(e, e.message));
     } finally {
       setEnviandoPausar(false);
     }
@@ -240,7 +226,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
       setModalCancelar({ open: false, produccion: null });
       cargarPausadas();
     } catch (e) {
-      toast.error(e.message);
+      toast.error(extraerMensajeError(e, e.message));
     } finally {
       setEnviandoCancelar(false);
     }
@@ -258,7 +244,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
       setAlertFinalizar({ open: false, produccion: null });
       cargarActivas();
     } catch (e) {
-      toast.error(e.message);
+      toast.error(extraerMensajeError(e, e.message));
     } finally {
       setEnviandoFinalizar(false);
     }
@@ -272,11 +258,27 @@ export default function ProduccionBobinaTubo({ usuario }) {
       cargarActivas();
       cargarPausadas();
     } catch (e) {
-      toast.error(e.message);
+      toast.error(extraerMensajeError(e, e.message));
     } finally {
       setProcesandoId(null);
     }
   };
+
+  const ResumenProduccion = ({ produccion }) => (
+    <div className="flex flex-col gap-1 rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
+      <span className="font-mono font-bold text-slate-900">
+        {produccion.CodigoBobina1} + {produccion.CodigoBobina2}
+      </span>
+      {(produccion.FechaHoraPausa || produccion.FechaInicioProduccion) && (
+        <span className="flex items-center gap-1 text-[12px] text-slate-500">
+          <Clock size={12} strokeWidth={2.75} />
+          {produccion.FechaHoraPausa
+            ? `Pausada: ${dateFormatter(produccion.FechaHoraPausa)}`
+            : `Inicio: ${dateFormatter(produccion.FechaInicioProduccion)}`}
+        </span>
+      )}
+    </div>
+  );
 
   return (
     <div className="pt-20 md:pt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
@@ -389,11 +391,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
           <div className="flex flex-col gap-4">
             {modalInsertar.produccion && (
-              <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
-                <span className="font-mono font-bold text-slate-900">
-                  {modalInsertar.produccion.CodigoBobina1} + {modalInsertar.produccion.CodigoBobina2}
-                </span>
-              </div>
+              <ResumenProduccion produccion={modalInsertar.produccion} />
             )}
 
             <SelectForModal
@@ -410,7 +408,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="cantidad-logs" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Cantidad de logs (máx. {LIMITE_CANTIDAD_LOGS})
+                Cantidad de logs
               </Label>
               <Input
                 id="cantidad-logs"
@@ -419,7 +417,6 @@ export default function ProduccionBobinaTubo({ usuario }) {
                 placeholder="0"
                 type="number"
                 min={1}
-                max={LIMITE_CANTIDAD_LOGS}
                 className="h-11"
               />
             </div>
@@ -473,11 +470,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
           <div className="flex flex-col gap-4">
             {modalPausar.produccion && (
-              <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
-                <span className="font-mono font-bold text-slate-900">
-                  {modalPausar.produccion.CodigoBobina1} + {modalPausar.produccion.CodigoBobina2}
-                </span>
-              </div>
+              <ResumenProduccion produccion={modalPausar.produccion} />
             )}
 
             <div className="flex flex-col gap-1.5">
@@ -539,11 +532,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
           <div className="flex flex-col gap-4">
             {modalCancelar.produccion && (
-              <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
-                <span className="font-mono font-bold text-slate-900">
-                  {modalCancelar.produccion.CodigoBobina1} + {modalCancelar.produccion.CodigoBobina2}
-                </span>
-              </div>
+              <ResumenProduccion produccion={modalCancelar.produccion} />
             )}
 
             <div className="flex flex-col gap-1.5">
@@ -586,6 +575,12 @@ export default function ProduccionBobinaTubo({ usuario }) {
                   <span className="font-mono font-bold text-slate-900">
                     {alertFinalizar.produccion.CodigoBobina1} + {alertFinalizar.produccion.CodigoBobina2}
                   </span>
+                  {alertFinalizar.produccion.FechaInicioProduccion && (
+                    <>
+                      , iniciada el{" "}
+                      {dateFormatter(alertFinalizar.produccion.FechaInicioProduccion)}
+                    </>
+                  )}
                   . Esta acción no se puede deshacer.
                 </>
               )}

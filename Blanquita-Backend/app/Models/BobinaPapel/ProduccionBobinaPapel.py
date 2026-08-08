@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 
 
 class IniciarProduccionBobinaTuboRequest(BaseModel):
@@ -100,7 +100,7 @@ class VerPausasProduccionBobinaTuboActivasResponse(BaseModel):
 class InsertarMovimientoOperadorLogsRequest(BaseModel):
     IdProduccionBobinaTubo: int
     IdTipoMovimientoOperadorLogs: int
-    CantidadLogs: int
+    CantidadLogs: int=Field(ge=1)
     Observacion: Optional[str] = None
 
 
