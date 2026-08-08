@@ -1,4 +1,4 @@
-import { Home, Boxes, Factory,Database } from "lucide-react";
+import { Home, Boxes, Factory,Database,ShelvingUnit } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 export const RutasNavBar = [
   {
@@ -25,5 +25,13 @@ export const RutasNavBar = [
       { titulo: "Producción", icono: Factory, ruta: "produccion" },
     ],
   },
+  {
+    titulo:"Productos",
+    icono:ShelvingUnit,
+    ruta:"producto",
+    subrutas: [
+      { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
+    ],
+  }
 ];
 
