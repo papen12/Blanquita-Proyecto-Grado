@@ -22,6 +22,8 @@ from app.Models.BobinaPapel.ProduccionBobinaPapel import (
     VerPausasProduccionBobinaTuboActivasRequest,
     VerPausasProduccionBobinaTuboActivasResponse,
 )
+from app.utils.validators import EsCantidadValida
+from app.Constants.Cantidades import CANTIDAD_INGRESO_LOGS
 
 
 class ProduccionBobinaPapelService:
@@ -219,6 +221,12 @@ class ProduccionBobinaPapelService:
     def InsertarMovimientoOperadorLogs(
         self, data: InsertarMovimientoOperadorLogsRequest, id_usuario: int
     ) -> InsertarMovimientoOperadorLogsResponse:
+        if not EsCantidadValida(data.CantidadLogs, CANTIDAD_INGRESO_LOGS):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"La cantidad máxima de ingreso es de {CANTIDAD_INGRESO_LOGS}",
+            )
+
         params = {
             "p_IdProduccionBobinaTubo": data.IdProduccionBobinaTubo,
             "p_IdTipoMovimientoOperadorLogs": data.IdTipoMovimientoOperadorLogs,
@@ -236,10 +244,10 @@ class ProduccionBobinaPapelService:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="CantidadLogs debe ser un valor positivo",
                 )
-            if "La cantiddad máxima de ingreso es de 50" in mensaje:
+            if "máxima de ingreso" in mensaje:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                    detail="La cantiddad máxima de ingreso es de 50"
+                    detail=f"La cantidad máxima de ingreso es de {CANTIDAD_INGRESO_LOGS}",
                 )
             if "No existe la producción" in mensaje:
                 raise HTTPException(
