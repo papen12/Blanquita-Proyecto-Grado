@@ -11,7 +11,8 @@ const RUTA_POR_ROL = {
   2: "/encargado/inicio"
 };
 
-const RUTAS_PROTEGIDAS = ["/operador", "/encargado"];
+const RUTAS_PROTEGIDAS = ["/operador", "/encargado", "/scan"];
+const RUTAS_SIN_PREFIJO_ROL = ["/scan"];
 const RUTAS_PUBLICAS_AUTH = ["/"];
 
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -38,13 +39,19 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (!sesion) {
     limpiarSesion(context.cookies);
-    return context.redirect("/");
+    const destino = encodeURIComponent(pathname + context.url.search);
+    return context.redirect(`/?redirigir=${destino}`);
   }
 
-  const prefijoPermitido = PREFIJO_POR_ROL[sesion.IdRol];
+  const omitePrefijoRol = RUTAS_SIN_PREFIJO_ROL.some((prefijo) =>
+    pathname.startsWith(prefijo)
+  );
 
-  if (!prefijoPermitido || !pathname.startsWith(prefijoPermitido)) {
-    return context.redirect(RUTA_POR_ROL[sesion.IdRol] || "/");
+  if (!omitePrefijoRol) {
+    const prefijoPermitido = PREFIJO_POR_ROL[sesion.IdRol];
+    if (!prefijoPermitido || !pathname.startsWith(prefijoPermitido)) {
+      return context.redirect(RUTA_POR_ROL[sesion.IdRol] || "/");
+    }
   }
 
   context.locals.usuario = sesion;
