@@ -9,5 +9,5 @@ import BottomBar from '@/components/layout/Qr/BottomBar';
 <Layout>
 	<NavBar client:load idRol={usuario.IdRol} />
 	<InventarioBobinasPapel client:load usuario={usuario}/>
-	<BottomBar idRol={usuario.IdRol} subRuta={"bobina-papel"} client:load/>
+	<BottomBar idRol={usuario.IdRol} subRuta={"bobina-papel"} idOpcionSelect={1} client:load/>
 </Layout>

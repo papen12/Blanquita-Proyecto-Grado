@@ -1,4 +1,4 @@
-import { Boxes, Factory } from "lucide-react";
+import { Boxes, Factory, User } from "lucide-react";
 
 function unirRutas(...segmentos) {
   const limpios = segmentos
@@ -9,19 +9,36 @@ function unirRutas(...segmentos) {
 }
 
 export class BottomBarRoutes {
-  constructor(rutaBase, subRuta) {
+  constructor(rutaBase, subRuta, idOpcionSelect) {
     this.rutaBase = rutaBase;
-    this.opciones = [
+    this.grupos = [
       {
-        titulo: "Inventario",
-        icono: Boxes,
-        ruta: unirRutas(rutaBase, subRuta, "inventario"),
+        idOp: 1,
+        opciones: [
+          {
+            titulo: "Inventario",
+            icono: Boxes,
+            ruta: unirRutas(rutaBase, subRuta, "inventario"),
+          },
+          {
+            titulo: "Produccion",
+            icono: Factory,
+            ruta: unirRutas(rutaBase, subRuta, "produccion"),
+          },
+        ],
       },
       {
-        titulo: "Produccion",
-        icono: Factory,
-        ruta: unirRutas(rutaBase, subRuta, "produccion"),
+        idOp: 2,
+        opciones: [
+          {
+            titulo: "Perfil",
+            icono: User,
+            ruta: unirRutas(rutaBase, subRuta, "perfil"),
+          },
+        ],
       },
     ];
+
+    this.opciones = this.grupos.find((g) => g.idOp === idOpcionSelect).opciones;
   }
 }

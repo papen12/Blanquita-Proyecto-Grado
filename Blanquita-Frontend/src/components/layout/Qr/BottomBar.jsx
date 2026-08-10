@@ -35,7 +35,7 @@ function OpcionNav({ opcion, activa }) {
   );
 }
 
-export default function BottomBar({ idRol, subRuta }) {
+export default function BottomBar({ idRol, subRuta, idOpcionSelect }) {
   const rutaBase = PREFIJO_POR_ROL[idRol];
 
   const [rutaActual, setRutaActual] = useState("");
@@ -70,7 +70,7 @@ export default function BottomBar({ idRol, subRuta }) {
     return null;
   }
 
-  const rutas = new BottomBarRoutes(rutaBase, subRuta);
+  const rutas = new BottomBarRoutes(rutaBase, subRuta, idOpcionSelect);
   const opciones = rutas.opciones;
 
   const mitad = Math.ceil(opciones.length / 2);
