@@ -1,0 +1,483 @@
+CREATE TABLE "Turno" (
+  "IdTurno" SERIAL PRIMARY KEY,
+  "NombreTurno" TEXT NOT NULL,
+  "HoraInicio" TIME NOT NULL,
+  "HoraFin" TIME NOT NULL,
+  "DescripcionTurno" TEXT
+);
+
+CREATE TABLE "Rol" (
+  "IdRol" SERIAL PRIMARY KEY,
+  "NombreRol" TEXT NOT NULL,
+  "Descripcion" TEXT
+);
+
+CREATE TABLE "EstadoUsuario" (
+  "IdEstadoUsuario" SERIAL PRIMARY KEY,
+  "NombreEstadoUsuario" TEXT NOT NULL,
+  "DescripcionEstadoUsuario" TEXT
+);
+
+CREATE TABLE "Usuario" (
+  "IdUsuario" SERIAL PRIMARY KEY,
+  "AuthUserId" UUID NOT NULL UNIQUE REFERENCES auth."users"("id") ON DELETE RESTRICT,
+  "IdRol" INTEGER NOT NULL REFERENCES "Rol"("IdRol") ON DELETE RESTRICT,
+  "IdEstadoUsuario" INTEGER NOT NULL REFERENCES "EstadoUsuario"("IdEstadoUsuario") ON DELETE RESTRICT,
+  "Ci" TEXT UNIQUE NOT NULL,
+  "PrimerNombre" TEXT NOT NULL,
+  "SegundoNombre" TEXT,
+  "ApellidoPaterno" TEXT NOT NULL,
+  "ApellidoMaterno" TEXT,
+  "Celular" TEXT,
+  "FechaRegistro" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT "chk_usuario_celular" CHECK ("Celular" IS NULL OR "Celular" ~ '^[67][0-9]{7}$')
+);
+
+CREATE TABLE "EstadoProveedor" (
+  "IdEstadoProveedor" SERIAL PRIMARY KEY,
+  "NombreEstadoProveedor" TEXT NOT NULL,
+  "DescripcionEstadoProveedor" TEXT
+);
+
+CREATE TABLE "Proveedor" (
+  "IdProveedor" SERIAL PRIMARY KEY,
+  "NombreProveedor" TEXT NOT NULL,
+  "CelularProveedor" TEXT,
+  "CorreoProveedor" TEXT,
+  "IdEstadoProveedor" INTEGER NOT NULL DEFAULT 1 REFERENCES "EstadoProveedor"("IdEstadoProveedor") ON DELETE CASCADE
+);
+
+CREATE INDEX "idx_proveedor_estado" ON "Proveedor"("IdEstadoProveedor");
+
+CREATE TABLE "TipoBobina" (
+  "IdTipoBobina" SERIAL PRIMARY KEY,
+  "NombreTipoBobina" TEXT NOT NULL,
+  "DiametroMm" NUMERIC NOT NULL DEFAULT 1210,
+  "Formato" NUMERIC NOT NULL DEFAULT 2760,
+  "TaraKg" NUMERIC NOT NULL DEFAULT 38
+);
+
+CREATE TABLE "EstadoMateriaPrima" (
+  "IdEstadoMateriaPrima" SERIAL PRIMARY KEY,
+  "TipoEstado" TEXT NOT NULL
+);
+
+CREATE TABLE "LoteBobina" (
+  "IdLoteBobina" SERIAL PRIMARY KEY,
+  "IdProveedor" INTEGER NOT NULL REFERENCES "Proveedor"("IdProveedor") ON DELETE CASCADE,
+  "FechaRecepcion" DATE NOT NULL
+);
+
+CREATE TABLE "BobinaPapel" (
+  "IdBobinaPapel" SERIAL PRIMARY KEY,
+  "CodigoBobina" TEXT UNIQUE NOT NULL,
+  "IdTipoBobina" INTEGER NOT NULL REFERENCES "TipoBobina"("IdTipoBobina") ON DELETE CASCADE,
+  "IdLoteBobina" INTEGER NOT NULL REFERENCES "LoteBobina"("IdLoteBobina") ON DELETE CASCADE,
+  "IdEstadoMateriaPrima" INTEGER NOT NULL REFERENCES "EstadoMateriaPrima"("IdEstadoMateriaPrima") ON DELETE CASCADE,
+  "PesoBrutoKg" NUMERIC,
+  "Gramaje" NUMERIC,
+  "PesoNetoKg" NUMERIC
+);
+CREATE INDEX "idx_bobina_tipo_estado" ON "BobinaPapel"("IdTipoBobina", "IdEstadoMateriaPrima");
+
+CREATE TABLE "TipoBobinaServilleta" (
+  "IdTipoBobinaServilleta" SERIAL PRIMARY KEY,
+  "NombreTipoBobinaServilleta" TEXT NOT NULL,
+  "DiametroMm" NUMERIC NOT NULL DEFAULT 1210,
+  "CrepadoPorcentaje" NUMERIC NOT NULL DEFAULT 14,
+  "ResistenciaKgf" NUMERIC NOT NULL DEFAULT 1.35
+);
+
+CREATE TABLE "FormatoSubBobina" (
+  "IdFormatoSubBobina" SERIAL PRIMARY KEY,
+  "DescripcionFormato" TEXT NOT NULL,
+  "CantidadBobina435" INTEGER NOT NULL DEFAULT 0,
+  "CantidadBobina220" INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE "TipoMedidaSubBobina" (
+  "IdTipoMedidaSubBobina" SERIAL PRIMARY KEY,
+  "MedidaMm" INTEGER NOT NULL,
+  "Descripcion" TEXT
+);
+
+CREATE TABLE "BobinaServilleta" (
+  "IdBobinaServilleta" SERIAL PRIMARY KEY,
+  "IdLoteBobina" INTEGER NOT NULL REFERENCES "LoteBobina"("IdLoteBobina") ON DELETE CASCADE,
+  "IdTipoBobinaServilleta" INTEGER NOT NULL REFERENCES "TipoBobinaServilleta"("IdTipoBobinaServilleta") ON DELETE CASCADE,
+  "IdEstadoMateriaPrima" INTEGER NOT NULL REFERENCES "EstadoMateriaPrima"("IdEstadoMateriaPrima") ON DELETE CASCADE,
+  "FechaRecepcion" DATE NOT NULL
+);
+CREATE INDEX "idx_bobinaserv_tipo" ON "BobinaServilleta"("IdTipoBobinaServilleta");
+CREATE INDEX "idx_bobinaserv_estado" ON "BobinaServilleta"("IdEstadoMateriaPrima");
+
+CREATE TABLE "UnidadBobinaServilleta" (
+  "IdUnidadBobinaServilleta" SERIAL PRIMARY KEY,
+  "IdBobinaServilleta" INTEGER NOT NULL REFERENCES "BobinaServilleta"("IdBobinaServilleta") ON DELETE CASCADE,
+  "IdFormatoSubBobina" INTEGER NOT NULL REFERENCES "FormatoSubBobina"("IdFormatoSubBobina") ON DELETE CASCADE,
+  "CodigoBobina" TEXT UNIQUE NOT NULL,
+  "PesoBrutoKg" NUMERIC,
+  "GramajeGr" NUMERIC
+);
+CREATE INDEX "idx_unidbobserv_bobserv" ON "UnidadBobinaServilleta"("IdBobinaServilleta");
+CREATE INDEX "idx_unidbobserv_formato" ON "UnidadBobinaServilleta"("IdFormatoSubBobina");
+
+CREATE TABLE "SubBobinaServilleta" (
+  "IdSubBobinaServilleta" SERIAL PRIMARY KEY,
+  "IdUnidadBobinaServilleta" INTEGER NOT NULL REFERENCES "UnidadBobinaServilleta"("IdUnidadBobinaServilleta") ON DELETE CASCADE,
+  "IdTipoMedidaSubBobina" INTEGER NOT NULL REFERENCES "TipoMedidaSubBobina"("IdTipoMedidaSubBobina") ON DELETE CASCADE,
+  "IdEstadoMateriaPrima" INTEGER NOT NULL REFERENCES "EstadoMateriaPrima"("IdEstadoMateriaPrima") ON DELETE CASCADE
+);
+CREATE INDEX "idx_subbobina_unidad" ON "SubBobinaServilleta"("IdUnidadBobinaServilleta");
+CREATE INDEX "idx_subbobina_estado" ON "SubBobinaServilleta"("IdEstadoMateriaPrima");
+
+CREATE TABLE "LoteEmpaque" (
+  "IdLoteEmpaque" SERIAL PRIMARY KEY,
+  "IdProveedor" INTEGER NOT NULL REFERENCES "Proveedor"("IdProveedor") ON DELETE CASCADE,
+  "FechaRecepcion" DATE NOT NULL,
+  "CantidadToneladasPedida" NUMERIC
+);
+
+CREATE TABLE "TipoEmpaque" (
+  "IdTipoEmpaque" SERIAL PRIMARY KEY,
+  "NombreTipoEmpaque" TEXT NOT NULL
+);
+
+CREATE TABLE "Empaque" (
+  "IdEmpaque" SERIAL PRIMARY KEY,
+  "IdTipoEmpaque" INTEGER NOT NULL REFERENCES "TipoEmpaque"("IdTipoEmpaque") ON DELETE CASCADE,
+  "IdLoteEmpaque" INTEGER NOT NULL REFERENCES "LoteEmpaque"("IdLoteEmpaque") ON DELETE CASCADE,
+  "IdEstadoMateriaPrima" INTEGER NOT NULL REFERENCES "EstadoMateriaPrima"("IdEstadoMateriaPrima") ON DELETE CASCADE,
+  "PesoKg" NUMERIC,
+  "CodigoEmpaque" TEXT UNIQUE NOT NULL
+);
+CREATE INDEX "idx_empaque_estado" ON "Empaque"("IdEstadoMateriaPrima");
+
+CREATE TABLE "LotePallet" (
+  "IdLotePallet" SERIAL PRIMARY KEY,
+  "IdProveedor" INTEGER NOT NULL REFERENCES "Proveedor"("IdProveedor") ON DELETE CASCADE,
+  "FechaRecepcion" DATE NOT NULL
+);
+
+CREATE TABLE "TipoPallet" (
+  "IdTipoPallet" SERIAL PRIMARY KEY,
+  "NumeroRodelas" INTEGER,
+  "Descripcion" TEXT
+);
+
+CREATE TABLE "Pallet" (
+  "IdPallet" SERIAL PRIMARY KEY,
+  "IdLotePallet" INTEGER NOT NULL REFERENCES "LotePallet"("IdLotePallet") ON DELETE CASCADE,
+  "IdEstadoMateriaPrima" INTEGER NOT NULL REFERENCES "EstadoMateriaPrima"("IdEstadoMateriaPrima") ON DELETE CASCADE,
+  "IdTipoPallet" INTEGER NOT NULL REFERENCES "TipoPallet"("IdTipoPallet") ON DELETE CASCADE,
+  "CodigoPallet" TEXT UNIQUE NOT NULL
+);
+CREATE INDEX "idx_pallet_estado" ON "Pallet"("IdEstadoMateriaPrima");
+
+CREATE TABLE "TipoMovimientoMateriaPrima" (
+  "IdTipoMovimiento" SERIAL PRIMARY KEY,
+  "NombreMovimiento" TEXT NOT NULL,
+  "AplicaA" TEXT NOT NULL,
+  "DescripcionTipoMovimientoMateriaPrima" TEXT
+);
+
+CREATE TABLE "MovimientoBobina" (
+  "IdMovimientoBobina" SERIAL PRIMARY KEY,
+  "IdBobinaPapel" INTEGER NOT NULL REFERENCES "BobinaPapel"("IdBobinaPapel") ON DELETE CASCADE,
+  "IdTipoMovimiento" INTEGER NOT NULL REFERENCES "TipoMovimientoMateriaPrima"("IdTipoMovimiento") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "FechaMovimiento" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "Observacion" TEXT
+);
+CREATE INDEX "idx_movbobina_bobina_fecha" ON "MovimientoBobina"("IdBobinaPapel", "FechaMovimiento" DESC);
+
+CREATE TABLE "MovimientoPallet" (
+  "IdMovimientoPallet" SERIAL PRIMARY KEY,
+  "IdPallet" INTEGER NOT NULL REFERENCES "Pallet"("IdPallet") ON DELETE CASCADE,
+  "IdTipoMovimiento" INTEGER NOT NULL REFERENCES "TipoMovimientoMateriaPrima"("IdTipoMovimiento") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "FechaMovimiento" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "Observacion" TEXT
+);
+CREATE INDEX "idx_movpallet_pallet_fecha" ON "MovimientoPallet"("IdPallet", "FechaMovimiento" DESC);
+
+CREATE TABLE "MovimientoSubBobina" (
+  "IdMovimientoSubBobina" SERIAL PRIMARY KEY,
+  "IdSubBobinaServilleta" INTEGER NOT NULL REFERENCES "SubBobinaServilleta"("IdSubBobinaServilleta") ON DELETE CASCADE,
+  "IdTipoMovimiento" INTEGER NOT NULL REFERENCES "TipoMovimientoMateriaPrima"("IdTipoMovimiento") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "FechaMovimiento" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "Observacion" TEXT
+);
+CREATE INDEX "idx_movsubbobina_subbobina_fecha" ON "MovimientoSubBobina"("IdSubBobinaServilleta", "FechaMovimiento" DESC);
+
+CREATE TABLE "MovimientoEmpaque" (
+  "IdMovimientoEmpaque" SERIAL PRIMARY KEY,
+  "IdEmpaque" INTEGER NOT NULL REFERENCES "Empaque"("IdEmpaque") ON DELETE CASCADE,
+  "IdTipoMovimiento" INTEGER NOT NULL REFERENCES "TipoMovimientoMateriaPrima"("IdTipoMovimiento") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "FechaMovimiento" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "Observacion" TEXT
+);
+CREATE INDEX "idx_movempaque_empaque_fecha" ON "MovimientoEmpaque"("IdEmpaque", "FechaMovimiento" DESC);
+
+CREATE TABLE "EstadoProduccion" (
+  "IdEstadoProduccion" SERIAL PRIMARY KEY,
+  "NombreEstadoProduccion" TEXT NOT NULL,
+  "DescripcionEstadoProduccion" TEXT
+);
+
+CREATE TABLE "ProduccionBobinaTubo" (
+  "IdProduccionBobinaTubo" SERIAL PRIMARY KEY,
+  "IdEstadoProduccion" INTEGER NOT NULL REFERENCES "EstadoProduccion"("IdEstadoProduccion") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "IdBobina_1" INTEGER NOT NULL REFERENCES "BobinaPapel"("IdBobinaPapel") ON DELETE CASCADE,
+  "IdBobina_2" INTEGER NOT NULL REFERENCES "BobinaPapel"("IdBobinaPapel") ON DELETE CASCADE,
+  "IdTurno" INTEGER NOT NULL REFERENCES "Turno"("IdTurno") ON DELETE CASCADE,
+  "FechaInicioProduccion" TIMESTAMPTZ NOT NULL,
+  "FechaFinProduccion" TIMESTAMPTZ,
+  "CantidadLogsActual" INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX "idx_prodbobinatubo_turno" ON "ProduccionBobinaTubo"("IdTurno");
+CREATE INDEX "idx_prodbobinatubo_estado" ON "ProduccionBobinaTubo"("IdEstadoProduccion");
+
+CREATE TABLE "ProduccionPalletTubo" (
+  "IdProduccionPalletTubo" SERIAL PRIMARY KEY,
+  "IdEstadoProduccion" INTEGER NOT NULL REFERENCES "EstadoProduccion"("IdEstadoProduccion") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "IdPallet" INTEGER NOT NULL REFERENCES "Pallet"("IdPallet") ON DELETE CASCADE,
+  "IdTurno" INTEGER NOT NULL REFERENCES "Turno"("IdTurno") ON DELETE CASCADE,
+  "FechaInicioProduccion" TIMESTAMPTZ NOT NULL,
+  "FechaFinProduccion" TIMESTAMPTZ
+);
+CREATE INDEX "idx_prodpallettubo_turno" ON "ProduccionPalletTubo"("IdTurno");
+CREATE INDEX "idx_prodpallettubo_estado" ON "ProduccionPalletTubo"("IdEstadoProduccion");
+
+CREATE TABLE "ProduccionServilleta" (
+  "IdProduccionServilleta" SERIAL PRIMARY KEY,
+  "IdEstadoProduccion" INTEGER NOT NULL REFERENCES "EstadoProduccion"("IdEstadoProduccion") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "IdSubBobina" INTEGER NOT NULL REFERENCES "SubBobinaServilleta"("IdSubBobinaServilleta") ON DELETE CASCADE,
+  "IdTurno" INTEGER NOT NULL REFERENCES "Turno"("IdTurno") ON DELETE CASCADE,
+  "FechaInicioProduccion" TIMESTAMPTZ NOT NULL,
+  "FechaFinProduccion" TIMESTAMPTZ
+);
+CREATE INDEX "idx_prodservilleta_turno" ON "ProduccionServilleta"("IdTurno");
+CREATE INDEX "idx_prodservilleta_estado" ON "ProduccionServilleta"("IdEstadoProduccion");
+CREATE INDEX "idx_prodservilleta_subbobina" ON "ProduccionServilleta"("IdSubBobina");
+
+CREATE TABLE "PausaProduccionBobinaTubo" (
+  "IdPausaProduccionBobinaTubo" SERIAL PRIMARY KEY,
+  "IdProduccionBobinaTubo" INTEGER NOT NULL REFERENCES "ProduccionBobinaTubo"("IdProduccionBobinaTubo") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "FechaHoraPausa" TIMESTAMPTZ NOT NULL,
+  "MotivoPausaProduccion" TEXT,
+  "FechaHoraReanudacion" TIMESTAMPTZ
+);
+CREATE INDEX "idx_pausabobinatubo_fecha" ON "PausaProduccionBobinaTubo"("FechaHoraPausa");
+
+CREATE TABLE "PausaProduccionServilleta" (
+  "IdPausaProduccionServilleta" SERIAL PRIMARY KEY,
+  "IdProduccionServilleta" INTEGER NOT NULL REFERENCES "ProduccionServilleta"("IdProduccionServilleta") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "FechaHoraPausa" TIMESTAMPTZ NOT NULL,
+  "MotivoPausaProduccion" TEXT,
+  "FechaHoraReanudacion" TIMESTAMPTZ
+);
+CREATE INDEX "idx_pausaservilleta_fecha" ON "PausaProduccionServilleta"("FechaHoraPausa");
+
+CREATE TABLE "PausaProduccionPalletTubo" (
+  "IdPausaProduccionPalletTubo" SERIAL PRIMARY KEY,
+  "IdProduccionPalletTubo" INTEGER NOT NULL REFERENCES "ProduccionPalletTubo"("IdProduccionPalletTubo") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "FechaHoraPausa" TIMESTAMPTZ NOT NULL,
+  "MotivoPausaProduccion" TEXT,
+  "FechaHoraReanudacion" TIMESTAMPTZ
+);
+CREATE INDEX "idx_pausapallettubo_fecha" ON "PausaProduccionPalletTubo"("FechaHoraPausa");
+
+CREATE TABLE "Producto" (
+  "IdProducto" SERIAL PRIMARY KEY,
+  "NombreProducto" TEXT NOT NULL
+);
+
+CREATE TABLE "PresentacionProducto" (
+  "IdPresentacion" SERIAL PRIMARY KEY,
+  "IdProducto" INTEGER NOT NULL REFERENCES "Producto"("IdProducto") ON DELETE CASCADE,
+  "TipoContenedor" TEXT NOT NULL,
+  "CantidadRollosUnidades" INTEGER,
+  "CantidadPorUnidadTerminada" INTEGER,
+  "CodigoPresentacion" TEXT UNIQUE NOT NULL
+);
+CREATE INDEX "idx_presentacion_producto" ON "PresentacionProducto"("IdProducto");
+
+CREATE TABLE "TipoMovimientoInventario" (
+  "IdTipoMovimientoInventario" SERIAL PRIMARY KEY,
+  "NombreTipoMovimientoInventario" TEXT NOT NULL,
+  "DescripcionTipoMovimientoInventario" TEXT
+);
+
+CREATE TABLE "MovimientoProductoTerminado" (
+  "IdMovimientoProductoTerminado" SERIAL PRIMARY KEY,
+  "IdTipoMovimientoInventario" INTEGER NOT NULL REFERENCES "TipoMovimientoInventario"("IdTipoMovimientoInventario") ON DELETE CASCADE,
+  "IdPresentacion" INTEGER NOT NULL REFERENCES "PresentacionProducto"("IdPresentacion") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "CantidadIngresoInventario" NUMERIC NOT NULL,
+  "FechaMovimiento" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "Observacion" TEXT
+);
+CREATE INDEX "idx_movprodterm_presentacion_fecha" ON "MovimientoProductoTerminado"("IdPresentacion", "FechaMovimiento" DESC);
+CREATE INDEX "idx_movprodterm_fecha" ON "MovimientoProductoTerminado"("FechaMovimiento");
+
+CREATE TABLE "InventarioProductoTerminado" (
+  "IdPresentacion" INTEGER PRIMARY KEY REFERENCES "PresentacionProducto"("IdPresentacion") ON DELETE CASCADE,
+  "CantidadActual" NUMERIC NOT NULL DEFAULT 0
+);
+
+CREATE TABLE "TipoInsumo" (
+  "IdTipoInsumo" SERIAL PRIMARY KEY,
+  "NombreInsumo" TEXT NOT NULL,
+  "DescripcionInsumo" TEXT
+);
+
+CREATE TABLE "MovimientoInsumo" (
+  "IdMovimientoInsumo" SERIAL PRIMARY KEY,
+  "IdTipoInsumo" INTEGER NOT NULL REFERENCES "TipoInsumo"("IdTipoInsumo") ON DELETE CASCADE,
+  "IdTipoMovimiento" INTEGER NOT NULL REFERENCES "TipoMovimientoMateriaPrima"("IdTipoMovimiento") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "CantidadMovimiento" NUMERIC,
+  "FechaMovimiento" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "Observacion" TEXT
+);
+CREATE INDEX "idx_movinsumo_tipo_fecha" ON "MovimientoInsumo"("IdTipoInsumo", "FechaMovimiento" DESC);
+
+CREATE TABLE "InventarioInsumo" (
+  "IdInventarioInsumo" SERIAL PRIMARY KEY,
+  "IdTipoInsumo" INTEGER NOT NULL REFERENCES "TipoInsumo"("IdTipoInsumo") ON DELETE CASCADE,
+  "CantidadActual" NUMERIC NOT NULL DEFAULT 0
+);
+
+CREATE TABLE "TipoEmpaqueBolsa" (
+  "IdTipoEmpaqueBolsa" SERIAL PRIMARY KEY,
+  "NombreEmpaqueBolsa" TEXT NOT NULL,
+  "DescripcionEmpaqueBolsa" TEXT
+);
+
+CREATE TABLE "MovimientoEmpaqueBolsa" (
+  "IdMovimientoEmpaqueBolsa" SERIAL PRIMARY KEY,
+  "IdTipoEmpaqueBolsa" INTEGER NOT NULL REFERENCES "TipoEmpaqueBolsa"("IdTipoEmpaqueBolsa") ON DELETE CASCADE,
+  "IdLoteEmpaque" INTEGER REFERENCES "LoteEmpaque"("IdLoteEmpaque") ON DELETE CASCADE,
+  "IdTipoMovimiento" INTEGER NOT NULL REFERENCES "TipoMovimientoMateriaPrima"("IdTipoMovimiento") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "CantidadMovimiento" NUMERIC NOT NULL,
+  "FechaMovimiento" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "Observacion" TEXT
+);
+CREATE INDEX "idx_movempaquebolsa_tipo_fecha" ON "MovimientoEmpaqueBolsa"("IdTipoEmpaqueBolsa", "FechaMovimiento" DESC);
+CREATE INDEX "idx_movempaquebolsa_lote" ON "MovimientoEmpaqueBolsa"("IdLoteEmpaque");
+
+ALTER TABLE "MovimientoEmpaqueBolsa"
+ADD CONSTRAINT chk_lote_solo_ingreso
+CHECK ("IdTipoMovimiento" <> 1 OR "IdLoteEmpaque" IS NOT NULL);
+
+CREATE TABLE "InventarioEmpaqueBolsa" (
+  "IdInventarioEmpaqueBolsa" SERIAL PRIMARY KEY,
+  "IdTipoEmpaqueBolsa" INTEGER NOT NULL REFERENCES "TipoEmpaqueBolsa"("IdTipoEmpaqueBolsa") ON DELETE CASCADE,
+  "CantidadActual" NUMERIC NOT NULL DEFAULT 0
+);
+
+CREATE TABLE "TipoBolsaJava" (
+  "IdTipoBolsaJava" SERIAL PRIMARY KEY,
+  "NombreBolsaJava" TEXT NOT NULL,
+  "DescripcionBolsaJava" TEXT
+);
+
+CREATE TABLE "MovimientoBolsaJava" (
+  "IdMovimientoBolsaJava" SERIAL PRIMARY KEY,
+  "IdTipoBolsaJava" INTEGER NOT NULL REFERENCES "TipoBolsaJava"("IdTipoBolsaJava") ON DELETE CASCADE,
+  "IdLoteEmpaque" INTEGER REFERENCES "LoteEmpaque"("IdLoteEmpaque") ON DELETE CASCADE,
+  "IdTipoMovimiento" INTEGER NOT NULL REFERENCES "TipoMovimientoMateriaPrima"("IdTipoMovimiento") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "CantidadMovimiento" NUMERIC,
+  "FechaMovimiento" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "Observacion" TEXT
+);
+CREATE INDEX "idx_movbolsajava_tipo_fecha" ON "MovimientoBolsaJava"("IdTipoBolsaJava", "FechaMovimiento" DESC);
+CREATE INDEX "idx_movbolsajava_lote" ON "MovimientoBolsaJava"("IdLoteEmpaque");
+
+ALTER TABLE "MovimientoBolsaJava"
+ADD CONSTRAINT chk_lote_solo_ingreso_bolsajava
+CHECK ("IdTipoMovimiento" <> 1 OR "IdLoteEmpaque" IS NOT NULL);
+
+CREATE TABLE "InventarioBolsaJava" (
+  "IdInventarioBolsaJava" SERIAL PRIMARY KEY,
+  "IdTipoBolsaJava" INTEGER NOT NULL REFERENCES "TipoBolsaJava"("IdTipoBolsaJava") ON DELETE CASCADE,
+  "CantidadActual" NUMERIC NOT NULL DEFAULT 0
+);
+
+CREATE TABLE "TipoMovimientoOperadorLogs" (
+  "IdTipoMovimientoOperadorLogs" SERIAL PRIMARY KEY,
+  "NombreMovimiento" TEXT NOT NULL,
+  "DescripcionTipoMovimientoOperadorLogs" TEXT
+);
+
+CREATE TABLE "MovimientoOperadorLogs" (
+  "IdMovimientoOperadorLogs" SERIAL PRIMARY KEY,
+  "IdProduccionBobinaTubo" INTEGER NOT NULL REFERENCES "ProduccionBobinaTubo"("IdProduccionBobinaTubo") ON DELETE CASCADE,
+  "IdTipoMovimientoOperadorLogs" INTEGER NOT NULL REFERENCES "TipoMovimientoOperadorLogs"("IdTipoMovimientoOperadorLogs") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "CantidadLogs" INTEGER NOT NULL,
+  "FechaMovimiento" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "Observacion" TEXT
+);
+CREATE INDEX "idx_movoperlogs_produccion_fecha" ON "MovimientoOperadorLogs"("IdProduccionBobinaTubo", "FechaMovimiento" DESC);
+CREATE INDEX "idx_movoperlogs_tipo" ON "MovimientoOperadorLogs"("IdTipoMovimientoOperadorLogs");
+
+CREATE TABLE "CancelacionProduccionBobinaTubo" (
+  "IdCancelacionProduccionBobinaTubo" SERIAL PRIMARY KEY,
+  "IdProduccionBobinaTubo" INTEGER NOT NULL REFERENCES "ProduccionBobinaTubo"("IdProduccionBobinaTubo") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "FechaHoraCancelacion" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "MotivoCancelacion" TEXT
+);
+CREATE INDEX "idx_cancelbobinatubo_produccion" ON "CancelacionProduccionBobinaTubo"("IdProduccionBobinaTubo");
+
+CREATE TABLE "CancelacionProduccionPalletTubo" (
+  "IdCancelacionProduccionPalletTubo" SERIAL PRIMARY KEY,
+  "IdProduccionPalletTubo" INTEGER NOT NULL REFERENCES "ProduccionPalletTubo"("IdProduccionPalletTubo") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "FechaHoraCancelacion" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "MotivoCancelacion" TEXT
+);
+CREATE INDEX "idx_cancelpallettubo_produccion" ON "CancelacionProduccionPalletTubo"("IdProduccionPalletTubo");
+
+CREATE TABLE "CancelacionProduccionServilleta" (
+  "IdCancelacionProduccionServilleta" SERIAL PRIMARY KEY,
+  "IdProduccionServilleta" INTEGER NOT NULL REFERENCES "ProduccionServilleta"("IdProduccionServilleta") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "FechaHoraCancelacion" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "MotivoCancelacion" TEXT
+);
+CREATE INDEX "idx_cancelservilleta_produccion" ON "CancelacionProduccionServilleta"("IdProduccionServilleta");
+
+CREATE TABLE "EstadoRefreshToken" (
+  "IdEstadoRefreshToken" SERIAL PRIMARY KEY,
+  "NombreEstadoRefreshToken" TEXT NOT NULL,
+  "Descripcion" TEXT
+);
+
+CREATE TABLE "RefreshToken" (
+  "IdRefreshToken" SERIAL PRIMARY KEY,
+  "IdEstadoRefreshToken" INTEGER NOT NULL REFERENCES "EstadoRefreshToken"("IdEstadoRefreshToken") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "TokenHash" TEXT NOT NULL,
+  "FechaCreacion" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "FechaExpiracion" TIMESTAMPTZ NOT NULL,
+  "FechaRevocacion" TIMESTAMPTZ,
+  "IpOrigen" INET,
+  "UserAgent" TEXT
+);
+
+CREATE UNIQUE INDEX "idx_refreshtoken_hash" ON "RefreshToken"("TokenHash");
+CREATE INDEX "idx_refreshtoken_usuario_estado" ON "RefreshToken"("IdUsuario", "IdEstadoRefreshToken");
+CREATE INDEX "idx_refreshtoken_expiracion" ON "RefreshToken"("FechaExpiracion") WHERE "IdEstadoRefreshToken" = 1;
