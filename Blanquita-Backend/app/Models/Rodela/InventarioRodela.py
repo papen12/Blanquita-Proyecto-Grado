@@ -1,0 +1,64 @@
+from datetime import date, datetime
+from pydantic import BaseModel
+
+
+class ResumenInventarioRodelaResponse(BaseModel):
+    IdTipoRodela: int
+    NombreTipoRodela: str
+    Descripcion: str | None
+    CantidadEnAlmacen: int
+    CantidadAbiertas: int
+
+
+class DetalleInventarioRodelaRequest(BaseModel):
+    IdTipoRodela: int
+
+
+class DetalleInventarioRodelaResponse(BaseModel):
+    IdRodela: int
+    CodigoRodela: str
+    CodigoLote: str
+    FechaRecepcion: date
+    NombreProveedor: str
+    TipoEstado: str
+
+
+class RodelaEnAlmacenResponse(BaseModel):
+    IdRodela: int
+    CodigoRodela: str
+
+
+class TrasladarRodelaRequest(BaseModel):
+    IdRodela: int
+    Observacion: str | None = None
+
+
+class TrasladarRodelaResponse(BaseModel):
+    IdRodela: int
+    CodigoRodela: str
+    IdEstadoMateriaPrima: int
+    FechaMovimiento: datetime
+
+
+class CorregirTrasladoRodelaRequest(BaseModel):
+    IdRodela: int
+    Observacion: str | None = None
+
+
+class CorregirTrasladoRodelaResponse(BaseModel):
+    IdRodela: int
+    CodigoRodela: str
+    IdEstadoMateriaPrima: int
+    FechaMovimiento: datetime
+
+
+class DarDeBajaRodelaRequest(BaseModel):
+    IdRodela: int
+    Observacion: str
+
+
+class DarDeBajaRodelaResponse(BaseModel):
+    IdRodela: int
+    CodigoRodela: str
+    IdEstadoMateriaPrima: int
+    FechaMovimiento: datetime

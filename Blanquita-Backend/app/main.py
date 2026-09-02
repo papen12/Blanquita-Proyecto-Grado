@@ -9,9 +9,8 @@ from app.Routes.BobinaPapel.InventarioRouter import InventarioBobinaPapelRouter
 from app.Routes.BobinaPapel.ProduccionRouter import ProduccionBobinaPapelRouter
 
 
-from app.Routes.Pallet.PalletRouter import PalletRouter
-from app.Routes.Pallet.ProducionRouter import ProduccionPalletRouter
-from app.Routes.Pallet.InventarioRouter import InventarioPalletRouter
+from app.Routes.Rodela.RodelaRouter import RodelaRouter
+from app.Routes.Rodela.InventarioRouter import InventarioRodelaRouter
 
 
 from app.Routes.Empaque.EmpaqueBobinaRouter import EmpaqueBobinaRouter
@@ -80,10 +79,9 @@ app.include_router(ProduccionBobinaPapelRouter)
 
 
 
-#ROUTERS PALLET
-app.include_router(PalletRouter)
-app.include_router(ProduccionPalletRouter)
-app.include_router(InventarioPalletRouter)
+#ROUTERS RODELA
+app.include_router(RodelaRouter)
+app.include_router(InventarioRodelaRouter)
 
 
 
