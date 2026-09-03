@@ -1,0 +1,13 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import InventarioBobinaServilleta from '@/components/ServilletaBobina/Inventario';
+const { usuario } = Astro.locals;
+import NavBar from '@/components/layout/NavBar';
+import BottomBar from '@/components/layout/Qr/BottomBar';
+---
+
+<Layout>
+	<NavBar client:load idRol={usuario.IdRol} />
+	<InventarioBobinaServilleta client:load usuario={usuario}/>
+	<BottomBar idRol={usuario.IdRol} subRuta={"bobina-servilleta"} idOpcionSelect={1} client:load/>
+</Layout>

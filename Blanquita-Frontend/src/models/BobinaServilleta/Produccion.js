@@ -1,0 +1,97 @@
+export const AbrirBobinaServilletaRequest = (idBobinaServilleta, observacion) => ({
+  IdBobinaServilleta: idBobinaServilleta,
+  Observacion: observacion ?? null
+});
+
+export const AbrirBobinaServilletaResponse = (data) => ({
+  IdBobinaServilleta: data.IdBobinaServilleta,
+  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
+  CantidadSubBobinas435: data.CantidadSubBobinas435,
+  CantidadSubBobinas220: data.CantidadSubBobinas220,
+  CantidadSubBobinasTotal: data.CantidadSubBobinasTotal
+});
+
+export const IniciarProduccionServilletaRequest = (idSubBobina) => ({
+  IdSubBobina: idSubBobina
+});
+
+export const IniciarProduccionServilletaResponse = (data) => ({
+  IdProduccionServilleta: data.IdProduccionServilleta,
+  FechaInicioProduccion: data.FechaInicioProduccion,
+  IdTurno: data.IdTurno,
+  NombreTurno: data.NombreTurno
+});
+
+export const PausaProduccionServilletaRequest = (idProduccionServilleta, motivoPausaProduccion) => ({
+  IdProduccionServilleta: idProduccionServilleta,
+  MotivoPausaProduccion: motivoPausaProduccion ?? null
+});
+
+export const PausaProduccionServilletaResponse = (data) => ({
+  IdPausaProduccionServilleta: data.IdPausaProduccionServilleta,
+  IdProduccionServilleta: data.IdProduccionServilleta,
+  FechaHoraPausa: data.FechaHoraPausa,
+  MotivoPausaProduccion: data.MotivoPausaProduccion ?? null,
+  FechaHoraReanudacion: data.FechaHoraReanudacion ?? null,
+  IdEstadoProduccion: data.IdEstadoProduccion
+});
+
+export const ReanudarProduccionServilletaRequest = (idProduccionServilleta) => ({
+  IdProduccionServilleta: idProduccionServilleta
+});
+
+export const ReanudarProduccionServilletaResponse = (data) => ({
+  IdPausaProduccionServilleta: data.IdPausaProduccionServilleta,
+  IdProduccionServilleta: data.IdProduccionServilleta,
+  FechaHoraPausa: data.FechaHoraPausa,
+  MotivoPausaProduccion: data.MotivoPausaProduccion ?? null,
+  FechaHoraReanudacion: data.FechaHoraReanudacion,
+  IdEstadoProduccion: data.IdEstadoProduccion
+});
+
+export const FinalizarProduccionServilletaRequest = (idProduccionServilleta) => ({
+  IdProduccionServilleta: idProduccionServilleta
+});
+
+export const FinalizarProduccionServilletaResponse = (data) => ({
+  IdProduccionServilleta: data.IdProduccionServilleta,
+  FechaFinProduccion: data.FechaFinProduccion,
+  IdEstadoProduccion: data.IdEstadoProduccion,
+  NombreEstadoProduccion: data.NombreEstadoProduccion
+});
+
+export const CancelarProduccionServilletaRequest = (idProduccionServilleta, motivoCancelacion) => ({
+  IdProduccionServilleta: idProduccionServilleta,
+  MotivoCancelacion: motivoCancelacion ?? null
+});
+
+export const CancelarProduccionServilletaResponse = (data) => ({
+  IdCancelacionProduccionServilleta: data.IdCancelacionProduccionServilleta,
+  IdProduccionServilleta: data.IdProduccionServilleta,
+  FechaHoraCancelacion: data.FechaHoraCancelacion,
+  MotivoCancelacion: data.MotivoCancelacion ?? null,
+  IdEstadoProduccion: data.IdEstadoProduccion
+});
+
+export const VerProduccionServilletaActivasRequest = (idTipoMedidaSubBobina) => ({
+  IdTipoMedidaSubBobina: idTipoMedidaSubBobina ?? null
+});
+
+export const VerProduccionServilletaActivasResponse = (data) => ({
+  IdProduccionServilleta: data.IdProduccionServilleta,
+  NombreEstadoProduccion: data.NombreEstadoProduccion,
+  IdSubBobina: data.IdSubBobina,
+  CodigoUnidadOrigen: data.CodigoUnidadOrigen,
+  IdTipoMedidaSubBobina: data.IdTipoMedidaSubBobina,
+  NombreTurno: data.NombreTurno,
+  FechaInicioProduccion: data.FechaInicioProduccion
+});
+
+export const VerPausasProduccionServilletaActivasResponse = (data) => ({
+  IdPausaProduccionServilleta: data.IdPausaProduccionServilleta,
+  IdProduccionServilleta: data.IdProduccionServilleta,
+  IdSubBobina: data.IdSubBobina,
+  CodigoUnidadOrigen: data.CodigoUnidadOrigen,
+  FechaHoraPausa: data.FechaHoraPausa,
+  NombreEstadoProduccion: data.NombreEstadoProduccion
+});
