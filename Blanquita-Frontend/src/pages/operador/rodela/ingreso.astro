@@ -2,12 +2,12 @@
 import Layout from '../../../layouts/Layout.astro';
 const { usuario } = Astro.locals;
 import NavBar from '@/components/layout/NavBar';
-import IngresoPallets from '@/components/Pallet/Ingreso';
+import IngresoRodelas from '@/components/Rodela/Ingreso';
 import BottomBar from '@/components/layout/Qr/BottomBar';
 ---
 
 <Layout>
 	<NavBar client:load idRol={usuario.IdRol} />
-	<IngresoPallets client:load usuario={usuario}/>
+	<IngresoRodelas client:load usuario={usuario}/>
 	<BottomBar idRol={usuario.IdRol} subRuta={"rodela"} idOpcionSelect={1} client:load/>
 </Layout>

@@ -8,24 +8,32 @@ function unirRutas(...segmentos) {
   return "/" + limpios.join("/");
 }
 
+const SUB_RUTAS_SIN_PRODUCCION = new Set(["rodela"]);
+
 export class BottomBarRoutes {
   constructor(rutaBase, subRuta, idOpcionSelect) {
     this.rutaBase = rutaBase;
+
+    const opcionesInventario = [
+      {
+        titulo: "Inventario",
+        icono: Boxes,
+        ruta: unirRutas(rutaBase, subRuta, "inventario"),
+      },
+    ];
+
+    if (!SUB_RUTAS_SIN_PRODUCCION.has(subRuta)) {
+      opcionesInventario.push({
+        titulo: "Produccion",
+        icono: Factory,
+        ruta: unirRutas(rutaBase, subRuta, "produccion"),
+      });
+    }
+
     this.grupos = [
       {
         idOp: 1,
-        opciones: [
-          {
-            titulo: "Inventario",
-            icono: Boxes,
-            ruta: unirRutas(rutaBase, subRuta, "inventario"),
-          },
-          {
-            titulo: "Produccion",
-            icono: Factory,
-            ruta: unirRutas(rutaBase, subRuta, "produccion"),
-          },
-        ],
+        opciones: opcionesInventario,
       },
       {
         idOp: 2,

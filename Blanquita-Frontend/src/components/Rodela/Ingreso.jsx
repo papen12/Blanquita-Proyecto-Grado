@@ -17,13 +17,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SelectEntidad } from "@/components/layout/Selectentidad";
 import Header from "@/components/layout/Header";
 import {
-  ObtenerTiposPallet,
-  cargarLotePallet,
-} from "../../services/Pallet/Pallet";
+  ObtenerTiposRodela,
+  cargarLoteRodela,
+} from "../../services/Rodela/Rodela";
 import { ObtenerProveedoresForm } from "../../services/Proveedor/Proveedor";
 import { dateFormatter } from "@/utils/dates";
 
-export default function IngresoPallets({ usuario }) {
+export default function IngresoRodelas({ usuario }) {
   const [tipos, setTipos] = useState([]);
   const [loadingTipos, setLoadingTipos] = useState(true);
   const [errorTipos, setErrorTipos] = useState("");
@@ -33,17 +33,17 @@ export default function IngresoPallets({ usuario }) {
   const [errorProveedores, setErrorProveedores] = useState("");
 
   const [idProveedor, setIdProveedor] = useState("");
-  const [idTipoPallet, setIdTipoPallet] = useState(null);
+  const [idTipoRodela, setIdTipoRodela] = useState(null);
 
   const secuencia = useRef(1);
   const refsCodigo = useRef({});
 
   const nuevaFila = () => ({
     id: secuencia.current++,
-    CodigoPallet: "",
+    CodigoRodela: "",
   });
 
-  const [filas, setFilas] = useState([{ id: 0, CodigoPallet: "" }]);
+  const [filas, setFilas] = useState([{ id: 0, CodigoRodela: "" }]);
 
   const [enviando, setEnviando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState("");
@@ -59,9 +59,9 @@ export default function IngresoPallets({ usuario }) {
     setLoadingTipos(true);
     setErrorTipos("");
     try {
-      const data = await ObtenerTiposPallet();
+      const data = await ObtenerTiposRodela();
       setTipos(data);
-      if (data.length) setIdTipoPallet(data[0].IdTipoPallet);
+      if (data.length) setIdTipoRodela(data[0].IdTipoRodela);
     } catch (e) {
       setErrorTipos(e.message);
       setTipos([]);
@@ -108,14 +108,14 @@ export default function IngresoPallets({ usuario }) {
   const codigosRepetidos = (() => {
     const cuenta = {};
     filas.forEach((f) => {
-      const c = f.CodigoPallet.trim().toLowerCase();
+      const c = f.CodigoRodela.trim().toLowerCase();
       if (c) cuenta[c] = (cuenta[c] || 0) + 1;
     });
     return new Set(Object.keys(cuenta).filter((c) => cuenta[c] > 1));
   })();
 
   const filaConError = (f) => {
-    const codigo = f.CodigoPallet.trim();
+    const codigo = f.CodigoRodela.trim();
     if (!codigo) return "Falta el código";
     if (codigosRepetidos.has(codigo.toLowerCase())) return "Código repetido";
     return null;
@@ -129,7 +129,7 @@ export default function IngresoPallets({ usuario }) {
 
   const listo =
     !!idProveedor &&
-    !!idTipoPallet &&
+    !!idTipoRodela &&
     filas.length > 0 &&
     Object.keys(erroresFilas).length === 0;
 
@@ -141,28 +141,28 @@ export default function IngresoPallets({ usuario }) {
       setErrorEnvio("Selecciona el proveedor del lote.");
       return;
     }
-    if (!idTipoPallet) {
-      setErrorEnvio("Selecciona el tipo de pallet del lote.");
+    if (!idTipoRodela) {
+      setErrorEnvio("Selecciona el tipo de rodela del lote.");
       return;
     }
     if (Object.keys(erroresFilas).length > 0) {
-      setErrorEnvio("Revisa los pallets marcados en rojo antes de guardar.");
+      setErrorEnvio("Revisa las rodelas marcadas en rojo antes de guardar.");
       return;
     }
 
-    const pallets = filas.map((f) => f.CodigoPallet.trim());
+    const rodelas = filas.map((f) => f.CodigoRodela.trim());
 
     setEnviando(true);
     try {
-      const data = await cargarLotePallet(
+      const data = await cargarLoteRodela(
         Number(idProveedor),
-        Number(idTipoPallet),
-        pallets,
+        Number(idTipoRodela),
+        rodelas,
       );
       setResultado(data);
       setFilas([nuevaFila()]);
       setTocado(false);
-      toast.success(`${data.CantidadPallets} pallets ingresados al almacén`);
+      toast.success(`${data.CantidadRodelas} rodelas ingresadas al almacén`);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
       setErrorEnvio(e.message);
@@ -172,18 +172,18 @@ export default function IngresoPallets({ usuario }) {
     }
   };
 
-  const tipoActual = tipos.find((t) => t.IdTipoPallet === idTipoPallet);
+  const tipoActual = tipos.find((t) => t.IdTipoRodela === idTipoRodela);
 
   return (
     <div className="pt-20 md:pt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <Header
         volver
         titulo="Almacén · Materia Prima"
-        subtitulo="Registrar ingreso de pallets"
+        subtitulo="Registrar ingreso de rodelas"
         contador={{
           valor: filas.length,
-          singular: "pallet en el lote",
-          plural: "pallets en el lote",
+          singular: "rodela en el lote",
+          plural: "rodelas en el lote",
         }}
       />
 
@@ -203,7 +203,7 @@ export default function IngresoPallets({ usuario }) {
                   Lote registrado
                 </div>
                 <div className="text-sm text-slate-600">
-                  {resultado.CantidadPallets} pallets · Recepción{" "}
+                  {resultado.CantidadRodelas} rodelas · Recepción{" "}
                   {dateFormatter(resultado.FechaRecepcion)}
                 </div>
               </div>
@@ -224,7 +224,7 @@ export default function IngresoPallets({ usuario }) {
               Datos del lote
             </div>
             <div className="text-sm text-slate-500">
-              Se aplican a todos los pallets que registres abajo
+              Se aplican a todas las rodelas que registres abajo
             </div>
           </div>
 
@@ -276,7 +276,7 @@ export default function IngresoPallets({ usuario }) {
 
             <div className="flex flex-col gap-2">
               <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Tipo de pallet
+                Tipo de rodela
               </Label>
 
               {loadingTipos && (
@@ -302,7 +302,7 @@ export default function IngresoPallets({ usuario }) {
 
               {!loadingTipos && !errorTipos && tipos.length === 0 && (
                 <div className="rounded-xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-400">
-                  No hay tipos de pallet registrados.
+                  No hay tipos de rodela registrados.
                 </div>
               )}
 
@@ -310,20 +310,22 @@ export default function IngresoPallets({ usuario }) {
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {tipos.map((t) => (
                     <button
-                      key={t.IdTipoPallet}
+                      key={t.IdTipoRodela}
                       type="button"
-                      onClick={() => setIdTipoPallet(t.IdTipoPallet)}
+                      onClick={() => setIdTipoRodela(t.IdTipoRodela)}
                       className={cn(
                         "flex h-14 flex-col items-center justify-center rounded-lg border-2 px-3 text-sm font-bold transition-colors",
-                        idTipoPallet === t.IdTipoPallet
+                        idTipoRodela === t.IdTipoRodela
                           ? "border-c3 bg-c1/15 text-c3"
                           : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
                       )}
                     >
-                      <span>{t.Descripcion}</span>
-                      <span className="text-[11px] font-semibold text-slate-500">
-                        {t.NumeroRodelas} rodelas
-                      </span>
+                      <span>{t.NombreTipoRodela}</span>
+                      {t.Descripcion && (
+                        <span className="text-[11px] font-semibold text-slate-500">
+                          {t.Descripcion}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -336,11 +338,11 @@ export default function IngresoPallets({ usuario }) {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
             <div className="flex flex-wrap items-center gap-3">
               <div className="text-base font-extrabold text-slate-900">
-                Pallets del lote
+                Rodelas del lote
               </div>
               {tipoActual && (
                 <Badge variant="outline" className="border-c3 font-bold text-c3">
-                  {tipoActual.Descripcion}
+                  {tipoActual.NombreTipoRodela}
                 </Badge>
               )}
             </div>
@@ -349,7 +351,7 @@ export default function IngresoPallets({ usuario }) {
               className="h-11 gap-2 bg-gradient-to-r from-c3 to-c4 font-bold text-white hover:opacity-90"
             >
               <Plus size={16} strokeWidth={2.75} />
-              Agregar pallet
+              Agregar rodela
             </Button>
           </div>
 
@@ -358,7 +360,7 @@ export default function IngresoPallets({ usuario }) {
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-500">
                   <th className="w-12 px-5 py-3">#</th>
-                  <th className="px-3 py-3">Código de pallet</th>
+                  <th className="px-3 py-3">Código de rodela</th>
                   <th className="w-14 px-3 py-3"></th>
                 </tr>
               </thead>
@@ -379,15 +381,15 @@ export default function IngresoPallets({ usuario }) {
                       <td className="px-3 py-2.5">
                         <Input
                           ref={(el) => (refsCodigo.current[f.id] = el)}
-                          value={f.CodigoPallet}
+                          value={f.CodigoRodela}
                           onChange={(e) =>
-                            actualizarFila(f.id, "CodigoPallet", e.target.value)
+                            actualizarFila(f.id, "CodigoRodela", e.target.value)
                           }
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && i === filas.length - 1)
                               agregarFila();
                           }}
-                          placeholder="Ej. PLT-2026-0148"
+                          placeholder="Ej. RDL-2026-0148"
                           className={cn(
                             "h-10 font-mono",
                             err && "border-red-300 focus-visible:ring-red-300",
@@ -440,7 +442,7 @@ export default function IngresoPallets({ usuario }) {
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Pallet {i + 1}
+                      Rodela {i + 1}
                     </span>
                     <Button
                       variant="ghost"
@@ -457,11 +459,11 @@ export default function IngresoPallets({ usuario }) {
                       Código
                     </Label>
                     <Input
-                      value={f.CodigoPallet}
+                      value={f.CodigoRodela}
                       onChange={(e) =>
-                        actualizarFila(f.id, "CodigoPallet", e.target.value)
+                        actualizarFila(f.id, "CodigoRodela", e.target.value)
                       }
-                      placeholder="Ej. PLT-2026-0148"
+                      placeholder="Ej. RDL-2026-0148"
                       className="h-11 bg-white font-mono"
                     />
                   </div>
@@ -489,13 +491,13 @@ export default function IngresoPallets({ usuario }) {
           <div className="flex w-full flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
               <span className="font-extrabold text-white">
-                {filas.length} {filas.length === 1 ? "pallet" : "pallets"}
+                {filas.length} {filas.length === 1 ? "rodela" : "rodelas"}
               </span>
               {tipoActual && (
                 <span className="text-slate-400">
                   Tipo{" "}
                   <strong className="text-slate-200">
-                    {tipoActual.Descripcion}
+                    {tipoActual.NombreTipoRodela}
                   </strong>
                 </span>
               )}
