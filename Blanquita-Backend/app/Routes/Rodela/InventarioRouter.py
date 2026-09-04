@@ -104,7 +104,7 @@ def CorregirTrasladoRodela(
 )
 def DarDeBajaRodela(
     data: DarDeBajaRodelaRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: InventarioRodelaService = Depends(inventario_rodela_service)
 ):
     return service.DarDeBajaRodela(data, usuario_actual["IdUsuario"])
