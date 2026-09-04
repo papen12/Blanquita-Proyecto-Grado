@@ -1,6 +1,6 @@
-import { Boxes, Factory, User } from "lucide-react";
+import { Boxes, Factory, PackagePlus } from "lucide-react";
 
-function unirRutas(...segmentos) {
+export function unirRutas(...segmentos) {
   const limpios = segmentos
     .filter((s) => typeof s === "string" && s.trim() !== "")
     .map((s) => s.replace(/^\/+|\/+$/g, ""))
@@ -8,45 +8,60 @@ function unirRutas(...segmentos) {
   return "/" + limpios.join("/");
 }
 
-const SUB_RUTAS_SIN_PRODUCCION = new Set(["rodela"]);
-
-export class BottomBarRoutes {
-  constructor(rutaBase, subRuta, idOpcionSelect) {
-    this.rutaBase = rutaBase;
-
-    const opcionesInventario = [
+export const BottomBarOpciones = [
+  {
+    id: 1, // bobina-papel / bobina-servilleta: inventario + produccion
+    opciones: [
       {
         titulo: "Inventario",
         icono: Boxes,
-        ruta: unirRutas(rutaBase, subRuta, "inventario"),
+        ruta: "inventario",
       },
-    ];
-
-    if (!SUB_RUTAS_SIN_PRODUCCION.has(subRuta)) {
-      opcionesInventario.push({
+      {
         titulo: "Produccion",
         icono: Factory,
-        ruta: unirRutas(rutaBase, subRuta, "produccion"),
-      });
-    }
-
-    this.grupos = [
+        ruta: "produccion",
+      },
+    ],
+  },
+  {
+    id: 2, // rodela: inventario + ingreso (no tiene produccion)
+    opciones: [
       {
-        idOp: 1,
-        opciones: opcionesInventario,
+        titulo: "Inventario",
+        icono: Boxes,
+        ruta: "inventario",
       },
       {
-        idOp: 2,
-        opciones: [
-          {
-            titulo: "Perfil",
-            icono: User,
-            ruta: unirRutas(rutaBase, subRuta, "perfil"),
-          },
-        ],
+        titulo: "Ingreso",
+        icono: PackagePlus,
+        ruta: "ingreso",
       },
-    ];
+    ],
+  },
+  {
+    id: 3, // empaque: solo inventario (aun no tiene ingreso/produccion)
+    opciones: [
+      {
+        titulo: "Inventario",
+        icono: Boxes,
+        ruta: "bobina-inventario",
+      },
+    ],
+  },
+  // id: 4 -> Perfil (pendiente, continua la numeracion actual)
+];
 
-    this.opciones = this.grupos.find((g) => g.idOp === idOpcionSelect).opciones;
+export function resolverOpcionesConjunto(idConjunto, rutaBase, subRuta) {
+  const conjunto = BottomBarOpciones.find((c) => c.id === idConjunto);
+
+  if (!conjunto) {
+    console.error("resolverOpcionesConjunto: idConjunto no válido ->", idConjunto);
+    return [];
   }
+
+  return conjunto.opciones.map((opcion) => ({
+    ...opcion,
+    ruta: unirRutas(rutaBase, subRuta, opcion.ruta),
+  }));
 }

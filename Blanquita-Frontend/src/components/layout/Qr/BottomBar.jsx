@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Camera } from "lucide-react";
 import EscanerQR from "@/components/layout/Qr/Escanerqr";
-import { BottomBarRoutes } from "@/constants/BottomBarOptions";
+import { resolverOpcionesConjunto } from "@/constants/BottomBarOptions";
 import { PREFIJO_POR_ROL } from "@/constants/Roles";
 import { resolverRutaQR } from "@/utils/QR";
 
@@ -70,8 +70,7 @@ export default function BottomBar({ idRol, subRuta, idOpcionSelect }) {
     return null;
   }
 
-  const rutas = new BottomBarRoutes(rutaBase, subRuta, idOpcionSelect);
-  const opciones = rutas.opciones;
+  const opciones = resolverOpcionesConjunto(idOpcionSelect, rutaBase, subRuta);
 
   const mitad = Math.ceil(opciones.length / 2);
   const izquierda = opciones.slice(0, mitad);

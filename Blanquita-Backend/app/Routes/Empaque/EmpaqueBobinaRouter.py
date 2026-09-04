@@ -72,8 +72,9 @@ def VerInventario(
     status_code=200
 )
 def VerDetalleInventario(
-    data: DetalleInventarioEmpaqueRequest,
+    IdTipoEmpaque: int,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: EmpaqueBobinaService = Depends(empaque_bobina_service)
 ):
+    data = DetalleInventarioEmpaqueRequest(IdTipoEmpaque=IdTipoEmpaque)
     return service.VerDetalleInventarioEmpaque(data)

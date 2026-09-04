@@ -1,51 +1,51 @@
-export const EmpaqueItem = (codigoEmpaque, idTipoEmpaque, pesoKg) => ({
-  CodigoEmpaque: codigoEmpaque,
-  IdTipoEmpaque: idTipoEmpaque,
-  PesoKg: pesoKg
-});
+import {
+  ResumenInventarioEmpaqueResponse,
+  DetalleInventarioEmpaqueResponse,
+  TrasladarEmpaquesProduccionRequest,
+  TrasladarEmpaquesProduccionResponseItem
+} from "../../models/Empaque/EmpaqueBobina";
+import { manejarErrorBackend } from "@/utils/validators";
 
-export const IngresoEmpaqueRequest = (idProveedor, cantidadToneladasPedida, empaques) => ({
-  IdProveedor: idProveedor,
-  CantidadToneladasPedida: cantidadToneladasPedida,
-  Empaques: empaques.map((e) => EmpaqueItem(e.CodigoEmpaque, e.IdTipoEmpaque, e.PesoKg))
-});
+export async function verResumenInventarioEmpaque() {
+  const response = await fetch("/api/empaquebobina/inventario");
 
-export const IngresoEmpaqueResponseItem = (data) => ({
-  FechaRecepcion: data.FechaRecepcion,
-  IdTipoEmpaque: data.IdTipoEmpaque,
-  NombreTipoEmpaque: data.NombreTipoEmpaque,
-  CantidadEmpaques: data.CantidadEmpaques
-});
+  if (!response.ok) {
+    await manejarErrorBackend(response);
+  }
 
-export const IngresoEmpaqueResponse = (data) => ({
-  Resumen: data.Resumen.map(IngresoEmpaqueResponseItem)
-});
+  const data = await response.json();
 
-export const TrasladarEmpaquesProduccionRequest = (idsEmpaque) => ({
-  IdsEmpaque: idsEmpaque
-});
+  return data.map(ResumenInventarioEmpaqueResponse);
+}
 
-export const TrasladarEmpaquesProduccionResponseItem = (data) => ({
-  IdEmpaque: data.IdEmpaque,
-  CodigoEmpaque: data.CodigoEmpaque,
-  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
-  FechaMovimiento: data.FechaMovimiento
-});
+export async function verDetalleInventarioEmpaque(idTipoEmpaque) {
+  const params = new URLSearchParams({ IdTipoEmpaque: idTipoEmpaque });
 
-export const ResumenInventarioEmpaqueResponse = (data) => ({
-  IdTipoEmpaque: data.IdTipoEmpaque,
-  NombreTipoEmpaque: data.NombreTipoEmpaque,
-  CantidadEmpaques: data.CantidadEmpaques
-});
+  const response = await fetch(`/api/empaquebobina/inventariodetalle?${params.toString()}`);
 
-export const DetalleInventarioEmpaqueRequest = (idTipoEmpaque) => ({
-  IdTipoEmpaque: idTipoEmpaque
-});
+  if (!response.ok) {
+    await manejarErrorBackend(response);
+  }
 
-export const DetalleInventarioEmpaqueResponse = (data) => ({
-  IdEmpaque: data.IdEmpaque,
-  CodigoEmpaque: data.CodigoEmpaque,
-  PesoKg: data.PesoKg,
-  FechaRecepcion: data.FechaRecepcion,
-  NombreProveedor: data.NombreProveedor
-});
+  const data = await response.json();
+
+  return data.map(DetalleInventarioEmpaqueResponse);
+}
+
+export async function trasladarEmpaquesAProduccion(idsEmpaque) {
+  const payload = TrasladarEmpaquesProduccionRequest(idsEmpaque);
+
+  const response = await fetch("/api/empaquebobina/trasladarproduccion", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    await manejarErrorBackend(response);
+  }
+
+  const data = await response.json();
+
+  return data.map(TrasladarEmpaquesProduccionResponseItem);
+}
