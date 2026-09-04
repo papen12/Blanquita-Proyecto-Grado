@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -7,7 +8,8 @@ from fastapi import HTTPException, status
 from app.Repository.BobinaServilleta.BobinaServilleta import BobinaServilletaRepository
 from app.Models.BobinaServilleta.BobinaServilleta import (
     IngresoBobinaServilletaRequest,
-    IngresoBobinaServilletaResponse
+    IngresoBobinaServilletaResponse,
+    TipoBobinaServilletaIngreso
 )
 
 
@@ -34,3 +36,15 @@ class BobinaServilletaService:
             )
 
         return IngresoBobinaServilletaResponse(**resultado)
+
+    def ObtenerTiposBobinaServilleta(self) -> List[TipoBobinaServilletaIngreso]:
+        try:
+            resultado = self.repository.ObtenerTipoBobinaServilleta()
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudieron obtener los tipos de bobina servilleta"
+            )
+        if not resultado:
+            return []
+        return [TipoBobinaServilletaIngreso(**tipo) for tipo in resultado]

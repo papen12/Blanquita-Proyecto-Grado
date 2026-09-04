@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
 
+from typing import List
+
 from app.Services.BobinaServilleta.BobinaServilletaService import BobinaServilletaService
 
 from app.Auth.Dependencies import require_role
@@ -9,7 +11,8 @@ from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR
 
 from app.Models.BobinaServilleta.BobinaServilleta import (
     IngresoBobinaServilletaResponse,
-    IngresoBobinaServilletaRequest
+    IngresoBobinaServilletaRequest,
+    TipoBobinaServilletaIngreso
 )
 
 BobinaServilletaRouter=APIRouter(prefix="/bobinaservilleta",tags=["Bobina Servilleta - CRUD e Ingreso"])
@@ -27,3 +30,14 @@ def CargarLoteBobinaServilleta(
     service: BobinaServilletaService = Depends(bobina_servilleta_service)
 ):
     return service.InsertarBobinasServilleta(data, usuario_actual["IdUsuario"])
+
+@BobinaServilletaRouter.get(
+    "/obtenertipos",
+    response_model=List[TipoBobinaServilletaIngreso],
+    status_code=200
+)
+def ObtenerTiposBobinaServilleta(
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: BobinaServilletaService = Depends(bobina_servilleta_service)
+):
+    return service.ObtenerTiposBobinaServilleta()

@@ -25,3 +25,8 @@ class IngresoBobinaServilletaResponse(BaseModel):
     FechaRecepcion: date
     CantidadBobinasServilleta: int
     CantidadUnidades: int
+
+
+class TipoBobinaServilletaIngreso(BaseModel):
+    IdTipoBobinaServilleta: int
+    NombreTipoBobinaServilleta: str

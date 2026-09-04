@@ -16,3 +16,11 @@ class BobinaServilletaRepository:
             )
         """
         return self.caller.LlamarUnRegistro(sql, params)
+
+    def ObtenerTipoBobinaServilleta(self) -> list[dict]:
+        sql = """
+            SELECT "IdTipoBobinaServilleta", "NombreTipoBobinaServilleta"
+            FROM "TipoBobinaServilleta"
+            ORDER BY "IdTipoBobinaServilleta"
+        """
+        return self.caller.LlamarFuncion(sql, {})

@@ -16,16 +16,23 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SelectEntidad } from "@/components/layout/Selectentidad";
 import Header from "@/components/layout/Header";
-import { cargarLoteBobinaServilleta } from "../../services/BobinaServilleta/BobinaServilleta";
+import {
+  cargarLoteBobinaServilleta,
+  ObtenerTiposBobinaServilleta,
+} from "../../services/BobinaServilleta/BobinaServilleta";
 import { ObtenerProveedoresForm } from "../../services/Proveedor/Proveedor";
 import { dateFormatter } from "@/utils/dates";
 import { Formatos } from "@/constants/BobinaServilleta";
 
-const ID_TIPO_BOBINA_SERVILLETA = 1;
 const FORMATO_UNIDAD_1 = Formatos[0];
 const FORMATO_UNIDAD_2 = Formatos[1];
 
 export default function IngresoBobinasServilleta({ usuario }) {
+  const [tipos, setTipos] = useState([]);
+  const [loadingTipos, setLoadingTipos] = useState(true);
+  const [errorTipos, setErrorTipos] = useState("");
+  const [idTipoBobinaServilleta, setIdTipoBobinaServilleta] = useState(null);
+
   const [proveedores, setProveedores] = useState([]);
   const [loadingProveedores, setLoadingProveedores] = useState(true);
   const [errorProveedores, setErrorProveedores] = useState("");
@@ -63,8 +70,24 @@ export default function IngresoBobinasServilleta({ usuario }) {
   const [resultado, setResultado] = useState(null);
 
   useEffect(() => {
+    cargarTipos();
     cargarProveedores();
   }, []);
+
+  const cargarTipos = async () => {
+    setLoadingTipos(true);
+    setErrorTipos("");
+    try {
+      const data = await ObtenerTiposBobinaServilleta();
+      setTipos(data);
+      if (data.length) setIdTipoBobinaServilleta(data[0].IdTipoBobinaServilleta);
+    } catch (e) {
+      setErrorTipos(e.message);
+      setTipos([]);
+    } finally {
+      setLoadingTipos(false);
+    }
+  };
 
   const cargarProveedores = async () => {
     setLoadingProveedores(true);
@@ -135,7 +158,10 @@ export default function IngresoBobinasServilleta({ usuario }) {
   }, {});
 
   const listo =
-    !!idProveedor && filas.length > 0 && Object.keys(erroresFilas).length === 0;
+    !!idProveedor &&
+    !!idTipoBobinaServilleta &&
+    filas.length > 0 &&
+    Object.keys(erroresFilas).length === 0;
 
   const guardarLote = async () => {
     setTocado(true);
@@ -143,6 +169,10 @@ export default function IngresoBobinasServilleta({ usuario }) {
 
     if (!idProveedor) {
       setErrorEnvio("Selecciona el proveedor del lote.");
+      return;
+    }
+    if (!idTipoBobinaServilleta) {
+      setErrorEnvio("Selecciona el tipo de bobina del lote.");
       return;
     }
     if (Object.keys(erroresFilas).length > 0) {
@@ -171,7 +201,7 @@ export default function IngresoBobinasServilleta({ usuario }) {
     try {
       const data = await cargarLoteBobinaServilleta(
         Number(idProveedor),
-        ID_TIPO_BOBINA_SERVILLETA,
+        Number(idTipoBobinaServilleta),
         bobinas,
       );
       setResultado(data);
@@ -188,6 +218,10 @@ export default function IngresoBobinasServilleta({ usuario }) {
       setEnviando(false);
     }
   };
+
+  const tipoActual = tipos.find(
+    (t) => t.IdTipoBobinaServilleta === idTipoBobinaServilleta,
+  );
 
   return (
     <div className="pt-20 md:pt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
@@ -241,54 +275,96 @@ export default function IngresoBobinasServilleta({ usuario }) {
           </div>
 
           <div className="flex flex-col gap-5 p-5">
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                  Proveedor
-                </Label>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Proveedor
+              </Label>
 
-                {loadingProveedores && <Skeleton className="h-11 w-full rounded-lg" />}
+              {loadingProveedores && <Skeleton className="h-11 w-full rounded-lg" />}
 
-                {!loadingProveedores && errorProveedores && (
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600">
-                    {errorProveedores}
-                    <Button
-                      variant="outline"
-                      onClick={cargarProveedores}
-                      className="h-9 border-red-300 font-bold text-red-600 hover:bg-red-100"
-                    >
-                      Reintentar
-                    </Button>
-                  </div>
-                )}
-
-                {!loadingProveedores && !errorProveedores && proveedores.length === 0 && (
-                  <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-400">
-                    No hay proveedores registrados.
-                  </div>
-                )}
-
-                {!loadingProveedores && !errorProveedores && proveedores.length > 0 && (
-                  <SelectEntidad
-                    opciones={proveedores}
-                    valor={idProveedor}
-                    onCambio={setIdProveedor}
-                    campoValor="IdProveedor"
-                    campoEtiqueta="NombreProveedor"
-                    placeholder="Selecciona el proveedor"
-                    invalido={tocado && !idProveedor}
-                  />
-                )}
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                  Tipo de bobina
-                </Label>
-                <div className="flex h-11 items-center rounded-lg border-2 border-slate-200 bg-slate-50 px-3.5 text-sm font-bold text-slate-600">
-                  Único tipo disponible (Id {ID_TIPO_BOBINA_SERVILLETA})
+              {!loadingProveedores && errorProveedores && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600">
+                  {errorProveedores}
+                  <Button
+                    variant="outline"
+                    onClick={cargarProveedores}
+                    className="h-9 border-red-300 font-bold text-red-600 hover:bg-red-100"
+                  >
+                    Reintentar
+                  </Button>
                 </div>
-              </div>
+              )}
+
+              {!loadingProveedores && !errorProveedores && proveedores.length === 0 && (
+                <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-400">
+                  No hay proveedores registrados.
+                </div>
+              )}
+
+              {!loadingProveedores && !errorProveedores && proveedores.length > 0 && (
+                <SelectEntidad
+                  opciones={proveedores}
+                  valor={idProveedor}
+                  onCambio={setIdProveedor}
+                  campoValor="IdProveedor"
+                  campoEtiqueta="NombreProveedor"
+                  placeholder="Selecciona el proveedor"
+                  invalido={tocado && !idProveedor}
+                />
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Tipo de bobina
+              </Label>
+
+              {loadingTipos && (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {[0, 1].map((i) => (
+                    <Skeleton key={i} className="h-12 rounded-lg" />
+                  ))}
+                </div>
+              )}
+
+              {!loadingTipos && errorTipos && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                  {errorTipos}
+                  <Button
+                    variant="outline"
+                    onClick={cargarTipos}
+                    className="h-9 border-red-300 font-bold text-red-600 hover:bg-red-100"
+                  >
+                    Reintentar
+                  </Button>
+                </div>
+              )}
+
+              {!loadingTipos && !errorTipos && tipos.length === 0 && (
+                <div className="rounded-xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-400">
+                  No hay tipos de bobina servilleta registrados.
+                </div>
+              )}
+
+              {!loadingTipos && !errorTipos && tipos.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {tipos.map((t) => (
+                    <button
+                      key={t.IdTipoBobinaServilleta}
+                      type="button"
+                      onClick={() => setIdTipoBobinaServilleta(t.IdTipoBobinaServilleta)}
+                      className={cn(
+                        "h-12 rounded-lg border-2 px-3 text-sm font-bold transition-colors",
+                        idTipoBobinaServilleta === t.IdTipoBobinaServilleta
+                          ? "border-c3 bg-c1/15 text-c3"
+                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                      )}
+                    >
+                      {t.NombreTipoBobinaServilleta}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -299,6 +375,11 @@ export default function IngresoBobinasServilleta({ usuario }) {
               <div className="text-base font-extrabold text-slate-900">
                 Bobinas del lote
               </div>
+              {tipoActual && (
+                <Badge variant="outline" className="border-c3 font-bold text-c3">
+                  {tipoActual.NombreTipoBobinaServilleta}
+                </Badge>
+              )}
               <div className="text-sm text-slate-500">
                 Cada bobina lleva 2 unidades: unidad 1 arriba, unidad 2 abajo
               </div>

@@ -20,3 +20,8 @@ export const IngresoBobinaServilletaResponse = (data) => ({
   CantidadBobinasServilleta: data.CantidadBobinasServilleta,
   CantidadUnidades: data.CantidadUnidades
 });
+
+export const TipoBobinaServilletaIngreso = (data) => ({
+  IdTipoBobinaServilleta: data.IdTipoBobinaServilleta,
+  NombreTipoBobinaServilleta: data.NombreTipoBobinaServilleta
+});

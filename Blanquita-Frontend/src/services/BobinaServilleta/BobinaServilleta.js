@@ -1,6 +1,7 @@
 import {
   IngresoBobinaServilletaRequest,
-  IngresoBobinaServilletaResponse
+  IngresoBobinaServilletaResponse,
+  TipoBobinaServilletaIngreso
 } from "../../models/BobinaServilleta/BobinaServilleta";
 import { manejarErrorBackend } from "@/utils/validators";
 
@@ -20,4 +21,16 @@ export async function cargarLoteBobinaServilleta(idProveedor, idTipoBobinaServil
   const data = await response.json();
 
   return IngresoBobinaServilletaResponse(data);
+}
+
+export async function ObtenerTiposBobinaServilleta() {
+  const response = await fetch("/api/bobinaservilleta/obtenertipos");
+
+  if (!response.ok) {
+    await manejarErrorBackend(response);
+  }
+
+  const data = await response.json();
+
+  return data.map(TipoBobinaServilletaIngreso);
 }
