@@ -7,3 +7,7 @@ export const Roles = {
   Operador: 1,
   Encargado: 2,
 };
+
+
+export const  MOTIVO_CANCELACION_MIN = 5;
+export const MOTIVO_CANCELACION_MAX = 150;

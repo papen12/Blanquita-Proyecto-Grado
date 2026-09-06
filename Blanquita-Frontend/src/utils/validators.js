@@ -1,4 +1,4 @@
-import { Roles } from "@/constants/Roles";
+import { Roles } from "@/constants/Values";
 export const EsEncargado=(idRol)=> idRol===Roles.Encargado
 
 export function extraerMensajeError(data, fallback = "Ocurrió un error inesperado") {

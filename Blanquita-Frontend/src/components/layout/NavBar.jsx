@@ -22,7 +22,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { PREFIJO_POR_ROL } from "@/constants/Roles";
+import { PREFIJO_POR_ROL } from "@/constants/Values";
 
 function IconoItem({ item, size = 18 }) {
   if (item.esIconoLab) {

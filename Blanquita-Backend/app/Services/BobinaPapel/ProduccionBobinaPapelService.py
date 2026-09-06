@@ -22,8 +22,12 @@ from app.Models.BobinaPapel.ProduccionBobinaPapel import (
     VerPausasProduccionBobinaTuboActivasRequest,
     VerPausasProduccionBobinaTuboActivasResponse,
 )
-from app.utils.validators import EsCantidadValida
-from app.Constants.Cantidades import CANTIDAD_INGRESO_LOGS
+from app.utils.validators import EsCantidadValida,ValidarTexto
+from app.Constants.Cantidades import (
+    CANTIDAD_INGRESO_LOGS,
+    LONGITUD_MAXIMA_DESCRIPCION,
+    LONGITUD_MINIMA_DESCRIPCION
+)
 
 
 class ProduccionBobinaPapelService:
@@ -109,10 +113,17 @@ class ProduccionBobinaPapelService:
     def PausarProduccion(
         self, data: PausarProduccionBobinaTuboRequest, id_usuario: int
     ) -> PausarProduccionBobinaTuboResponse:
+        motivo = (data.MotivoPausaProduccion or "").strip()
+        if not ValidarTexto(LONGITUD_MINIMA_DESCRIPCION, LONGITUD_MAXIMA_DESCRIPCION, motivo):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"El motivo de la pausa es obligatorio y debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres",
+            )
+
         params = {
             "p_IdProduccionBobinaTubo": data.IdProduccionBobinaTubo,
             "p_IdUsuario": id_usuario,
-            "p_MotivoPausaProduccion": data.MotivoPausaProduccion,
+            "p_MotivoPausaProduccion": motivo,
         }
 
         try:
@@ -185,12 +196,17 @@ class ProduccionBobinaPapelService:
     def CancelarProduccion(
         self, data: CancelarProduccionBobinaTuboRequest, id_usuario: int
     ) -> CancelarProduccionBobinaTuboResponse:
+        motivo = (data.MotivoCancelacion or "").strip()
+        if not ValidarTexto(LONGITUD_MINIMA_DESCRIPCION, LONGITUD_MAXIMA_DESCRIPCION, motivo):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"El motivo de cancelación es obligatorio y debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres",
+            )
         params = {
             "p_id_produccion": data.IdProduccionBobinaTubo,
             "p_id_usuario": id_usuario,
-            "p_motivo_cancelacion": data.MotivoCancelacion,
+            "p_motivo_cancelacion": motivo,
         }
-
         try:
             resultado = self.repository.CancelarProduccionBobinaTubo(params)
         except SQLAlchemyError as e:
@@ -209,7 +225,6 @@ class ProduccionBobinaPapelService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No se pudo cancelar la producción de bobina tubo, verifica los datos ingresados",
             )
-
         if not resultado:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

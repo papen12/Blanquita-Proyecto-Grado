@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Camera } from "lucide-react";
 import EscanerQR from "@/components/layout/Qr/Escanerqr";
 import { resolverOpcionesConjunto } from "@/constants/BottomBarOptions";
-import { PREFIJO_POR_ROL } from "@/constants/Roles";
+import { PREFIJO_POR_ROL } from "@/constants/Values";
 import { resolverRutaQR } from "@/utils/QR";
 
 function normalizar(ruta) {

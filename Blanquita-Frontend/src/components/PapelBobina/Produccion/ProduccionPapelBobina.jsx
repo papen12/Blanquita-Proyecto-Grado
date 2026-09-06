@@ -37,6 +37,7 @@ import {
 } from "../../../services/BobinaPapel/Produccion";
 import { ObtenerTiposPapelBobina } from "../../../services/BobinaPapel/BobinaPapel";
 import { movimientosOperador } from "../../../constants/MovimientoOperador";
+import { MOTIVO_CANCELACION_MIN, MOTIVO_CANCELACION_MAX } from "@/constants/Values";
 import { dateFormatter } from "@/utils/dates";
 import { extraerMensajeError } from "@/utils/validators";
 import Header from "../../layout/Header";
@@ -76,10 +77,12 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
   const [modalPausar, setModalPausar] = useState({ open: false, produccion: null });
   const [formMotivoPausa, setFormMotivoPausa] = useState("");
+  const [errorPausar, setErrorPausar] = useState("");
   const [enviandoPausar, setEnviandoPausar] = useState(false);
 
   const [modalCancelar, setModalCancelar] = useState({ open: false, produccion: null });
   const [formMotivoCancelacion, setFormMotivoCancelacion] = useState("");
+  const [errorCancelar, setErrorCancelar] = useState("");
   const [enviandoCancelar, setEnviandoCancelar] = useState(false);
 
   const [alertFinalizar, setAlertFinalizar] = useState({ open: false, produccion: null });
@@ -173,6 +176,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
   const abrirPausar = (produccion) => {
     setFormMotivoPausa("");
+    setErrorPausar("");
     setModalPausar({ open: true, produccion });
   };
 
@@ -207,19 +211,30 @@ export default function ProduccionBobinaTubo({ usuario }) {
     });
   };
 
+  const motivoPausaValido =
+    formMotivoPausa.trim().length >= MOTIVO_CANCELACION_MIN &&
+    formMotivoPausa.trim().length <= MOTIVO_CANCELACION_MAX;
+
   const confirmarPausar = async () => {
+    if (!motivoPausaValido) {
+      setErrorPausar(
+        `El motivo de la pausa debe tener entre ${MOTIVO_CANCELACION_MIN} y ${MOTIVO_CANCELACION_MAX} caracteres`,
+      );
+      return;
+    }
     setEnviandoPausar(true);
+    setErrorPausar("");
     try {
       await pausarProduccion(
         modalPausar.produccion.IdProduccionBobinaTubo,
-        formMotivoPausa.trim() || null,
+        formMotivoPausa.trim(),
       );
       toast.success("Producción pausada");
       setModalPausar({ open: false, produccion: null });
       cargarActivas();
       cargarPausadas();
     } catch (e) {
-      toast.error(extraerMensajeError(e, e.message));
+      setErrorPausar(extraerMensajeError(e, e.message));
     } finally {
       setEnviandoPausar(false);
     }
@@ -227,21 +242,33 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
   const abrirCancelar = (produccion) => {
     setFormMotivoCancelacion("");
+    setErrorCancelar("");
     setModalCancelar({ open: true, produccion });
   };
 
+  const motivoCancelacionValido =
+    formMotivoCancelacion.trim().length >= MOTIVO_CANCELACION_MIN &&
+    formMotivoCancelacion.trim().length <= MOTIVO_CANCELACION_MAX;
+
   const confirmarCancelar = async () => {
+    if (!motivoCancelacionValido) {
+      setErrorCancelar(
+        `El motivo de cancelación debe tener entre ${MOTIVO_CANCELACION_MIN} y ${MOTIVO_CANCELACION_MAX} caracteres`,
+      );
+      return;
+    }
     setEnviandoCancelar(true);
+    setErrorCancelar("");
     try {
       await cancelarProduccion(
         modalCancelar.produccion.IdProduccionBobinaTubo,
-        formMotivoCancelacion.trim() || null,
+        formMotivoCancelacion.trim(),
       );
       toast.success("Producción cancelada");
       setModalCancelar({ open: false, produccion: null });
       cargarPausadas();
     } catch (e) {
-      toast.error(extraerMensajeError(e, e.message));
+      setErrorCancelar(extraerMensajeError(e, e.message));
     } finally {
       setEnviandoCancelar(false);
     }
@@ -559,7 +586,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="motivo-pausa" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Detalle de la pausa (opcional)
+                Detalle de la pausa
               </Label>
               <Textarea
                 id="motivo-pausa"
@@ -567,14 +594,24 @@ export default function ProduccionBobinaTubo({ usuario }) {
                 onChange={(e) => setFormMotivoPausa(e.target.value)}
                 placeholder="Ej. Falla de máquina, cambio de turno..."
                 className="min-h-20"
+                maxLength={MOTIVO_CANCELACION_MAX}
               />
+              <span className="text-xs text-slate-500">
+                {formMotivoPausa.trim().length}/{MOTIVO_CANCELACION_MAX} · mínimo {MOTIVO_CANCELACION_MIN} caracteres
+              </span>
             </div>
+
+            {errorPausar && (
+              <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
+                {errorPausar}
+              </div>
+            )}
           </div>
 
           <DialogFooter>
             <Button
               onClick={confirmarPausar}
-              disabled={enviandoPausar}
+              disabled={enviandoPausar || !motivoPausaValido}
               className="h-11 w-full gap-2 bg-amber-500 font-extrabold text-white hover:bg-amber-600 sm:w-auto"
             >
               {enviandoPausar ? <Loader2 size={16} className="animate-spin" /> : "Pausar producción"}
@@ -599,7 +636,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="motivo-cancelacion" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Motivo de cancelación (opcional)
+                Motivo de cancelación
               </Label>
               <Textarea
                 id="motivo-cancelacion"
@@ -607,14 +644,24 @@ export default function ProduccionBobinaTubo({ usuario }) {
                 onChange={(e) => setFormMotivoCancelacion(e.target.value)}
                 placeholder="Ej. Bobina dañada, error de registro..."
                 className="min-h-20"
+                maxLength={MOTIVO_CANCELACION_MAX}
               />
+              <span className="text-xs text-slate-500">
+                {formMotivoCancelacion.trim().length}/{MOTIVO_CANCELACION_MAX} · mínimo {MOTIVO_CANCELACION_MIN} caracteres
+              </span>
             </div>
+
+            {errorCancelar && (
+              <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
+                {errorCancelar}
+              </div>
+            )}
           </div>
 
           <DialogFooter>
             <Button
               onClick={confirmarCancelar}
-              disabled={enviandoCancelar}
+              disabled={enviandoCancelar || !motivoCancelacionValido}
               className="h-11 w-full gap-2 bg-red-600 font-extrabold text-white hover:bg-red-700 sm:w-auto"
             >
               {enviandoCancelar ? <Loader2 size={16} className="animate-spin" /> : "Cancelar producción"}
