@@ -55,3 +55,8 @@ class DetalleInventarioEmpaqueResponse(BaseModel):
     PesoKg: float
     FechaRecepcion: date
     NombreProveedor: str
+
+
+class TipoEmpaque(BaseModel):
+    IdTipoEmpaque: int
+    NombreTipoEmpaque: str

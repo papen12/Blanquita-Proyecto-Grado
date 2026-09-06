@@ -8,14 +8,15 @@ from app.Auth.Dependencies import require_role
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 
 
-from app.Models.Empaque.EmpaqueBobina import( 
+from app.Models.Empaque.EmpaqueBobina import(
     IngresoEmpaqueRequest,
     IngresoEmpaqueResponse,
     TrasladarEmpaquesProduccionRequest,
     TrasladarEmpaquesProduccionResponseItem,
     ResumenInventarioEmpaqueResponse,
     DetalleInventarioEmpaqueRequest,
-    DetalleInventarioEmpaqueResponse
+    DetalleInventarioEmpaqueResponse,
+    TipoEmpaque
 )
 
 EmpaqueBobinaRouter = APIRouter(
@@ -78,3 +79,15 @@ def VerDetalleInventario(
 ):
     data = DetalleInventarioEmpaqueRequest(IdTipoEmpaque=IdTipoEmpaque)
     return service.VerDetalleInventarioEmpaque(data)
+
+
+@EmpaqueBobinaRouter.get(
+    "/obtenertipos",
+    response_model=list[TipoEmpaque],
+    status_code=200
+)
+def ObtenerTiposEmpaque(
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: EmpaqueBobinaService = Depends(empaque_bobina_service)
+):
+    return service.ObtenerTiposEmpaque()

@@ -40,12 +40,17 @@ export const BottomBarOpciones = [
     ],
   },
   {
-    id: 3, // empaque: solo inventario (aun no tiene ingreso/produccion)
+    id: 3, // empaque bobina: inventario + ingreso (no tiene produccion)
     opciones: [
       {
         titulo: "Inventario",
         icono: Boxes,
         ruta: "bobina-inventario",
+      },
+      {
+        titulo: "Ingreso",
+        icono: PackagePlus,
+        ruta: "bobina-ingreso",
       },
     ],
   },

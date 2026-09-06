@@ -49,3 +49,8 @@ export const DetalleInventarioEmpaqueResponse = (data) => ({
   FechaRecepcion: data.FechaRecepcion,
   NombreProveedor: data.NombreProveedor
 });
+
+export const TipoEmpaqueIngreso = (data) => ({
+  IdTipoEmpaque: data.IdTipoEmpaque,
+  NombreTipoEmpaque: data.NombreTipoEmpaque
+});

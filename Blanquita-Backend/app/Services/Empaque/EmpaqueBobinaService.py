@@ -1,18 +1,18 @@
 import json
 
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 
 from app.Repository.Empaque.EmpaqueBobina import EmpaqueBobinaRepository
-from app.Models.Empaque.EmpaqueBobina import( 
+from app.Models.Empaque.EmpaqueBobina import(
     IngresoEmpaqueRequest,
     IngresoEmpaqueResponse,
     TrasladarEmpaquesProduccionRequest,
     TrasladarEmpaquesProduccionResponseItem,
     ResumenInventarioEmpaqueResponse,
     DetalleInventarioEmpaqueRequest,
-    DetalleInventarioEmpaqueResponse
+    DetalleInventarioEmpaqueResponse,
+    TipoEmpaque
 )
 
 
@@ -28,7 +28,24 @@ class EmpaqueBobinaService:
             "p_Empaques": json.dumps([e.model_dump() for e in data.Empaques])
         }
 
-        resultado = self.repository.InsertarEmpaques(params)
+        try:
+            resultado = self.repository.InsertarEmpaques(params)
+        except HTTPException as e:
+            mensaje = str(e.detail)
+            if "duplicate key" in mensaje or "CodigoEmpaque" in mensaje:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Ya existe un empaque registrado con ese código"
+                )
+            if "al menos un empaque" in mensaje:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Debe enviar al menos un empaque para registrar"
+                )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo registrar el lote de empaques, verifica los datos ingresados"
+            )
 
         if not resultado:
             raise HTTPException(
@@ -65,3 +82,9 @@ class EmpaqueBobinaService:
         resultado = self.repository.VerDetalleInventarioEmpaque(params)
 
         return resultado
+
+    def ObtenerTiposEmpaque(self) -> list[TipoEmpaque]:
+        resultado = self.repository.ObtenerTipoEmpaque()
+        if not resultado:
+            return []
+        return [TipoEmpaque(**tipo) for tipo in resultado]

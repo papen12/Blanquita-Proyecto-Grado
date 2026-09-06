@@ -39,3 +39,10 @@ class EmpaqueBobinaRepository:
             )
         """
         return self.caller.LlamarFuncion(sql, params)
+
+    def ObtenerTipoEmpaque(self) -> list[dict]:
+        sql = """
+            SELECT * FROM "TipoEmpaque"
+            ORDER BY "IdTipoEmpaque"
+        """
+        return self.caller.LlamarFuncion(sql, {})

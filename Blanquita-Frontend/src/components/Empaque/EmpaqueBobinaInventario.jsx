@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, ArrowRight, Loader2, Search, Package, Check } from "lucide-react";
+import { Plus, X, ArrowRight, Loader2, Search, Package, Check } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -275,6 +275,11 @@ export default function EmpaqueBobinaInventario({ usuario }) {
       <Header
         titulo="Almacén · Materia Prima"
         subtitulo="Inventario de Empaques"
+        accion={{
+          texto: "Registrar ingreso",
+          icono: Plus,
+          href: "/operador/empaque/bobina-ingreso",
+        }}
       />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
