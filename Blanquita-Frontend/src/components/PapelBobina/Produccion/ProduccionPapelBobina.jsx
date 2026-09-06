@@ -35,6 +35,7 @@ import {
   cancelarProduccion,
   insertarMovimientoLog,
 } from "../../../services/BobinaPapel/Produccion";
+import { ObtenerTiposPapelBobina } from "../../../services/BobinaPapel/BobinaPapel";
 import { movimientosOperador } from "../../../constants/MovimientoOperador";
 import { dateFormatter } from "@/utils/dates";
 import { extraerMensajeError } from "@/utils/validators";
@@ -47,6 +48,9 @@ const SEPARADOR = ". ";
 
 export default function ProduccionBobinaTubo({ usuario }) {
   const [vista, setVista] = useState("activas");
+
+  const [tiposBobina, setTiposBobina] = useState([]);
+  const [filtroTipo, setFiltroTipo] = useState("");
 
   const motivosPausa = [
     "Falta de pegamento",
@@ -82,15 +86,23 @@ export default function ProduccionBobinaTubo({ usuario }) {
   const [enviandoFinalizar, setEnviandoFinalizar] = useState(false);
 
   useEffect(() => {
+    ObtenerTiposPapelBobina()
+      .then(setTiposBobina)
+      .catch(() => setTiposBobina([]));
+  }, []);
+
+  useEffect(() => {
     cargarActivas();
     cargarPausadas();
-  }, []);
+  }, [filtroTipo]);
+
+  const idTipoFiltro = filtroTipo === "" ? undefined : Number(filtroTipo);
 
   const cargarActivas = async () => {
     setLoadingActivas(true);
     setErrorActivas("");
     try {
-      const data = await verProduccionBobinaTubo();
+      const data = await verProduccionBobinaTubo(idTipoFiltro);
       setActivas(data);
     } catch (e) {
       setErrorActivas(extraerMensajeError(e, e.message));
@@ -104,7 +116,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
     setLoadingPausadas(true);
     setErrorPausadas("");
     try {
-      const data = await verPausasProduccionBobinaTuboActivas();
+      const data = await verPausasProduccionBobinaTuboActivas(idTipoFiltro);
       setPausadas(data);
     } catch (e) {
       setErrorPausadas(extraerMensajeError(e, e.message));
@@ -310,6 +322,37 @@ export default function ProduccionBobinaTubo({ usuario }) {
             </TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {tiposBobina.length > 0 && (
+          <div className="mb-5 flex flex-col gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-600">
+              Filtrar por tipo
+            </span>
+            <ToggleGroup
+              type="single"
+              value={filtroTipo ? [filtroTipo] : ["todos"]}
+              className="flex w-full flex-wrap justify-start gap-2"
+            >
+              <ToggleGroupItem
+                value="todos"
+                onClick={() => setFiltroTipo("")}
+                className="h-auto rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+              >
+                Todos
+              </ToggleGroupItem>
+              {tiposBobina.map((t) => (
+                <ToggleGroupItem
+                  key={t.IdTipoBobina}
+                  value={String(t.IdTipoBobina)}
+                  onClick={() => setFiltroTipo(String(t.IdTipoBobina))}
+                  className="h-auto rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+                >
+                  {t.NombreTipoBobina}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+        )}
 
         {vista === "activas" && (
           <>
