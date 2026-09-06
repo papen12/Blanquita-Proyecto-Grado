@@ -1,7 +1,6 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Cylinder } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { RolloIcono } from "./Iconos";
 import { fmt } from "./constantes";
 
 export function TarjetaTipo({ tipo: t, activo, onClick }) {
@@ -15,7 +14,7 @@ export function TarjetaTipo({ tipo: t, activo, onClick }) {
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <RolloIcono className={cn("h-8 w-8 shrink-0", t.text)} />
+          <Cylinder className={cn("h-8 w-8 shrink-0", t.text)} strokeWidth={2} />
           <div className="text-[17px] font-extrabold text-slate-900">
             {t.NombreTipoBobina}
           </div>

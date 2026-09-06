@@ -26,7 +26,6 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import SelectForModal from "@/components/layout/SelectForModal";
 import {
   verProduccionBobinaTubo,
   verPausasProduccionBobinaTuboActivas,
@@ -117,6 +116,10 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
   const requiereObservacion =
     formTipoMovimiento !== "" && Number(formTipoMovimiento) !== ID_TIPO_INGRESO;
+
+  const movimientoSeleccionado = movimientosOperador.find(
+    (m) => String(m.IdTipoMovimientoOperadorLogs) === String(formTipoMovimiento),
+  );
 
   const abrirInsertar = (produccion) => {
     setFormTipoMovimiento("");
@@ -394,17 +397,33 @@ export default function ProduccionBobinaTubo({ usuario }) {
               <ResumenProduccion produccion={modalInsertar.produccion} />
             )}
 
-            <SelectForModal
-              id="tipo-movimiento"
-              etiqueta="Tipo de movimiento"
-              opciones={movimientosOperador}
-              campoValor="IdTipoMovimientoOperadorLogs"
-              campoEtiqueta="NombreMovimiento"
-              campoDescripcion="DescripcionTipoMovimientoOperadorLogs"
-              valor={formTipoMovimiento}
-              onCambio={setFormTipoMovimiento}
-              placeholder="Selecciona un tipo"
-            />
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Tipo de movimiento
+              </Label>
+              <ToggleGroup
+                type="single"
+                value={movimientoSeleccionado ? [movimientoSeleccionado.NombreMovimiento] : []}
+                className="flex w-full flex-wrap justify-start gap-2"
+              >
+                {movimientosOperador.map((m) => (
+                  <ToggleGroupItem
+                    key={m.IdTipoMovimientoOperadorLogs}
+                    value={m.NombreMovimiento}
+                    onClick={() =>
+                      setFormTipoMovimiento(
+                        Number(formTipoMovimiento) === m.IdTipoMovimientoOperadorLogs
+                          ? ""
+                          : String(m.IdTipoMovimientoOperadorLogs),
+                      )
+                    }
+                    className="h-auto rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+                  >
+                    {m.NombreMovimiento}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="cantidad-logs" className="text-xs font-bold uppercase tracking-wide text-slate-600">

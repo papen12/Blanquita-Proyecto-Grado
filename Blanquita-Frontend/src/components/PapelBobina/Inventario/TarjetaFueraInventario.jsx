@@ -1,7 +1,6 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, PackageX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { FueraIcono } from "./Iconos";
 
 export function TarjetaFueraInventario({ cantidad, activo, onClick }) {
   return (
@@ -14,7 +13,7 @@ export function TarjetaFueraInventario({ cantidad, activo, onClick }) {
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <FueraIcono className="h-8 w-8 shrink-0 text-amber-600" />
+          <PackageX className="h-8 w-8 shrink-0 text-amber-600" strokeWidth={2} />
           <div className="text-[17px] font-extrabold text-slate-900">
             Fuera de inventario
           </div>

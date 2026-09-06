@@ -5,10 +5,11 @@ import {
   ArrowRight,
   Loader2,
   Search,
-  Scissors,
   RotateCcw,
   Ban,
-  PackageOpen,
+  Database,
+  Disc2,
+  PackageX,
   Check,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -67,16 +68,6 @@ const etiquetaSubBobinas = (n) => {
   return `${c} ${c === 1 ? "sub-bobina" : "sub-bobinas"}`;
 };
 
-function BobinaIcono({ className }) {
-  return (
-    <svg viewBox="0 0 32 32" className={className} fill="none">
-      <rect x="5" y="9" width="22" height="14" rx="7" stroke="currentColor" strokeWidth="2.5" />
-      <ellipse cx="12" cy="16" rx="3" ry="7" stroke="currentColor" strokeWidth="2.5" />
-      <path d="M12 16h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-    </svg>
-  );
-}
-
 function TarjetaTipoBobina({ tipo: t, activo, onClick }) {
   return (
     <button
@@ -88,7 +79,7 @@ function TarjetaTipoBobina({ tipo: t, activo, onClick }) {
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <BobinaIcono className={cn("h-8 w-8 shrink-0", t.text)} />
+          <Database className={cn("h-8 w-8 shrink-0", t.text)} strokeWidth={2} />
           <div className="text-[17px] font-extrabold text-slate-900">
             {t.NombreTipoBobinaServilleta}
           </div>
@@ -124,7 +115,7 @@ function TarjetaTipoSubBobina({ tipo: t, activo, onClick }) {
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <Scissors className={cn("h-7 w-7 shrink-0", t.text)} strokeWidth={2.25} />
+          <Disc2 className={cn("h-7 w-7 shrink-0", t.text)} strokeWidth={2} />
           <div className="text-[17px] font-extrabold text-slate-900">
             {t.NombreTipoMedida}
           </div>
@@ -159,7 +150,7 @@ function TarjetaFuera({ cantidad, activo, onClick }) {
       )}
     >
       <div className="flex items-center gap-2.5">
-        <PackageOpen className="h-7 w-7 shrink-0 text-amber-600" strokeWidth={2.25} />
+        <PackageX className="h-7 w-7 shrink-0 text-amber-600" strokeWidth={2} />
         <div className="text-[17px] font-extrabold text-slate-900">Fuera de inventario</div>
       </div>
       <div className="flex items-baseline gap-1.5">
@@ -224,10 +215,7 @@ function TablaBobinas({ bobinas, tipoSel, procesandoId, onAbrir }) {
                   {procesandoId === b.IdBobinaServilleta ? (
                     <Loader2 size={13} className="animate-spin" />
                   ) : (
-                    <>
-                      <Scissors size={13} strokeWidth={2.75} />
-                      Abrir
-                    </>
+                    "Abrir"
                   )}
                 </Button>
               </TableCell>
@@ -275,10 +263,7 @@ function ListaMovilBobinas({ bobinas, tipoSel, procesandoId, onAbrir }) {
             {procesandoId === b.IdBobinaServilleta ? (
               <Loader2 size={13} className="animate-spin" />
             ) : (
-              <>
-                <Scissors size={13} strokeWidth={2.75} />
-                Abrir bobina
-              </>
+              "Abrir bobina"
             )}
           </Button>
         </div>
@@ -722,9 +707,9 @@ export default function InventarioBobinaServilleta({ usuario }) {
             >
               <div className="flex flex-wrap items-center gap-3">
                 {sel.clase === "bobina" ? (
-                  <BobinaIcono className={cn("h-7 w-7 shrink-0", tipoSel.text)} />
+                  <Database className={cn("h-7 w-7 shrink-0", tipoSel.text)} strokeWidth={2} />
                 ) : (
-                  <Scissors className={cn("h-6 w-6 shrink-0", tipoSel.text)} strokeWidth={2.25} />
+                  <Disc2 className={cn("h-6 w-6 shrink-0", tipoSel.text)} strokeWidth={2} />
                 )}
                 <div className={cn("text-base font-extrabold", tipoSel.text)}>
                   {sel.clase === "bobina"
@@ -1037,10 +1022,7 @@ export default function InventarioBobinaServilleta({ usuario }) {
               {enviandoAbrir ? (
                 <Loader2 size={16} className="animate-spin" />
               ) : (
-                <>
-                  <Scissors size={15} strokeWidth={2.75} />
-                  Abrir bobina
-                </>
+                "Abrir bobina"
               )}
             </Button>
           </DialogFooter>

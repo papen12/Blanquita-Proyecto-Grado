@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, X, ArrowRight, Loader2, Search } from "lucide-react";
+import { Plus, X, ArrowRight, Loader2, Search, Cylinder } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,6 @@ import { iniciarProduccion } from "../../../services/BobinaPapel/Produccion";
 import { dateFormatter } from "@/utils/dates";
 
 import { ACENTOS, fmt } from "./constantes";
-import { RolloIcono } from "./Iconos";
 import { TarjetaTipo } from "./TarjetaTipo";
 import { TarjetaFueraInventario } from "./TarjetaFueraInventario";
 import { TablaBobinas } from "./TablaBobinas";
@@ -43,6 +42,7 @@ export default function InventarioBobinasPapel({ usuario }) {
   const [loadingFuera, setLoadingFuera] = useState(false);
   const [errorFuera, setErrorFuera] = useState("");
   const [procesandoId, setProcesandoId] = useState(null);
+  const [busquedaCodigoFuera, setBusquedaCodigoFuera] = useState("");
 
   useEffect(() => {
     cargarResumen();
@@ -180,10 +180,19 @@ export default function InventarioBobinasPapel({ usuario }) {
   const toggleFueraInventario = () => {
     const nuevoEstado = !mostrarFuera;
     setMostrarFuera(nuevoEstado);
+    setBusquedaCodigoFuera("");
     if (nuevoEstado) {
       cargarFueraInventario();
     }
   };
+
+  const fueraInventarioFiltradas = busquedaCodigoFuera.trim()
+    ? fueraInventario.filter((b) =>
+        b.CodigoBobina.toLowerCase().includes(
+          busquedaCodigoFuera.trim().toLowerCase(),
+        ),
+      )
+    : fueraInventario;
 
   const handleReingresar = async (idBobinaPapel, codigoBobina) => {
     setProcesandoId(idBobinaPapel);
@@ -279,7 +288,7 @@ export default function InventarioBobinasPapel({ usuario }) {
               )}
             >
               <div className="flex flex-wrap items-center gap-3">
-                <RolloIcono className={cn("h-7 w-7 shrink-0", tipoSel.text)} />
+                <Cylinder className={cn("h-7 w-7 shrink-0", tipoSel.text)} strokeWidth={2} />
                 <div className={cn("text-base font-extrabold", tipoSel.text)}>
                   Bobinas · {tipoSel.NombreTipoBobina}
                 </div>
@@ -448,6 +457,32 @@ export default function InventarioBobinasPapel({ usuario }) {
               </Button>
             </div>
 
+            {!loadingFuera && !errorFuera && fueraInventario.length > 0 && (
+              <div className="border-b border-slate-100 px-5 py-3.5">
+                <div className="relative max-w-xs">
+                  <Search
+                    size={16}
+                    strokeWidth={2.5}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <Input
+                    value={busquedaCodigoFuera}
+                    onChange={(e) => setBusquedaCodigoFuera(e.target.value)}
+                    placeholder="Buscar por código..."
+                    className="h-10 pl-9"
+                  />
+                  {busquedaCodigoFuera && (
+                    <button
+                      onClick={() => setBusquedaCodigoFuera("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                    >
+                      <X size={15} strokeWidth={2.75} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {loadingFuera && (
               <div className="space-y-2 p-5">
                 <Skeleton className="h-16 w-full" />
@@ -464,10 +499,18 @@ export default function InventarioBobinasPapel({ usuario }) {
                 No hay bobinas fuera de inventario.
               </div>
             )}
+            {!loadingFuera &&
+              !errorFuera &&
+              fueraInventario.length > 0 &&
+              fueraInventarioFiltradas.length === 0 && (
+                <div className="p-8 text-center text-sm text-slate-400">
+                  Ninguna bobina coincide con "{busquedaCodigoFuera}".
+                </div>
+              )}
 
-            {!loadingFuera && !errorFuera && fueraInventario.length > 0 && (
+            {!loadingFuera && !errorFuera && fueraInventarioFiltradas.length > 0 && (
               <div className="flex flex-col gap-3 p-5">
-                {fueraInventario.map((b) => (
+                {fueraInventarioFiltradas.map((b) => (
                   <div
                     key={b.IdBobinaPapel}
                     className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
