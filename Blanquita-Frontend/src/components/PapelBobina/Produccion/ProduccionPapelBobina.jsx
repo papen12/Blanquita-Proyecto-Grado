@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Pause, Loader2, Clock, Layers } from "lucide-react";
+import { Pause, Loader2, Clock, Layers, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,7 @@ import {
   insertarMovimientoLog,
 } from "../../../services/BobinaPapel/Produccion";
 import { ObtenerTiposPapelBobina } from "../../../services/BobinaPapel/BobinaPapel";
-import { movimientosOperador } from "../../../constants/MovimientoOperador";
+import { movimientosOperador, ObservacionesInsertarLogs } from "../../../constants/MovimientoOperador";
 import { MOTIVO_CANCELACION_MIN, MOTIVO_CANCELACION_MAX } from "@/constants/Values";
 import { dateFormatter } from "@/utils/dates";
 import { extraerMensajeError } from "@/utils/validators";
@@ -45,6 +45,7 @@ import CardActiva from "./CardActiva";
 import CardPausada from "./CardPausada";
 
 const ID_TIPO_INGRESO = 1;
+const ID_TIPO_DESCUENTO = 2;
 const SEPARADOR = ". ";
 
 export default function ProduccionBobinaTubo({ usuario }) {
@@ -52,6 +53,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
   const [tiposBobina, setTiposBobina] = useState([]);
   const [filtroTipo, setFiltroTipo] = useState("");
+  const [buscarCodigoBobina, setBuscarCodigoBobina] = useState("");
 
   const motivosPausa = [
     "Falta de pegamento",
@@ -136,6 +138,21 @@ export default function ProduccionBobinaTubo({ usuario }) {
     (m) => String(m.IdTipoMovimientoOperadorLogs) === String(formTipoMovimiento),
   );
 
+  const motivosObservacion =
+    ObservacionesInsertarLogs.find((o) => o.id === Number(formTipoMovimiento))
+      ?.motivos.filter(Boolean) ?? [];
+
+  const logsActuales = Number(modalInsertar.produccion?.CantidadLogsActual ?? 0);
+  const esDescuento = Number(formTipoMovimiento) === ID_TIPO_DESCUENTO;
+  const descuentoExcedeTotal =
+    esDescuento && Number(formCantidadLogs) > logsActuales;
+
+  const seleccionarTipoMovimiento = (idMovimiento) => {
+    const yaSeleccionado = Number(formTipoMovimiento) === idMovimiento;
+    setFormTipoMovimiento(yaSeleccionado ? "" : String(idMovimiento));
+    setFormObservacionLog("");
+  };
+
   const abrirInsertar = (produccion) => {
     setFormTipoMovimiento("");
     setFormCantidadLogs("");
@@ -152,6 +169,12 @@ export default function ProduccionBobinaTubo({ usuario }) {
     const cantidad = Number(formCantidadLogs);
     if (!formCantidadLogs || cantidad <= 0) {
       setErrorInsertar("Ingresa una cantidad de logs válida.");
+      return;
+    }
+    if (esDescuento && cantidad > logsActuales) {
+      setErrorInsertar(
+        `No se puede descontar ${cantidad} logs, el total actual es ${logsActuales}.`,
+      );
       return;
     }
 
@@ -192,23 +215,29 @@ export default function ProduccionBobinaTubo({ usuario }) {
       ]
     : motivosPausa;
 
+  const alternarMotivoEnTexto = (motivo, actual) => {
+    if (actual.includes(motivo)) {
+      return actual
+        .replace(motivo, "")
+        .replace(/\.\s*\.\s*/g, ". ")
+        .replace(/^\s*\.\s*/, "")
+        .trimStart();
+    }
+    const texto = actual.trimEnd();
+    if (!texto) return motivo;
+    return texto.endsWith(".") ? `${texto} ${motivo}` : `${texto}${SEPARADOR}${motivo}`;
+  };
+
   const motivoEstaEnTexto = (motivo) => formMotivoPausa.includes(motivo);
 
   const alternarMotivo = (motivo) => {
-    setFormMotivoPausa((actual) => {
-      if (actual.includes(motivo)) {
-        return actual
-          .replace(motivo, "")
-          .replace(/\.\s*\.\s*/g, ". ")
-          .replace(/^\s*\.\s*/, "")
-          .trimStart();
-      }
-      const texto = actual.trimEnd();
-      if (!texto) return motivo;
-      return texto.endsWith(".")
-        ? `${texto} ${motivo}`
-        : `${texto}${SEPARADOR}${motivo}`;
-    });
+    setFormMotivoPausa((actual) => alternarMotivoEnTexto(motivo, actual));
+  };
+
+  const motivoObservacionEnTexto = (motivo) => formObservacionLog.includes(motivo);
+
+  const alternarMotivoObservacion = (motivo) => {
+    setFormObservacionLog((actual) => alternarMotivoEnTexto(motivo, actual));
   };
 
   const motivoPausaValido =
@@ -306,6 +335,18 @@ export default function ProduccionBobinaTubo({ usuario }) {
     }
   };
 
+  const coincideCodigoBobina = (p) => {
+    const q = buscarCodigoBobina.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      (p.CodigoBobina1 ?? "").toLowerCase().includes(q) ||
+      (p.CodigoBobina2 ?? "").toLowerCase().includes(q)
+    );
+  };
+
+  const activasFiltradas = activas.filter(coincideCodigoBobina);
+  const pausadasFiltradas = pausadas.filter(coincideCodigoBobina);
+
   const ResumenProduccion = ({ produccion }) => (
     <div className="flex flex-col gap-1 rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
       <span className="font-mono font-bold text-slate-900">
@@ -332,18 +373,18 @@ export default function ProduccionBobinaTubo({ usuario }) {
             <TabsTrigger value="activas" className="gap-1.5 font-bold">
               <Layers size={15} strokeWidth={2.75} />
               Activas
-              {activas.length > 0 && (
+              {activasFiltradas.length > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 min-w-5 justify-center px-1.5">
-                  {activas.length}
+                  {activasFiltradas.length}
                 </Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="pausadas" className="gap-1.5 font-bold">
               <Pause size={15} strokeWidth={2.75} />
               Pausadas
-              {pausadas.length > 0 && (
+              {pausadasFiltradas.length > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 min-w-5 justify-center px-1.5">
-                  {pausadas.length}
+                  {pausadasFiltradas.length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -381,6 +422,36 @@ export default function ProduccionBobinaTubo({ usuario }) {
           </div>
         )}
 
+        <div className="mb-5 flex flex-col gap-1.5">
+          <span className="text-xs font-bold uppercase tracking-wide text-slate-600">
+            Buscar por código de bobina
+          </span>
+          <div className="relative">
+            <Search
+              size={16}
+              strokeWidth={2.5}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <Input
+              value={buscarCodigoBobina}
+              onChange={(e) => setBuscarCodigoBobina(e.target.value)}
+              placeholder="Ej. 967 R20"
+              maxLength={15}
+              className="pl-9 pr-9"
+            />
+            {buscarCodigoBobina && (
+              <button
+                type="button"
+                onClick={() => setBuscarCodigoBobina("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                aria-label="Limpiar búsqueda"
+              >
+                <X size={15} strokeWidth={2.75} />
+              </button>
+            )}
+          </div>
+        </div>
+
         {vista === "activas" && (
           <>
             {loadingActivas && (
@@ -400,9 +471,14 @@ export default function ProduccionBobinaTubo({ usuario }) {
                 No hay producciones activas.
               </div>
             )}
-            {!loadingActivas && !errorActivas && activas.length > 0 && (
+            {!loadingActivas && !errorActivas && activas.length > 0 && activasFiltradas.length === 0 && (
+              <div className="rounded-2xl bg-white p-10 text-center text-sm text-slate-400 ring-1 ring-slate-200">
+                Ninguna producción activa con el código «{buscarCodigoBobina.trim()}».
+              </div>
+            )}
+            {!loadingActivas && !errorActivas && activasFiltradas.length > 0 && (
               <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {(activas ?? []).map((p) => (
+                {activasFiltradas.map((p) => (
                   <CardActiva
                     key={p.IdProduccionBobinaTubo}
                     p={p}
@@ -435,9 +511,14 @@ export default function ProduccionBobinaTubo({ usuario }) {
                 No hay producciones pausadas.
               </div>
             )}
-            {!loadingPausadas && !errorPausadas && pausadas.length > 0 && (
+            {!loadingPausadas && !errorPausadas && pausadas.length > 0 && pausadasFiltradas.length === 0 && (
+              <div className="rounded-2xl bg-white p-10 text-center text-sm text-slate-400 ring-1 ring-slate-200">
+                Ninguna producción pausada con el código «{buscarCodigoBobina.trim()}».
+              </div>
+            )}
+            {!loadingPausadas && !errorPausadas && pausadasFiltradas.length > 0 && (
               <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {(pausadas ?? []).map((p) => (
+                {pausadasFiltradas.map((p) => (
                   <CardPausada
                     key={p.IdPausaProduccionBobinaTubo}
                     p={p}
@@ -457,7 +538,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
         open={modalInsertar.open}
         onOpenChange={(open) => setModalInsertar({ open, produccion: open ? modalInsertar.produccion : null })}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Insertar movimiento de logs</DialogTitle>
           </DialogHeader>
@@ -480,13 +561,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
                   <ToggleGroupItem
                     key={m.IdTipoMovimientoOperadorLogs}
                     value={m.NombreMovimiento}
-                    onClick={() =>
-                      setFormTipoMovimiento(
-                        Number(formTipoMovimiento) === m.IdTipoMovimientoOperadorLogs
-                          ? ""
-                          : String(m.IdTipoMovimientoOperadorLogs),
-                      )
-                    }
+                    onClick={() => seleccionarTipoMovimiento(m.IdTipoMovimientoOperadorLogs)}
                     className="h-auto rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
                   >
                     {m.NombreMovimiento}
@@ -506,22 +581,58 @@ export default function ProduccionBobinaTubo({ usuario }) {
                 placeholder="0"
                 type="number"
                 min={1}
+                max={esDescuento ? logsActuales : undefined}
                 className="h-11"
               />
+              {esDescuento && (
+                <span
+                  className={`text-xs font-semibold ${
+                    descuentoExcedeTotal ? "text-red-600" : "text-slate-500"
+                  }`}
+                >
+                  Disponible para descontar: {logsActuales} logs
+                </span>
+              )}
             </div>
 
             {requiereObservacion && (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="observacion-log" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                  Observación
-                </Label>
-                <Textarea
-                  id="observacion-log"
-                  value={formObservacionLog}
-                  onChange={(e) => setFormObservacionLog(e.target.value)}
-                  placeholder="Motivo de la corrección..."
-                  className="min-h-20"
-                />
+              <div className="flex flex-col gap-3">
+                {motivosObservacion.length > 0 && (
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                      Motivos frecuentes
+                    </Label>
+                    <ToggleGroup
+                      type="multiple"
+                      value={motivosObservacion.filter(motivoObservacionEnTexto)}
+                      className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+                    >
+                      {motivosObservacion.map((motivo) => (
+                        <ToggleGroupItem
+                          key={motivo}
+                          value={motivo}
+                          onClick={() => alternarMotivoObservacion(motivo)}
+                          className="h-full w-full whitespace-normal rounded-xl border-2 border-slate-200 px-3 py-2 text-left text-[12.5px] font-bold leading-snug text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+                        >
+                          {motivo}
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="observacion-log" className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                    Observación
+                  </Label>
+                  <Textarea
+                    id="observacion-log"
+                    value={formObservacionLog}
+                    onChange={(e) => setFormObservacionLog(e.target.value)}
+                    placeholder="Motivo de la corrección..."
+                    className="min-h-20"
+                  />
+                </div>
               </div>
             )}
 
@@ -535,7 +646,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
           <DialogFooter>
             <Button
               onClick={confirmarInsertar}
-              disabled={enviandoInsertar}
+              disabled={enviandoInsertar || descuentoExcedeTotal}
               className="h-11 w-full gap-2 bg-gradient-to-r from-c3 to-c4 font-extrabold hover:opacity-90 sm:w-auto"
             >
               {enviandoInsertar ? (

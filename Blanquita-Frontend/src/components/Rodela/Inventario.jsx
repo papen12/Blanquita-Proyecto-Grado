@@ -8,6 +8,7 @@ import {
   Check,
   RotateCcw,
   Ban,
+  Disc,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -57,16 +58,6 @@ const etiquetaRodelas = (n) => {
   return `${cantidad} ${cantidad === 1 ? "rodela" : "rodelas"}`;
 };
 
-function RodelaIcono({ className }) {
-  return (
-    <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth="2.5" />
-      <circle cx="16" cy="16" r="4" stroke="currentColor" strokeWidth="2.5" />
-      <path d="M16 4v3M16 25v3M4 16h3M25 16h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-    </svg>
-  );
-}
-
 function EstadoBadge({ tipoEstado }) {
   if (tipoEstado === ESTADO_ABIERTA) {
     return (
@@ -93,7 +84,7 @@ function TarjetaTipo({ tipo: t, activo, onClick }) {
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <RodelaIcono className={cn("h-8 w-8 shrink-0", t.text)} />
+          <Disc className={cn("h-8 w-8 shrink-0", t.text)} strokeWidth={2} />
           <div className="text-[17px] font-extrabold text-slate-900">
             {t.NombreTipoRodela}
           </div>
@@ -542,7 +533,7 @@ export default function InventarioRodelas({ usuario }) {
               )}
             >
               <div className="flex flex-wrap items-center gap-3">
-                <RodelaIcono className={cn("h-7 w-7 shrink-0", tipoSel.text)} />
+                <Disc className={cn("h-7 w-7 shrink-0", tipoSel.text)} strokeWidth={2} />
                 <div className={cn("text-base font-extrabold", tipoSel.text)}>
                   Rodelas · {tipoSel.NombreTipoRodela}
                 </div>

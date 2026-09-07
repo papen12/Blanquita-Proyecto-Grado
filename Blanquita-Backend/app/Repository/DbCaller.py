@@ -3,6 +3,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 
+try:
+    from psycopg2.errors import RaiseException
+except ImportError: 
+    RaiseException = None
+
 
 class DbCaller:
     def __init__(self, db: Session):
@@ -17,9 +22,18 @@ class DbCaller:
             return filas
         except SQLAlchemyError as e:
             self.db.rollback()
+
+            origen = getattr(e, "orig", None)
+            if RaiseException is not None and isinstance(origen, RaiseException):
+                mensaje = getattr(origen.diag, "message_primary", None) or "Operación no permitida"
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=mensaje,
+                )
+
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error ejecutando operación en base de datos: {str(e)}"
+                detail="Error ejecutando operación en base de datos",
             )
 
     def LlamarUnRegistro(self, consulta: str, parametros: dict | None = None, commit: bool = True) -> dict | None:
