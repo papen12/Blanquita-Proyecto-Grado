@@ -1,4 +1,4 @@
-import { Boxes, Factory, PackagePlus } from "lucide-react";
+import { Boxes, Factory, PackagePlus,Home,CircleUserRound } from "lucide-react";
 
 export function unirRutas(...segmentos) {
   const limpios = segmentos
@@ -40,7 +40,7 @@ export const BottomBarOpciones = [
     ],
   },
   {
-    id: 3, // empaque bobina: inventario + ingreso (no tiene produccion)
+    id: 3, // empaque bobina: inventario + ingreso 
     opciones: [
       {
         titulo: "Inventario",
@@ -54,7 +54,22 @@ export const BottomBarOpciones = [
       },
     ],
   },
-  // id: 4 -> Perfil (pendiente, continua la numeracion actual)
+  // inicio
+  {
+    id:4,
+    opciones: [
+      {
+        titulo: "Inicio",
+        icono: Home,
+        ruta: "inicio",
+      },
+      {
+        titulo: "Perfil",
+        icono: CircleUserRound,
+        ruta: "perfil",
+      },
+    ],
+  }
 ];
 
 export function resolverOpcionesConjunto(idConjunto, rutaBase, subRuta) {

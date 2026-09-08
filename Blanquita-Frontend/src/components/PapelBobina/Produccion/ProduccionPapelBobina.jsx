@@ -36,7 +36,7 @@ import {
   insertarMovimientoLog,
 } from "../../../services/BobinaPapel/Produccion";
 import { ObtenerTiposPapelBobina } from "../../../services/BobinaPapel/BobinaPapel";
-import { movimientosOperador, ObservacionesInsertarLogs } from "../../../constants/MovimientoOperador";
+import { movimientosOperador, ObservacionesInsertarLogs } from "../../../constants/OperadorConfig";
 import { MOTIVO_CANCELACION_MIN, MOTIVO_CANCELACION_MAX } from "@/constants/Values";
 import { dateFormatter } from "@/utils/dates";
 import { extraerMensajeError } from "@/utils/validators";
