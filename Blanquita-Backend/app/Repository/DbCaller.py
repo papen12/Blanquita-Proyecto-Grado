@@ -2,12 +2,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
-
-try:
-    from psycopg2.errors import RaiseException
-except ImportError: 
-    RaiseException = None
-
+from psycopg2.errors import RaiseException
 
 class DbCaller:
     def __init__(self, db: Session):
