@@ -91,6 +91,7 @@ class UsuarioService:
             "p_Celular": datos.Celular,
             "p_SegundoNombre": datos.SegundoNombre,
             "p_ApellidoMaterno": datos.ApellidoMaterno,
+            "p_IsAdmin": datos.IsAdmin,
         }
 
         try:

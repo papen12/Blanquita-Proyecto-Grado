@@ -29,9 +29,8 @@ export const SesionUsuario = (payload) => {
   return {
     IdUsuario: metadata.IdUsuario ?? null,
     IdRol: metadata.IdRol ?? null,
-    NombreRol: metadata.NombreRol ?? null,
-    Ci: metadata.Ci ?? null,
     IdEstadoUsuario: metadata.IdEstadoUsuario ?? null,
+    IsAdmin: metadata.IsAdmin ?? false,
     AuthUserId: payload.sub ?? null,
     Correo: payload.email ?? null
   };

@@ -11,8 +11,9 @@ const RUTA_POR_ROL = {
   2: "/encargado/inicio"
 };
 
-const RUTAS_PROTEGIDAS = ["/operador", "/encargado", "/scan"];
-const RUTAS_SIN_PREFIJO_ROL = ["/scan"];
+const RUTAS_PROTEGIDAS = ["/operador", "/encargado", "/scan", "/admin"];
+const RUTAS_SIN_PREFIJO_ROL = ["/scan", "/admin"];
+const RUTAS_SOLO_ADMIN = ["/admin"];
 const RUTAS_PUBLICAS_AUTH = ["/"];
 
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -41,6 +42,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
     limpiarSesion(context.cookies);
     const destino = encodeURIComponent(pathname + context.url.search);
     return context.redirect(`/?redirigir=${destino}`);
+  }
+
+  const requiereAdmin = RUTAS_SOLO_ADMIN.some((prefijo) =>
+    pathname.startsWith(prefijo)
+  );
+
+  if (requiereAdmin && !sesion.IsAdmin) {
+    return context.redirect(RUTA_POR_ROL[sesion.IdRol] || "/");
   }
 
   const omitePrefijoRol = RUTAS_SIN_PREFIJO_ROL.some((prefijo) =>
