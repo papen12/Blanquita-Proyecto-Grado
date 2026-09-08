@@ -1,6 +1,6 @@
 import { 
         Home, Boxes, Factory,Database,
-        ShelvingUnit,SquareStack, Container,PackagePlus
+        ShelvingUnit,SquareStack, Container,CircleUserRound
       } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 export const RutasNavBar = [
@@ -9,6 +9,7 @@ export const RutasNavBar = [
     icono: Home,
     ruta: "inicio",
   },
+  
   {
     titulo: "Bobina Papel",
     icono: toiletRoll,
@@ -53,6 +54,11 @@ export const RutasNavBar = [
     subrutas: [
       { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
     ],
-  }
+  },
+  {
+    titulo: "Perfil",
+    icono: CircleUserRound,
+    ruta: "perfil",
+  },
 ];
 

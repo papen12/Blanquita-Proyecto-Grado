@@ -2,12 +2,12 @@
 import Layout from '../../layouts/Layout.astro';
 const { usuario } = Astro.locals;
 import NavBar from '@/components/layout/NavBar';
-import InicioOperador from '@/components/Usuario/InicioOperador';
+import Perfil from '@/components/Usuario/Perfil';
 import BottomBar from '@/components/layout/Qr/BottomBar';
 ---
 
 <Layout>
 	<NavBar client:load idRol={usuario.IdRol} />
-	<InicioOperador client:load usuario={usuario} />
-	<BottomBar idRol={usuario.IdRol} subRuta={""} idOpcionSelect={4} client:load/>
+	<Perfil client:load usuario={usuario} />
+	<BottomBar idRol={usuario.IdRol} subRuta={""} idOpcionSelect={4} client:load />
 </Layout>

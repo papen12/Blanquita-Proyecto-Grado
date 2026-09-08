@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.Auth.Dependencies import require_admin_db
+from app.Auth.Dependencies import get_current_user, require_admin_db
 from app.Config.supabase import get_db
-from app.Models.Usuario.Usuario import UsuarioCreate, UsuarioResponse
+from app.Models.Usuario.Usuario import UsuarioCreate, UsuarioPerfil, UsuarioResponse
 from app.Services.Usuario.UsuarioService import UsuarioService
 
 
@@ -25,3 +25,13 @@ def CrearUsuario(
     usuario_actual: dict = Depends(require_admin_db),
 ):
     return service.CrearUsuario(datos)
+
+@UsuarioRouter.get(
+    "/ver",
+    response_model=UsuarioPerfil,
+)
+def VerPerfil(
+    service: UsuarioService = Depends(get_usuario_service),
+    usuario_actual: dict = Depends(get_current_user),
+):
+    return service.ObtenerPerfil(usuario_actual)

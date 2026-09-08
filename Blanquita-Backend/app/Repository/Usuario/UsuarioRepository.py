@@ -12,6 +12,12 @@ class UsuarioRepository:
         '''
         return self.caller.LlamarUnRegistro(consulta, params, commit=False)
 
+    def ObtenerPerfil(self, params: dict) -> dict | None:
+        consulta = '''
+            SELECT * FROM "ObtenerPerfil"(p_IdUsuario => :p_IdUsuario)
+        '''
+        return self.caller.LlamarUnRegistro(consulta, params, commit=False)
+
     def CrearUsuario(self, params: dict) -> dict | None:
         consulta = '''
             SELECT * FROM "CrearUsuario"(

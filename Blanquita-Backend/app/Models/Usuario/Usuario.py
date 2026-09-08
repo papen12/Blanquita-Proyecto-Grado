@@ -29,3 +29,22 @@ class UsuarioResponse(BaseModel):
     Celular: str = Field(..., validation_alias="CelularOut")
     IsAdmin: bool = Field(..., validation_alias="IsAdminOut")
     FechaRegistro: datetime = Field(..., validation_alias="FechaRegistroOut")
+
+
+class UsuarioPerfil(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    IdUsuario: int = Field(..., validation_alias="IdUsuarioOut")
+    Ci: str = Field(..., validation_alias="CiOut")
+    PrimerNombre: str = Field(..., validation_alias="PrimerNombreOut")
+    SegundoNombre: str | None = Field(default=None, validation_alias="SegundoNombreOut")
+    ApellidoPaterno: str = Field(..., validation_alias="ApellidoPaternoOut")
+    ApellidoMaterno: str | None = Field(default=None, validation_alias="ApellidoMaternoOut")
+    NombreCompleto: str = Field(..., validation_alias="NombreCompletoOut")
+    Celular: str | None = Field(default=None, validation_alias="CelularOut")
+    IdRol: int = Field(..., validation_alias="IdRolOut")
+    NombreRol: str = Field(..., validation_alias="NombreRolOut")
+    IdEstadoUsuario: int = Field(..., validation_alias="IdEstadoUsuarioOut")
+    NombreEstadoUsuario: str = Field(..., validation_alias="NombreEstadoUsuarioOut")
+    FechaRegistro: datetime = Field(..., validation_alias="FechaRegistroOut")
+    Correo: str | None = None
