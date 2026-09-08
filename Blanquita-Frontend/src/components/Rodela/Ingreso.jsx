@@ -22,6 +22,7 @@ import {
 } from "../../services/Rodela/Rodela";
 import { ObtenerProveedoresForm } from "../../services/Proveedor/Proveedor";
 import { dateFormatter } from "@/utils/dates";
+import { aCodigo } from "@/utils/handlers";
 
 export default function IngresoRodelas({ usuario }) {
   const [tipos, setTipos] = useState([]);
@@ -383,7 +384,11 @@ export default function IngresoRodelas({ usuario }) {
                           ref={(el) => (refsCodigo.current[f.id] = el)}
                           value={f.CodigoRodela}
                           onChange={(e) =>
-                            actualizarFila(f.id, "CodigoRodela", e.target.value)
+                            actualizarFila(
+                              f.id,
+                              "CodigoRodela",
+                              aCodigo(e.target.value),
+                            )
                           }
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && i === filas.length - 1)
@@ -461,7 +466,11 @@ export default function IngresoRodelas({ usuario }) {
                     <Input
                       value={f.CodigoRodela}
                       onChange={(e) =>
-                        actualizarFila(f.id, "CodigoRodela", e.target.value)
+                        actualizarFila(
+                          f.id,
+                          "CodigoRodela",
+                          aCodigo(e.target.value),
+                        )
                       }
                       placeholder="Ej. RDL-2026-0148"
                       className="h-11 bg-white font-mono"

@@ -23,6 +23,7 @@ import {
 } from "../../services/Empaque/EmpaqueBobina";
 import { ObtenerProveedoresForm } from "../../services/Proveedor/Proveedor";
 import { dateFormatter } from "@/utils/dates";
+import { aCodigo } from "@/utils/handlers";
 
 const ACENTOS = [
   { text: "text-c3", soft: "bg-c4/8", border: "border-c4/30" },
@@ -522,7 +523,7 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
                                   ref={(el) => (refsCodigo.current[f.id] = el)}
                                   value={f.CodigoEmpaque}
                                   onChange={(e) =>
-                                    actualizarFila(b.id, f.id, "CodigoEmpaque", e.target.value)
+                                    actualizarFila(b.id, f.id, "CodigoEmpaque", aCodigo(e.target.value))
                                   }
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter" && i === b.filas.length - 1)
@@ -602,7 +603,7 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
                             <Input
                               value={f.CodigoEmpaque}
                               onChange={(e) =>
-                                actualizarFila(b.id, f.id, "CodigoEmpaque", e.target.value)
+                                actualizarFila(b.id, f.id, "CodigoEmpaque", aCodigo(e.target.value))
                               }
                               placeholder="Ej. EMP-2026-0148"
                               className="h-11 bg-white font-mono"

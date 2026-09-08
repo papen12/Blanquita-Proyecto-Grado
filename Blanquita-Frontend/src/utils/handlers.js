@@ -1,20 +1,15 @@
-export const handleKeyDown = (e) => {
-  if (e.key === " ") {
-    e.preventDefault();
+export const aCodigo = (valor) => valor.replace(/\s+/g, "-");
+export const codigoKeyDown = (e, onCambio) => {
+  if (e.key !== " ") return;
+  e.preventDefault();
 
-    const input = e.target;
-    const inicio = input.selectionStart;
-    const fin = input.selectionEnd;
+  const input = e.target;
+  const inicio = input.selectionStart;
+  const fin = input.selectionEnd;
 
-    const nuevoValor =
-      input.value.substring(0, inicio) +
-      "-" +
-      input.value.substring(fin);
+  onCambio(input.value.slice(0, inicio) + "-" + input.value.slice(fin));
 
-    setNombre(nuevoValor);
-
-    setTimeout(() => {
-      input.setSelectionRange(inicio + 1, inicio + 1);
-    }, 0);
-  }
+  requestAnimationFrame(() => {
+    input.setSelectionRange(inicio + 1, inicio + 1);
+  });
 };

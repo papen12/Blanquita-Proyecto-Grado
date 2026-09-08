@@ -23,6 +23,7 @@ import {
 import { ObtenerProveedoresForm } from "../../services/Proveedor/Proveedor";
 import { dateFormatter } from "@/utils/dates";
 import { Formatos } from "@/constants/BobinaServilleta";
+import { aCodigo } from "@/utils/handlers";
 
 const FORMATO_UNIDAD_1 = Formatos[0];
 const FORMATO_UNIDAD_2 = Formatos[1];
@@ -431,7 +432,7 @@ export default function IngresoBobinasServilleta({ usuario }) {
                       <Input
                         ref={(el) => (refsCodigo1.current[f.id] = el)}
                         value={f.Codigo1}
-                        onChange={(e) => actualizarFila(f.id, "Codigo1", e.target.value)}
+                        onChange={(e) => actualizarFila(f.id, "Codigo1", aCodigo(e.target.value))}
                         placeholder="Código de la unidad 1"
                         className={cn(
                           "h-10 font-mono",
@@ -469,7 +470,7 @@ export default function IngresoBobinasServilleta({ usuario }) {
                     <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[2fr_1fr_1fr]">
                       <Input
                         value={f.Codigo2}
-                        onChange={(e) => actualizarFila(f.id, "Codigo2", e.target.value)}
+                        onChange={(e) => actualizarFila(f.id, "Codigo2", aCodigo(e.target.value))}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && i === filas.length - 1) agregarFila();
                         }}

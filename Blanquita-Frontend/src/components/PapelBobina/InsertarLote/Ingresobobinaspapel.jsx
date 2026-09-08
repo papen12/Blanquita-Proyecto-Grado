@@ -22,6 +22,7 @@ import {
 } from "../../../services/BobinaPapel/BobinaPapel";
 import { ObtenerProveedoresForm } from "../../../services/Proveedor/Proveedor";
 import { dateFormatter } from "@/utils/dates";
+import { aCodigo } from "@/utils/handlers";
 
 const fmt = (n) =>
   Number(n || 0).toLocaleString("es-BO", {
@@ -425,7 +426,11 @@ export default function IngresoBobinasPapel({ usuario }) {
                           ref={(el) => (refsCodigo.current[f.id] = el)}
                           value={f.CodigoBobina}
                           onChange={(e) =>
-                            actualizarFila(f.id, "CodigoBobina", e.target.value)
+                            actualizarFila(
+                              f.id,
+                              "CodigoBobina",
+                              aCodigo(e.target.value),
+                            )
                           }
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && i === filas.length - 1)
@@ -545,7 +550,11 @@ export default function IngresoBobinasPapel({ usuario }) {
                     <Input
                       value={f.CodigoBobina}
                       onChange={(e) =>
-                        actualizarFila(f.id, "CodigoBobina", e.target.value)
+                        actualizarFila(
+                          f.id,
+                          "CodigoBobina",
+                          aCodigo(e.target.value),
+                        )
                       }
                       placeholder="Ej. HIG-2026-0148"
                       className="h-11 bg-white font-mono"
