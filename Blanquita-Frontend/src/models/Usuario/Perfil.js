@@ -1,3 +1,16 @@
+const limpiarOpcional = (valor) => {
+  const texto = (valor ?? "").trim();
+  return texto === "" ? null : texto;
+};
+
+export const PerfilUpdateRequest = (datos) => ({
+  PrimerNombre: (datos.PrimerNombre ?? "").trim(),
+  SegundoNombre: limpiarOpcional(datos.SegundoNombre),
+  ApellidoPaterno: (datos.ApellidoPaterno ?? "").trim(),
+  ApellidoMaterno: limpiarOpcional(datos.ApellidoMaterno),
+  Celular: limpiarOpcional(datos.Celular)
+});
+
 export const PerfilResponse = (data) => ({
   IdUsuario: data.IdUsuario,
   Ci: data.Ci,

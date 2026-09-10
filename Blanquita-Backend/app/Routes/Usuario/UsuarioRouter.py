@@ -3,7 +3,12 @@ from sqlalchemy.orm import Session
 
 from app.Auth.Dependencies import get_current_user, require_admin_db
 from app.Config.supabase import get_db
-from app.Models.Usuario.Usuario import UsuarioCreate, UsuarioPerfil, UsuarioResponse
+from app.Models.Usuario.Usuario import (
+    PerfilUpdate,
+    UsuarioCreate,
+    UsuarioPerfil,
+    UsuarioResponse,
+)
 from app.Services.Usuario.UsuarioService import UsuarioService
 
 
@@ -35,3 +40,14 @@ def VerPerfil(
     usuario_actual: dict = Depends(get_current_user),
 ):
     return service.ObtenerPerfil(usuario_actual)
+
+@UsuarioRouter.post(
+    "/editar",
+    response_model=UsuarioPerfil,
+)
+def EditarPerfil(
+    datos: PerfilUpdate,
+    service: UsuarioService = Depends(get_usuario_service),
+    usuario_actual: dict = Depends(get_current_user),
+):
+    return service.EditarPerfil(usuario_actual, datos)

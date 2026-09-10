@@ -18,6 +18,19 @@ class UsuarioRepository:
         '''
         return self.caller.LlamarUnRegistro(consulta, params, commit=False)
 
+    def EditarPerfil(self, params: dict) -> dict | None:
+        consulta = '''
+            SELECT * FROM "EditarPerfil"(
+                p_IdUsuario       => :p_IdUsuario,
+                p_PrimerNombre    => :p_PrimerNombre,
+                p_ApellidoPaterno => :p_ApellidoPaterno,
+                p_SegundoNombre   => :p_SegundoNombre,
+                p_ApellidoMaterno => :p_ApellidoMaterno,
+                p_Celular         => :p_Celular
+            )
+        '''
+        return self.caller.LlamarUnRegistro(consulta, params)
+
     def CrearUsuario(self, params: dict) -> dict | None:
         consulta = '''
             SELECT * FROM "CrearUsuario"(

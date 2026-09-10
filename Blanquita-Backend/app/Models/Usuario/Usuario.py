@@ -31,6 +31,14 @@ class UsuarioResponse(BaseModel):
     FechaRegistro: datetime = Field(..., validation_alias="FechaRegistroOut")
 
 
+class PerfilUpdate(BaseModel):
+    PrimerNombre: str = Field(..., min_length=1, max_length=15)
+    SegundoNombre: str | None = Field(default=None, max_length=15)
+    ApellidoPaterno: str = Field(..., min_length=1, max_length=15)
+    ApellidoMaterno: str | None = Field(default=None, max_length=15)
+    Celular: str | None = Field(default=None, pattern=r"^[67]\d{7}$")
+
+
 class UsuarioPerfil(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 

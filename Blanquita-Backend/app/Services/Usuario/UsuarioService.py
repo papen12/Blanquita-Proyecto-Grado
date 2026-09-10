@@ -4,7 +4,7 @@ import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.Models.Usuario.Usuario import UsuarioCreate, UsuarioPerfil
+from app.Models.Usuario.Usuario import PerfilUpdate, UsuarioCreate, UsuarioPerfil
 from app.Repository.Usuario.UsuarioRepository import UsuarioRepository
 
 SUPABASE_URL = os.getenv("SUPABASE_URL").rstrip("/")
@@ -22,6 +22,24 @@ class UsuarioService:
         fila = self.repository.ObtenerPerfil(
             {"p_IdUsuario": usuario_actual["IdUsuario"]}
         )
+
+        if not fila:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró el perfil del usuario"
+            )
+
+        return UsuarioPerfil(**fila, Correo=usuario_actual.get("Correo"))
+
+    def EditarPerfil(self, usuario_actual: dict, datos: PerfilUpdate) -> UsuarioPerfil:
+        fila = self.repository.EditarPerfil({
+            "p_IdUsuario": usuario_actual["IdUsuario"],
+            "p_PrimerNombre": datos.PrimerNombre,
+            "p_ApellidoPaterno": datos.ApellidoPaterno,
+            "p_SegundoNombre": datos.SegundoNombre,
+            "p_ApellidoMaterno": datos.ApellidoMaterno,
+            "p_Celular": datos.Celular,
+        })
 
         if not fila:
             raise HTTPException(
