@@ -170,3 +170,10 @@ export const ObservacionesRodela = [
   "Traslado duplicado de la misma rodela",
   "La producción se canceló antes de usar la rodela",
 ];
+
+
+export const ObservacionServilleta=[
+  "Empalme sub bobina",
+  "Error en la máquina",
+  "Falta de personal para producción"
+]

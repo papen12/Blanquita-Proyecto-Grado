@@ -5,6 +5,11 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 
 from app.Repository.BobinaServilleta.ProduccionBobinaServilleta import ProduccionBobinaServilletaRepository
+from app.utils.validators import ValidarTexto
+from app.Constants.Cantidades import (
+    LONGITUD_MINIMA_DESCRIPCION,
+    LONGITUD_MAXIMA_DESCRIPCION,
+)
 from app.Models.BobinaServilleta.ProduccionBobinaServilleta import (
     AbrirBobinaServilletaRequest,
     AbrirBobinaServilletaResponse,
@@ -68,10 +73,20 @@ class ProduccionBobinaServilletaService:
     def PausaProduccionServilleta(
         self, data: PausaProduccionServilletaRequest, id_usuario: int
     ) -> PausaProduccionServilletaResponse:
+        motivo = (data.MotivoPausaProduccion or "").strip()
+        if not ValidarTexto(LONGITUD_MINIMA_DESCRIPCION, LONGITUD_MAXIMA_DESCRIPCION, motivo):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=(
+                    "El motivo de la pausa es obligatorio y debe tener entre "
+                    f"{LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres"
+                ),
+            )
+
         params = {
             "p_IdProduccionServilleta": data.IdProduccionServilleta,
             "p_IdUsuario": id_usuario,
-            "p_MotivoPausaProduccion": data.MotivoPausaProduccion,
+            "p_MotivoPausaProduccion": motivo,
         }
 
         resultado = self.repository.PausaProduccionServilleta(params)
@@ -123,10 +138,20 @@ class ProduccionBobinaServilletaService:
     def CancelarProduccionServilleta(
         self, data: CancelarProduccionServilletaRequest, id_usuario: int
     ) -> CancelarProduccionServilletaResponse:
+        motivo = (data.MotivoCancelacion or "").strip()
+        if not ValidarTexto(LONGITUD_MINIMA_DESCRIPCION, LONGITUD_MAXIMA_DESCRIPCION, motivo):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=(
+                    "El motivo de cancelación es obligatorio y debe tener entre "
+                    f"{LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres"
+                ),
+            )
+
         params = {
             "p_id_produccion": data.IdProduccionServilleta,
             "p_id_usuario": id_usuario,
-            "p_motivo_cancelacion": data.MotivoCancelacion,
+            "p_motivo_cancelacion": motivo,
         }
 
         resultado = self.repository.CancelarProduccionServilleta(params)
