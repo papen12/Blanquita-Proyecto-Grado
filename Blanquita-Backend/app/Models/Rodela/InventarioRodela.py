@@ -52,13 +52,24 @@ class CorregirTrasladoRodelaResponse(BaseModel):
     FechaMovimiento: datetime
 
 
-class DarDeBajaRodelaRequest(BaseModel):
+class DeshacerTrasladoRodelaRequest(BaseModel):
     IdRodela: int
-    Observacion: str
+    Observacion: str | None = None
 
 
-class DarDeBajaRodelaResponse(BaseModel):
+class DeshacerTrasladoRodelaResponse(BaseModel):
     IdRodela: int
     CodigoRodela: str
     IdEstadoMateriaPrima: int
     FechaMovimiento: datetime
+
+
+class RodelaReingresableResponse(BaseModel):
+    IdRodela: int
+    CodigoRodela: str
+    IdTipoRodela: int
+    NombreTipoRodela: str
+    FechaRecepcion: date
+    NombreProveedor: str
+    FechaTraslado: datetime
+    MinutosRestantes: int

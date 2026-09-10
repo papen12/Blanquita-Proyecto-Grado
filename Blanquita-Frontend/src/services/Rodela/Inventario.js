@@ -6,8 +6,9 @@ import {
   TrasladarRodelaResponse,
   CorregirTrasladoRodelaRequest,
   CorregirTrasladoRodelaResponse,
-  DarDeBajaRodelaRequest,
-  DarDeBajaRodelaResponse
+  DeshacerTrasladoRodelaRequest,
+  DeshacerTrasladoRodelaResponse,
+  RodelaReingresableResponse
 } from "../../models/Rodela/Inventario";
 import { manejarErrorBackend } from "@/utils/validators";
 
@@ -87,10 +88,22 @@ export async function corregirTrasladoRodela(idRodela, observacion) {
   return CorregirTrasladoRodelaResponse(data);
 }
 
-export async function darDeBajaRodela(idRodela, observacion) {
-  const payload = DarDeBajaRodelaRequest(idRodela, observacion);
+export async function listarRodelasReingresables() {
+  const response = await fetch("/api/rodela/inventario/reingresables");
 
-  const response = await fetch("/api/rodela/inventario/dardebaja", {
+  if (!response.ok) {
+    await manejarErrorBackend(response);
+  }
+
+  const data = await response.json();
+
+  return data.map(RodelaReingresableResponse);
+}
+
+export async function deshacerTrasladoRodela(idRodela, observacion) {
+  const payload = DeshacerTrasladoRodelaRequest(idRodela, observacion);
+
+  const response = await fetch("/api/rodela/inventario/deshacer", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -102,5 +115,5 @@ export async function darDeBajaRodela(idRodela, observacion) {
 
   const data = await response.json();
 
-  return DarDeBajaRodelaResponse(data);
+  return DeshacerTrasladoRodelaResponse(data);
 }

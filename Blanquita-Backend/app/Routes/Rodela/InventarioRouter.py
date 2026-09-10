@@ -19,8 +19,9 @@ from app.Models.Rodela.InventarioRodela import (
     TrasladarRodelaResponse,
     CorregirTrasladoRodelaRequest,
     CorregirTrasladoRodelaResponse,
-    DarDeBajaRodelaRequest,
-    DarDeBajaRodelaResponse,
+    DeshacerTrasladoRodelaRequest,
+    DeshacerTrasladoRodelaResponse,
+    RodelaReingresableResponse,
 )
 
 
@@ -97,14 +98,26 @@ def CorregirTrasladoRodela(
     return service.CorregirTrasladoRodela(data, usuario_actual["IdUsuario"])
 
 
-@InventarioRodelaRouter.post(
-    "/dardebaja",
-    response_model=DarDeBajaRodelaResponse,
+@InventarioRodelaRouter.get(
+    "/reingresables",
+    response_model=list[RodelaReingresableResponse],
     status_code=200
 )
-def DarDeBajaRodela(
-    data: DarDeBajaRodelaRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+def ListarRodelasReingresables(
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: InventarioRodelaService = Depends(inventario_rodela_service)
 ):
-    return service.DarDeBajaRodela(data, usuario_actual["IdUsuario"])
+    return service.ListarRodelasReingresables()
+
+
+@InventarioRodelaRouter.post(
+    "/deshacer",
+    response_model=DeshacerTrasladoRodelaResponse,
+    status_code=200
+)
+def DeshacerTrasladoRodela(
+    data: DeshacerTrasladoRodelaRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: InventarioRodelaService = Depends(inventario_rodela_service)
+):
+    return service.DeshacerTrasladoRodela(data, usuario_actual["IdUsuario"])

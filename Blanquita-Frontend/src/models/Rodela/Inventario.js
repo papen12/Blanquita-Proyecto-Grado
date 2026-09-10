@@ -48,14 +48,25 @@ export const CorregirTrasladoRodelaResponse = (data) => ({
   FechaMovimiento: data.FechaMovimiento
 });
 
-export const DarDeBajaRodelaRequest = (idRodela, observacion) => ({
+export const DeshacerTrasladoRodelaRequest = (idRodela, observacion) => ({
   IdRodela: idRodela,
-  Observacion: observacion
+  Observacion: observacion ?? null
 });
 
-export const DarDeBajaRodelaResponse = (data) => ({
+export const DeshacerTrasladoRodelaResponse = (data) => ({
   IdRodela: data.IdRodela,
   CodigoRodela: data.CodigoRodela,
   IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
   FechaMovimiento: data.FechaMovimiento
+});
+
+export const RodelaReingresableResponse = (data) => ({
+  IdRodela: data.IdRodela,
+  CodigoRodela: data.CodigoRodela,
+  IdTipoRodela: data.IdTipoRodela,
+  NombreTipoRodela: data.NombreTipoRodela,
+  FechaRecepcion: data.FechaRecepcion,
+  NombreProveedor: data.NombreProveedor,
+  FechaTraslado: data.FechaTraslado,
+  MinutosRestantes: data.MinutosRestantes
 });

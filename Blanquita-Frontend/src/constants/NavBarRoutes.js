@@ -26,6 +26,7 @@ export const RutasNavBar = [
     ruta: "rodela",
     subrutas: [
       { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
+      { titulo: "Producción", icono: Factory, ruta: "produccion" },
     ],
   },
   {

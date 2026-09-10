@@ -6,8 +6,6 @@ import {
   Loader2,
   Search,
   Check,
-  RotateCcw,
-  Ban,
   Disc,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -15,8 +13,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -27,18 +23,9 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
   verResumenInventarioRodela,
   verDetalleInventarioRodela,
   trasladarRodelaAProduccion,
-  corregirTrasladoRodela,
-  darDeBajaRodela,
 } from "../../services/Rodela/Inventario";
 import { dateFormatter } from "@/utils/dates";
 import Header from "@/components/layout/Header";
@@ -51,27 +38,11 @@ const ACENTOS = [
 ];
 
 const ESTADO_ALMACEN = "En almacén";
-const ESTADO_ABIERTA = "Abierta";
 
 const etiquetaRodelas = (n) => {
   const cantidad = Number(n || 0);
   return `${cantidad} ${cantidad === 1 ? "rodela" : "rodelas"}`;
 };
-
-function EstadoBadge({ tipoEstado }) {
-  if (tipoEstado === ESTADO_ABIERTA) {
-    return (
-      <Badge variant="outline" className="border-0 bg-amber-100 font-bold text-amber-700">
-        Abierta
-      </Badge>
-    );
-  }
-  return (
-    <Badge variant="outline" className="border-0 bg-emerald-100 font-bold text-emerald-700">
-      En almacén
-    </Badge>
-  );
-}
 
 function TarjetaTipo({ tipo: t, activo, onClick }) {
   return (
@@ -122,87 +93,36 @@ function TarjetaTipo({ tipo: t, activo, onClick }) {
   );
 }
 
-function AccionesFila({ rodela, procesando, onCorregir, onBaja }) {
-  const abierta = rodela.TipoEstado === ESTADO_ABIERTA;
-  return (
-    <div className="flex justify-end gap-1.5">
-      {abierta && (
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={procesando}
-          onClick={() => onCorregir(rodela)}
-          className="gap-1 border-emerald-300 font-bold text-emerald-600 hover:bg-emerald-50"
-        >
-          {procesando ? (
-            <Loader2 size={13} className="animate-spin" />
-          ) : (
-            <>
-              <RotateCcw size={13} strokeWidth={2.75} />
-              Corregir
-            </>
-          )}
-        </Button>
-      )}
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={procesando}
-        onClick={() => onBaja(rodela)}
-        className="gap-1 border-red-300 font-bold text-red-600 hover:bg-red-50"
-      >
-        <Ban size={13} strokeWidth={2.75} />
-        Baja
-      </Button>
-    </div>
-  );
-}
-
-function TablaRodelas({
-  rodelas,
-  tipoSel,
-  marcadas,
-  onToggle,
-  onCorregir,
-  onBaja,
-  procesandoId,
-}) {
+function TablaRodelas({ rodelas, tipoSel, marcadas, onToggle }) {
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-[680px]">
+      <Table className="min-w-[560px]">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-11 pl-5" />
             <TableHead>Código</TableHead>
             <TableHead>Lote</TableHead>
             <TableHead>Recepción</TableHead>
-            <TableHead>Proveedor</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead className="pr-5 text-right">Acciones</TableHead>
+            <TableHead className="pr-5">Proveedor</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {rodelas.map((r) => {
-            const enAlmacen = r.TipoEstado === ESTADO_ALMACEN;
             const on = marcadas.includes(r.CodigoRodela);
             return (
               <TableRow key={r.IdRodela} className={cn(on && tipoSel.soft)}>
                 <TableCell className="pl-5">
-                  {enAlmacen ? (
-                    <button
-                      onClick={() => onToggle(r.CodigoRodela)}
-                      className={cn(
-                        "flex h-5 w-5 items-center justify-center rounded-md border-2",
-                        on
-                          ? cn(tipoSel.bg, "border-transparent text-white")
-                          : "border-slate-300",
-                      )}
-                    >
-                      {on && <Check size={13} strokeWidth={3.5} />}
-                    </button>
-                  ) : (
-                    <span className="block h-5 w-5" />
-                  )}
+                  <button
+                    onClick={() => onToggle(r.CodigoRodela)}
+                    className={cn(
+                      "flex h-5 w-5 items-center justify-center rounded-md border-2",
+                      on
+                        ? cn(tipoSel.bg, "border-transparent text-white")
+                        : "border-slate-300",
+                    )}
+                  >
+                    {on && <Check size={13} strokeWidth={3.5} />}
+                  </button>
                 </TableCell>
                 <TableCell className={cn("font-mono font-bold", tipoSel.text)}>
                   {r.CodigoRodela}
@@ -211,18 +131,7 @@ function TablaRodelas({
                 <TableCell className="text-slate-600">
                   {dateFormatter(r.FechaRecepcion)}
                 </TableCell>
-                <TableCell className="text-slate-600">{r.NombreProveedor}</TableCell>
-                <TableCell>
-                  <EstadoBadge tipoEstado={r.TipoEstado} />
-                </TableCell>
-                <TableCell className="pr-5">
-                  <AccionesFila
-                    rodela={r}
-                    procesando={procesandoId === r.IdRodela}
-                    onCorregir={onCorregir}
-                    onBaja={onBaja}
-                  />
-                </TableCell>
+                <TableCell className="pr-5 text-slate-600">{r.NombreProveedor}</TableCell>
               </TableRow>
             );
           })}
@@ -232,19 +141,10 @@ function TablaRodelas({
   );
 }
 
-function ListaMovilRodelas({
-  rodelas,
-  tipoSel,
-  marcadas,
-  onToggle,
-  onCorregir,
-  onBaja,
-  procesandoId,
-}) {
+function ListaMovilRodelas({ rodelas, tipoSel, marcadas, onToggle }) {
   return (
     <div className="flex flex-col gap-2.5 p-3.5">
       {rodelas.map((r) => {
-        const enAlmacen = r.TipoEstado === ESTADO_ALMACEN;
         const on = marcadas.includes(r.CodigoRodela);
         return (
           <div
@@ -258,21 +158,17 @@ function ListaMovilRodelas({
               <div className={cn("font-mono text-[15px] font-extrabold", tipoSel.text)}>
                 {r.CodigoRodela}
               </div>
-              {enAlmacen ? (
-                <button
-                  onClick={() => onToggle(r.CodigoRodela)}
-                  className={cn(
-                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2",
-                    on
-                      ? cn(tipoSel.bg, "border-transparent text-white")
-                      : "border-slate-300",
-                  )}
-                >
-                  {on && <Check size={14} strokeWidth={3.5} />}
-                </button>
-              ) : (
-                <EstadoBadge tipoEstado={r.TipoEstado} />
-              )}
+              <button
+                onClick={() => onToggle(r.CodigoRodela)}
+                className={cn(
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2",
+                  on
+                    ? cn(tipoSel.bg, "border-transparent text-white")
+                    : "border-slate-300",
+                )}
+              >
+                {on && <Check size={14} strokeWidth={3.5} />}
+              </button>
             </div>
             <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
               <span>
@@ -281,12 +177,6 @@ function ListaMovilRodelas({
               </span>
               <span>{r.NombreProveedor}</span>
             </div>
-            <AccionesFila
-              rodela={r}
-              procesando={procesandoId === r.IdRodela}
-              onCorregir={onCorregir}
-              onBaja={onBaja}
-            />
           </div>
         );
       })}
@@ -307,15 +197,6 @@ export default function InventarioRodelas({ usuario }) {
 
   const [marcadas, setMarcadas] = useState([]);
   const [enviando, setEnviando] = useState(false);
-  const [procesandoId, setProcesandoId] = useState(null);
-
-  const [dialogBaja, setDialogBaja] = useState({ open: false, rodela: null });
-  const [motivoBaja, setMotivoBaja] = useState("");
-  const [enviandoBaja, setEnviandoBaja] = useState(false);
-
-  const [dialogCorregir, setDialogCorregir] = useState({ open: false, rodela: null });
-  const [motivoCorregir, setMotivoCorregir] = useState("");
-  const [enviandoCorregir, setEnviandoCorregir] = useState(false);
 
   const requeridas = 1;
 
@@ -351,7 +232,7 @@ export default function InventarioRodelas({ usuario }) {
     setErrorDetalle("");
     try {
       const data = await verDetalleInventarioRodela(idTipoRodela);
-      setRodelasSel(data);
+      setRodelasSel(data.filter((r) => r.TipoEstado === ESTADO_ALMACEN));
     } catch (e) {
       setErrorDetalle(e.message);
       setRodelasSel([]);
@@ -417,56 +298,6 @@ export default function InventarioRodelas({ usuario }) {
       toast.error(e.message);
     } finally {
       setEnviando(false);
-    }
-  };
-
-  const abrirCorregir = (rodela) => {
-    setMotivoCorregir("");
-    setDialogCorregir({ open: true, rodela });
-  };
-
-  const confirmarCorregir = async () => {
-    const rodela = dialogCorregir.rodela;
-    if (!rodela) return;
-
-    setEnviandoCorregir(true);
-    try {
-      await corregirTrasladoRodela(rodela.IdRodela, motivoCorregir.trim() || null);
-      toast.success(`${rodela.CodigoRodela} reingresada al almacén`);
-      setDialogCorregir({ open: false, rodela: null });
-      refrescar();
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setEnviandoCorregir(false);
-    }
-  };
-
-  const abrirBaja = (rodela) => {
-    setMotivoBaja("");
-    setDialogBaja({ open: true, rodela });
-  };
-
-  const confirmarBaja = async () => {
-    const rodela = dialogBaja.rodela;
-    if (!rodela) return;
-
-    if (!motivoBaja.trim()) {
-      toast.error("La observación (motivo de la baja) es obligatoria");
-      return;
-    }
-
-    setEnviandoBaja(true);
-    try {
-      await darDeBajaRodela(rodela.IdRodela, motivoBaja.trim());
-      toast.success(`${rodela.CodigoRodela} dada de baja`);
-      setDialogBaja({ open: false, rodela: null });
-      setMarcadas((prev) => prev.filter((c) => c !== rodela.CodigoRodela));
-      refrescar();
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setEnviandoBaja(false);
     }
   };
 
@@ -597,7 +428,7 @@ export default function InventarioRodelas({ usuario }) {
             )}
             {!loadingDetalle && !errorDetalle && rodelasSel.length === 0 && (
               <div className="p-8 text-center text-sm text-slate-400">
-                No hay rodelas en almacén ni abiertas para este tipo.
+                No hay rodelas en almacén para este tipo.
               </div>
             )}
             {!loadingDetalle &&
@@ -617,9 +448,6 @@ export default function InventarioRodelas({ usuario }) {
                     tipoSel={tipoSel}
                     marcadas={marcadas}
                     onToggle={toggleRodela}
-                    onCorregir={abrirCorregir}
-                    onBaja={abrirBaja}
-                    procesandoId={procesandoId}
                   />
                 </div>
                 <div className="md:hidden">
@@ -628,9 +456,6 @@ export default function InventarioRodelas({ usuario }) {
                     tipoSel={tipoSel}
                     marcadas={marcadas}
                     onToggle={toggleRodela}
-                    onCorregir={abrirCorregir}
-                    onBaja={abrirBaja}
-                    procesandoId={procesandoId}
                   />
                 </div>
               </>
@@ -682,114 +507,6 @@ export default function InventarioRodelas({ usuario }) {
           </div>
         )}
       </main>
-
-      <Dialog
-        open={dialogCorregir.open}
-        onOpenChange={(open) =>
-          setDialogCorregir({ open, rodela: open ? dialogCorregir.rodela : null })
-        }
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Corregir traslado</DialogTitle>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-4">
-            {dialogCorregir.rodela && (
-              <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
-                <span className="font-mono font-bold text-slate-900">
-                  {dialogCorregir.rodela.CodigoRodela}
-                </span>{" "}
-                <span className="text-slate-500">volverá a "En almacén"</span>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-1.5">
-              <Label
-                htmlFor="motivo-corregir"
-                className="text-xs font-bold uppercase tracking-wide text-slate-600"
-              >
-                Motivo de la corrección (opcional)
-              </Label>
-              <Textarea
-                id="motivo-corregir"
-                value={motivoCorregir}
-                onChange={(e) => setMotivoCorregir(e.target.value)}
-                placeholder="Ej. Se escaneó la rodela equivocada..."
-                className="min-h-20"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              onClick={confirmarCorregir}
-              disabled={enviandoCorregir}
-              className="h-11 w-full gap-2 bg-emerald-600 font-extrabold text-white hover:bg-emerald-700 sm:w-auto"
-            >
-              {enviandoCorregir ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                "Reingresar al almacén"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={dialogBaja.open}
-        onOpenChange={(open) =>
-          setDialogBaja({ open, rodela: open ? dialogBaja.rodela : null })
-        }
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Dar de baja</DialogTitle>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-4">
-            {dialogBaja.rodela && (
-              <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
-                <span className="font-mono font-bold text-slate-900">
-                  {dialogBaja.rodela.CodigoRodela}
-                </span>{" "}
-                <span className="text-slate-500">se retirará definitivamente</span>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-1.5">
-              <Label
-                htmlFor="motivo-baja"
-                className="text-xs font-bold uppercase tracking-wide text-slate-600"
-              >
-                Motivo de la baja (obligatorio)
-              </Label>
-              <Textarea
-                id="motivo-baja"
-                value={motivoBaja}
-                onChange={(e) => setMotivoBaja(e.target.value)}
-                placeholder="Ej. Rodela dañada / contaminada..."
-                className="min-h-20"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              onClick={confirmarBaja}
-              disabled={enviandoBaja || !motivoBaja.trim()}
-              className="h-11 w-full gap-2 bg-red-600 font-extrabold text-white hover:bg-red-700 sm:w-auto"
-            >
-              {enviandoBaja ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                "Dar de baja"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
