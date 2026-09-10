@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   UserRound,
+  UserRoundKey,
   IdCard,
   Phone,
   Mail,
@@ -111,9 +112,11 @@ async function copiar(texto, etiqueta) {
 function Campo({ icono: Icono, etiqueta, valor, copiable = false }) {
   return (
     <div className="flex items-start gap-3 py-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-c4/10 text-c3">
-        <Icono size={17} strokeWidth={2.25} />
-      </div>
+      {Icono && (
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-c4/10 text-c3">
+          <Icono size={17} strokeWidth={2.25} />
+        </div>
+      )}
       <div className="min-w-0 flex-1">
         <div className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
           {etiqueta}
@@ -136,10 +139,15 @@ function Campo({ icono: Icono, etiqueta, valor, copiable = false }) {
   );
 }
 
-function TarjetaPerfil({ titulo, children }) {
+function TarjetaPerfil({ titulo, icono: Icono, children }) {
   return (
     <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-      <div className="border-b border-slate-100 px-5 py-3.5 text-sm font-extrabold text-slate-700">
+      <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-3.5 text-sm font-extrabold text-slate-700">
+        {Icono && (
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-c4/10 text-c3">
+            <Icono size={16} strokeWidth={2.25} />
+          </div>
+        )}
         {titulo}
       </div>
       <div className="px-5 py-1">{children}</div>
@@ -347,7 +355,7 @@ export default function Perfil() {
   }, []);
 
   return (
-    <div className="mt-20 md:mt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
+    <div className="contenido-con-sidebar mt-20 md:mt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-6 pb-28 sm:px-6 lg:max-w-5xl">
         {cargando && <PerfilSkeleton />}
 
@@ -410,17 +418,12 @@ export default function Perfil() {
               </div>
             </section>
 
-            <TarjetaPerfil titulo="Datos personales">
-              <Campo
-                icono={UserRound}
-                etiqueta="Primer nombre"
-                valor={perfil.PrimerNombre}
-              />
+            <TarjetaPerfil titulo="Datos personales" icono={UserRound}>
+              <Campo etiqueta="Primer nombre" valor={perfil.PrimerNombre} />
               {perfil.SegundoNombre && (
                 <>
                   <Separator />
                   <Campo
-                    icono={UserRound}
                     etiqueta="Segundo nombre"
                     valor={perfil.SegundoNombre}
                   />
@@ -428,7 +431,6 @@ export default function Perfil() {
               )}
               <Separator />
               <Campo
-                icono={UserRound}
                 etiqueta="Apellido paterno"
                 valor={perfil.ApellidoPaterno}
               />
@@ -436,7 +438,6 @@ export default function Perfil() {
                 <>
                   <Separator />
                   <Campo
-                    icono={UserRound}
                     etiqueta="Apellido materno"
                     valor={perfil.ApellidoMaterno}
                   />
@@ -461,7 +462,7 @@ export default function Perfil() {
             </TarjetaPerfil>
 
             <TarjetaPerfil titulo="Cuenta">
-              <Campo icono={ShieldCheck} etiqueta="Rol" valor={perfil.NombreRol} />
+              <Campo icono={UserRoundKey} etiqueta="Rol" valor={perfil.NombreRol} />
               <Separator />
               <Campo
                 icono={ShieldCheck}

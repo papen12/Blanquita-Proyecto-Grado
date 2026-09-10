@@ -86,8 +86,8 @@ export default function BottomBar({ idRol, subRuta, idOpcionSelect }) {
     <>
       <div className="h-20" />
 
-      <nav className="fixed inset-x-0 bottom-0 z-40">
-        <div className="relative mx-auto max-w-2xl">
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40">
+        <div className="pointer-events-auto relative mx-auto max-w-2xl">
           {avisoQR ? (
             <div className="absolute bottom-full left-1/2 mb-3 w-[min(90vw,24rem)] -translate-x-1/2 rounded-2xl bg-neutral-900/90 px-4 py-3 text-center backdrop-blur">
               <p className="font-sans text-sm font-medium text-white">{avisoQR}</p>

@@ -133,7 +133,7 @@ export default function InicioOperador({ usuario }) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 pt-20 font-sans text-slate-900 md:pt-30">
+    <div className="contenido-con-sidebar flex min-h-screen flex-col bg-slate-50 pt-20 font-sans text-slate-900 md:pt-0">
       <header className="bg-gradient-to-r from-c3 to-c4 px-5 py-5 text-white sm:px-7">
         <div className="mx-auto w-full max-w-5xl">
           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-white/80">

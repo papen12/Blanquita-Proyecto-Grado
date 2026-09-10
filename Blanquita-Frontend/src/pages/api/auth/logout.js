@@ -3,6 +3,11 @@ export const prerender = false;
 import { obtenerAccessTokenValido, limpiarSesion } from "../../../lib/auth-server";
 import { logoutTodos } from "../../../services/Usuario/Auth";
 
+const HEADERS = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store"
+};
+
 export async function POST({ cookies }) {
   const accessToken = await obtenerAccessTokenValido(cookies);
 
@@ -10,7 +15,7 @@ export async function POST({ cookies }) {
     limpiarSesion(cookies);
     return new Response(
       JSON.stringify({ detail: "No hay sesión activa" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
+      { status: 401, headers: HEADERS }
     );
   }
 
@@ -19,13 +24,13 @@ export async function POST({ cookies }) {
     limpiarSesion(cookies);
     return new Response(
       JSON.stringify(resultado),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: HEADERS }
     );
   } catch (error) {
     limpiarSesion(cookies);
     return new Response(
       JSON.stringify({ detail: error.message || "Error al cerrar sesión" }),
-      { status: error.status || 500, headers: { "Content-Type": "application/json" } }
+      { status: error.status || 500, headers: HEADERS }
     );
   }
 }

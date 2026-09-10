@@ -350,7 +350,7 @@ export default function ProduccionBobinaServilleta({ usuario }) {
   };
 
   return (
-    <div className="pt-20 md:pt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
+    <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <Header titulo="Producción" subtitulo="Producción de Bobinas de Servilleta" />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">

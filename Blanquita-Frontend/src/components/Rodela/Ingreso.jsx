@@ -176,7 +176,7 @@ export default function IngresoRodelas({ usuario }) {
   const tipoActual = tipos.find((t) => t.IdTipoRodela === idTipoRodela);
 
   return (
-    <div className="pt-20 md:pt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
+    <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <Header
         volver
         titulo="Almacén · Materia Prima"

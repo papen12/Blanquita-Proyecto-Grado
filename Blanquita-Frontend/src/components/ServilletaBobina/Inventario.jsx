@@ -643,7 +643,7 @@ export default function InventarioBobinaServilleta({ usuario }) {
   };
 
   return (
-    <div className="pt-20 md:pt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
+    <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <Header
         titulo="Almacén · Materia Prima"
         subtitulo="Inventario de Bobinas de Servilleta"

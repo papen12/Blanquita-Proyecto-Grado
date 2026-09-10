@@ -130,6 +130,19 @@
     }
 }
 
+/* Hueco reservado para el SideBar de escritorio.
+   - Solo aplica a partir de 768px: en movil el padding es siempre 0.
+   - --hueco-sidebar lo fija SideBar.jsx en <html> al plegar/desplegar; el valor
+     por defecto (17rem) cubre el render del servidor y el previo a la hidratacion. */
+.contenido-con-sidebar {
+    transition: padding-left 0.3s ease-in-out;
+}
+@media (min-width: 768px) {
+    .contenido-con-sidebar {
+        padding-left: var(--hueco-sidebar, 17rem);
+    }
+}
+
 
 @font-face {
     font-family: "Ekamai";
