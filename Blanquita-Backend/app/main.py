@@ -7,6 +7,7 @@ from app.Routes.Usuario.AuthRouter import AuthRouter
 from app.Routes.BobinaPapel.BobinaPapelRouter import BobinaPapelRouter
 from app.Routes.BobinaPapel.InventarioRouter import InventarioBobinaPapelRouter
 from app.Routes.BobinaPapel.ProduccionRouter import ProduccionBobinaPapelRouter
+from app.Routes.BobinaPapel.Reporte import bpReporteRouter
 
 
 from app.Routes.Rodela.RodelaRouter import RodelaRouter
@@ -76,7 +77,7 @@ app.include_router(AuthRouter)
 app.include_router(BobinaPapelRouter)
 app.include_router(InventarioBobinaPapelRouter)
 app.include_router(ProduccionBobinaPapelRouter)
-
+app.include_router(bpReporteRouter)
 
 
 #ROUTERS RODELA
