@@ -22,6 +22,7 @@ import { TarjetaFueraInventario } from "./TarjetaFueraInventario";
 import { TablaBobinas } from "./TablaBobinas";
 import { ListaMovilBobinas } from "./ListaMovilBobinas";
 import Header from "@/components/layout/Header";
+import { Roles } from "@/constants/Values";
 
 export default function InventarioBobinasPapel({ usuario }) {
   const [tipos, setTipos] = useState([]);
@@ -230,11 +231,15 @@ export default function InventarioBobinasPapel({ usuario }) {
       <Header
         titulo="Almacén · Materia Prima"
         subtitulo="Inventario de Bobinas de Papel"
-        accion={{
-          texto: "Registrar ingreso",
-          icono: Plus,
-          href: "/operador/bobina-papel/ingreso",
-        }}
+        accion={
+          usuario?.IdRol === Roles.Encargado
+            ? {
+                texto: "Registrar ingreso",
+                icono: Plus,
+                href: "/encargado/bobina-papel/ingreso",
+              }
+            : null
+        }
       />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">

@@ -50,6 +50,7 @@ import {
 } from "../../services/BobinaServilleta/Produccion";
 import { dateFormatter } from "@/utils/dates";
 import Header from "@/components/layout/Header";
+import { Roles } from "@/constants/Values";
 
 const ACENTOS = [
   { text: "text-c3", bg: "bg-c4", soft: "bg-c4/8", border: "border-c4/30", ring: "ring-c4/40" },
@@ -647,11 +648,15 @@ export default function InventarioBobinaServilleta({ usuario }) {
       <Header
         titulo="Almacén · Materia Prima"
         subtitulo="Inventario de Bobinas de Servilleta"
-        accion={{
-          texto: "Registrar ingreso",
-          icono: Plus,
-          href: "/operador/bobina-servilleta/ingreso",
-        }}
+        accion={
+          usuario?.IdRol === Roles.Encargado
+            ? {
+                texto: "Registrar ingreso",
+                icono: Plus,
+                href: "/encargado/bobina-servilleta/ingreso",
+              }
+            : null
+        }
       />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
