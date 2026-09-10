@@ -348,7 +348,7 @@ export default function Perfil() {
 
   return (
     <div className="mt-20 md:mt-30 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
-      <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-6 pb-28 sm:px-6">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-6 pb-28 sm:px-6 lg:max-w-5xl">
         {cargando && <PerfilSkeleton />}
 
         {!cargando && error && (
@@ -358,9 +358,9 @@ export default function Perfil() {
         )}
 
         {!cargando && !error && perfil && (
-          <div className="space-y-6">
+          <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-6 lg:space-y-0">
             <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-              <div className="relative flex flex-col items-center gap-4 bg-gradient-to-br from-c3 to-c4 p-6 text-white sm:flex-row sm:text-left">
+              <div className="relative flex h-full flex-col items-center gap-4 bg-gradient-to-br from-c3 to-c4 p-6 text-white sm:flex-row sm:text-left">
                 <Button
                   onClick={() => setEditando(true)}
                   className="absolute right-4 top-4 h-9 gap-1.5 bg-white/15 font-bold text-white hover:bg-white/25"
