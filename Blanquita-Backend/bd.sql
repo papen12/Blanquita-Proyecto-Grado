@@ -29,6 +29,7 @@ CREATE TABLE "Usuario" (
   "ApellidoPaterno" TEXT NOT NULL,
   "ApellidoMaterno" TEXT,
   "Celular" TEXT,
+  "IsAdmin" BOOLEAN NOT NULL DEFAULT FALSE,
   "FechaRegistro" TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT "chk_usuario_celular" CHECK ("Celular" IS NULL OR "Celular" ~ '^[67][0-9]{7}$')
 );
@@ -65,6 +66,7 @@ CREATE TABLE "EstadoMateriaPrima" (
 CREATE TABLE "LoteBobina" (
   "IdLoteBobina" SERIAL PRIMARY KEY,
   "IdProveedor" INTEGER NOT NULL REFERENCES "Proveedor"("IdProveedor") ON DELETE CASCADE,
+  "IdUsuario" INTEGER REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
   "FechaRecepcion" DATE NOT NULL
 );
 
@@ -134,6 +136,7 @@ CREATE INDEX "idx_subbobina_estado" ON "SubBobinaServilleta"("IdEstadoMateriaPri
 CREATE TABLE "LoteEmpaque" (
   "IdLoteEmpaque" SERIAL PRIMARY KEY,
   "IdProveedor" INTEGER NOT NULL REFERENCES "Proveedor"("IdProveedor") ON DELETE CASCADE,
+  "IdUsuario" INTEGER REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
   "FechaRecepcion" DATE NOT NULL,
   "CantidadToneladasPedida" NUMERIC
 );
@@ -156,6 +159,7 @@ CREATE INDEX "idx_empaque_estado" ON "Empaque"("IdEstadoMateriaPrima");
 CREATE TABLE "LoteRodela" (
   "IdLoteRodela" SERIAL PRIMARY KEY,
   "IdProveedor" INTEGER NOT NULL REFERENCES "Proveedor"("IdProveedor") ON DELETE CASCADE,
+  "IdUsuario" INTEGER REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
   "FechaRecepcion" DATE NOT NULL
 );
 
@@ -263,6 +267,8 @@ CREATE TABLE "PausaProduccionBobinaTubo" (
   "FechaHoraReanudacion" TIMESTAMPTZ
 );
 CREATE INDEX "idx_pausabobinatubo_fecha" ON "PausaProduccionBobinaTubo"("FechaHoraPausa");
+CREATE INDEX IF NOT EXISTS "idx_pausabobinatubo_produccion"
+  ON "PausaProduccionBobinaTubo"("IdProduccionBobinaTubo");
 
 CREATE TABLE "PausaProduccionServilleta" (
   "IdPausaProduccionServilleta" SERIAL PRIMARY KEY,
@@ -428,25 +434,3 @@ CREATE TABLE "CancelacionProduccionServilleta" (
   "MotivoCancelacion" TEXT
 );
 CREATE INDEX "idx_cancelservilleta_produccion" ON "CancelacionProduccionServilleta"("IdProduccionServilleta");
-
-CREATE TABLE "EstadoRefreshToken" (
-  "IdEstadoRefreshToken" SERIAL PRIMARY KEY,
-  "NombreEstadoRefreshToken" TEXT NOT NULL,
-  "Descripcion" TEXT
-);
-
-CREATE TABLE "RefreshToken" (
-  "IdRefreshToken" SERIAL PRIMARY KEY,
-  "IdEstadoRefreshToken" INTEGER NOT NULL REFERENCES "EstadoRefreshToken"("IdEstadoRefreshToken") ON DELETE CASCADE,
-  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
-  "TokenHash" TEXT NOT NULL,
-  "FechaCreacion" TIMESTAMPTZ NOT NULL DEFAULT now(),
-  "FechaExpiracion" TIMESTAMPTZ NOT NULL,
-  "FechaRevocacion" TIMESTAMPTZ,
-  "IpOrigen" INET,
-  "UserAgent" TEXT
-);
-
-CREATE UNIQUE INDEX "idx_refreshtoken_hash" ON "RefreshToken"("TokenHash");
-CREATE INDEX "idx_refreshtoken_usuario_estado" ON "RefreshToken"("IdUsuario", "IdEstadoRefreshToken");
-CREATE INDEX "idx_refreshtoken_expiracion" ON "RefreshToken"("FechaExpiracion") WHERE "IdEstadoRefreshToken" = 1;

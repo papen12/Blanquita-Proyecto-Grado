@@ -246,6 +246,10 @@ class ReporteBobinaPapelService:
             FechaRecepcion=primera["FechaRecepcion"],
             NombreProveedor=primera["NombreProveedor"],
             CantidadBobinas=primera["CantidadBobinas"],
+            Ci=primera["Ci"],
+            PrimerNombre=primera["PrimerNombre"],
+            ApellidoPaterno=primera["ApellidoPaterno"],
+            NombreRol=primera["NombreRol"],
             Bobinas=bobinas,
         )
 

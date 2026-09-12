@@ -95,6 +95,7 @@ def construir_reporte_detalle_produccion_bobina_papel(
         filas=[
             {"campo": "Operador", "valor": data.Operador},
             {"campo": "CI", "valor": data.Ci},
+            {"campo": "Rol", "valor": data.NombreRol},
             {"campo": "Fecha inicio", "valor": data.FechaInicioProduccion},
             {"campo": "Fecha fin", "valor": data.FechaFinProduccion},
             {"campo": "Duración total", "valor": _formatear_duracion(data.DuracionTotal)},
@@ -145,6 +146,7 @@ def construir_reporte_detalle_produccion_bobina_papel(
                     ("Duración", lambda p: _formatear_duracion(p.DuracionPausa)),
                     ("Motivo", "MotivoPausaProduccion"),
                     ("Operador", "OperadorPausa"),
+                    ("Rol", "RolPausa"),
                     ("Estado", "EstadoPausa"),
                 ],
                 filas=data.Pausas,
@@ -186,6 +188,12 @@ def construir_reporte_lote_bobina_papel_detalle(
                 "campo": "Cantidad de bobinas",
                 "valor": f"{data.CantidadBobinas:,}".replace(",", "."),
             },
+            {
+                "campo": "Registrado por",
+                "valor": f"{data.PrimerNombre} {data.ApellidoPaterno}",
+            },
+            {"campo": "CI", "valor": data.Ci},
+            {"campo": "Rol", "valor": data.NombreRol},
         ],
     )
 
@@ -227,6 +235,7 @@ def construir_reporte_cancelacion_produccion_bobina_papel(
             {"campo": "Motivo", "valor": data.Cancelacion.MotivoCancelacion},
             {"campo": "Cancelado por", "valor": data.Cancelacion.Operador},
             {"campo": "CI", "valor": data.Cancelacion.Ci},
+            {"campo": "Rol", "valor": data.Cancelacion.NombreRol},
         ],
     )
 
@@ -236,6 +245,7 @@ def construir_reporte_cancelacion_produccion_bobina_papel(
         filas=[
             {"campo": "Operador de producción", "valor": data.Operador},
             {"campo": "CI", "valor": data.Ci},
+            {"campo": "Rol", "valor": data.NombreRol},
             {"campo": "Fecha inicio", "valor": data.FechaInicioProduccion},
             {"campo": "Fecha fin", "valor": data.FechaFinProduccion},
             {"campo": "Duración total", "valor": _formatear_duracion(data.DuracionTotal)},
@@ -285,6 +295,7 @@ def construir_reporte_cancelacion_produccion_bobina_papel(
                 ("Duración", lambda p: _formatear_duracion(p.DuracionPausa)),
                 ("Motivo", "MotivoPausaProduccion"),
                 ("Operador", "OperadorPausa"),
+                ("Rol", "RolPausa"),
                 ("Estado", "EstadoPausa"),
             ],
             filas=data.Pausas,

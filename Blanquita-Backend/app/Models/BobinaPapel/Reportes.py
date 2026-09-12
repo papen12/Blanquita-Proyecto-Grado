@@ -90,6 +90,7 @@ class PausaProduccionBobinaTuboResponse(BaseModel):
     FechaHoraReanudacion: Optional[datetime]
     DuracionPausa: Optional[timedelta]
     OperadorPausa: str
+    RolPausa: str
     EstadoPausa: str
 
 
@@ -99,6 +100,7 @@ class ReporteProduccionBobinaTuboDetalleResponse(BaseModel):
     NombreTurno: str
     Operador: str
     Ci: str
+    NombreRol: str
     TipoBobina: str
     CodigoBobina1: str
     PesoNeto1: Optional[Decimal]
@@ -158,6 +160,10 @@ class ReporteLoteBobinaPapelDetalleResponse(BaseModel):
     FechaRecepcion: date
     NombreProveedor: str
     CantidadBobinas: int
+    Ci: str
+    PrimerNombre: str
+    ApellidoPaterno: str
+    NombreRol: str
     Bobinas: list[BobinaLoteDetalleResponse]
 
 
@@ -170,6 +176,7 @@ class CancelacionProduccionBobinaTuboResponse(BaseModel):
     MotivoCancelacion: Optional[str]
     Ci: str
     Operador: str
+    NombreRol: str
 
 
 class ReporteCancelacionProduccionBobinaTuboResponse(
