@@ -101,6 +101,13 @@ class Reporte:
         self._contenido.append(Spacer(1, alto))
         return self
 
+    def celda_multilinea(self, lineas: list[str]) -> Paragraph:
+        """Arma una celda de tabla con varias líneas (una por elemento de
+        `lineas`, vacíos se omiten), para usar como valor de retorno de un
+        accessor callable en `tabla()`."""
+        texto = "<br/>".join(escape(str(linea)) for linea in lineas if linea)
+        return Paragraph(texto, self._estilo_celda)
+
     def tabla(
         self,
         columnas: list[Columna],

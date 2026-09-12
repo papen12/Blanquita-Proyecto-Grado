@@ -24,6 +24,10 @@ from app.Models.BobinaPapel.Reportes import (
     ReporteCancelacionProduccionBobinaTuboRequest,
     ReporteCancelacionProduccionBobinaTuboResponse,
     CancelacionProduccionBobinaTuboResponse,
+    ReporteProduccionPorPeriodoRequest,
+    ReporteProduccionPorPeriodoResponse,
+    PausaPorMotivoResponse,
+    CancelacionPeriodoResponse,
 )
 from app.Repository.BobinaPapel.Reportes import ReporteBobinaPapelRepository
 
@@ -326,4 +330,106 @@ class ReporteBobinaPapelService:
             Pausas=pausas,
             TotalTiempoPausado=total_tiempo_pausado,
             Cancelacion=cancelacion,
+        )
+
+    def ReporteProduccionPorPeriodo(
+        self, data: ReporteProduccionPorPeriodoRequest
+    ) -> ReporteProduccionPorPeriodoResponse:
+        try:
+            filas_producciones = self.repository.VerProduccionesBobinaTubo(
+                {
+                    "p_FechaInicio": data.FechaInicio,
+                    "p_FechaFin": data.FechaFin,
+                    "p_IdTurno": None,
+                    "p_IdsTipoBobina": None,
+                    "p_CodigoBobina": None,
+                    "p_Operador": None,
+                    "p_IdEstadoProduccion": None,
+                }
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudieron obtener las producciones del período, verifica los datos ingresados",
+            )
+
+        producciones = [
+            ProduccionBobinaTuboCatalogoResponse(**fila) for fila in filas_producciones
+        ]
+        total_logs = sum(p.CantidadLogsActual for p in producciones)
+
+        try:
+            filas_pausas = self.repository.ReportePausasProduccionBobinaTubo(
+                {
+                    "p_IdProduccion": None,
+                    "p_FechaInicio": data.FechaInicio,
+                    "p_FechaFin": data.FechaFin,
+                    "p_IdTurno": None,
+                    "p_SoloAbiertas": None,
+                }
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudieron obtener las pausas del período",
+            )
+
+        pausas_por_motivo: dict[str, dict] = {}
+        for fila_pausa in filas_pausas:
+            motivo = fila_pausa["MotivoPausaProduccion"] or "Sin motivo especificado"
+            duracion = fila_pausa["DuracionPausa"] or timedelta()
+
+            if motivo not in pausas_por_motivo:
+                pausas_por_motivo[motivo] = {
+                    "CantidadPausas": 0,
+                    "TiempoTotal": timedelta(),
+                }
+
+            pausas_por_motivo[motivo]["CantidadPausas"] += 1
+            pausas_por_motivo[motivo]["TiempoTotal"] += duracion
+
+        pausas_agrupadas = [
+            PausaPorMotivoResponse(
+                Motivo=motivo,
+                CantidadPausas=datos["CantidadPausas"],
+                TiempoTotal=datos["TiempoTotal"],
+            )
+            for motivo, datos in pausas_por_motivo.items()
+        ]
+        total_tiempo_pausado = sum(
+            (p.TiempoTotal for p in pausas_agrupadas), timedelta()
+        )
+
+        cancelaciones = None
+
+        if data.VerCancelaciones:
+            try:
+                filas_cancelaciones = (
+                    self.repository.VerCancelacionesProduccionBobinaTubo(
+                        {
+                            "p_FechaInicio": data.FechaInicio,
+                            "p_FechaFin": data.FechaFin,
+                        }
+                    )
+                )
+            except SQLAlchemyError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No se pudieron obtener las cancelaciones del período",
+                )
+
+            cancelaciones = [
+                CancelacionPeriodoResponse(**fila) for fila in filas_cancelaciones
+            ]
+
+        return ReporteProduccionPorPeriodoResponse(
+            PeriodoInicio=data.FechaInicio,
+            PeriodoFin=data.FechaFin,
+            TotalProducciones=len(producciones),
+            TotalLogs=total_logs,
+            Producciones=producciones,
+            PausasPorMotivo=pausas_agrupadas,
+            TotalPausas=len(filas_pausas),
+            TotalTiempoPausado=total_tiempo_pausado,
+            Cancelaciones=cancelaciones,
         )

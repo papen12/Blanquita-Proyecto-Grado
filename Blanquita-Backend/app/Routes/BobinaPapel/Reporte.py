@@ -17,6 +17,7 @@ from app.Models.BobinaPapel.Reportes import (
     VerLotesBobinaPapelResponse,
     ReporteLoteBobinaPapelDetalleRequest,
     ReporteCancelacionProduccionBobinaTuboRequest,
+    ReporteProduccionPorPeriodoRequest,
 )
 from app.Services.BobinaPapel.Reportes import ReporteBobinaPapelService
 from app.Reportes.BobinaPapel import (
@@ -28,6 +29,8 @@ from app.Reportes.BobinaPapel import (
     nombre_archivo_lote_detalle,
     construir_reporte_cancelacion_produccion_bobina_papel,
     nombre_archivo_cancelacion_produccion,
+    construir_reporte_produccion_por_periodo,
+    nombre_archivo_produccion_por_periodo,
 )
 
 
@@ -203,5 +206,36 @@ def CrearReporteLote(
         media_type="application/pdf",
         headers={
             "Content-Disposition": f'attachment; filename="{nombre_archivo_lote_detalle(id_lote_bobina)}"'
+        },
+    )
+
+
+@bpReporteRouter.get(
+    "/produccion/periodo",
+    status_code=200,
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION]))],
+)
+def ReporteProduccionPorPeriodo(
+    FechaInicio: date,
+    FechaFin: date,
+    VerCancelaciones: bool = False,
+    service: ReporteBobinaPapelService = Depends(reporte_bobina_papel_service),
+):
+    data = service.ReporteProduccionPorPeriodo(
+        ReporteProduccionPorPeriodoRequest(
+            FechaInicio=FechaInicio,
+            FechaFin=FechaFin,
+            VerCancelaciones=VerCancelaciones,
+        )
+    )
+    pdf = construir_reporte_produccion_por_periodo(data)
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo_produccion_por_periodo(FechaInicio, FechaFin)}"'
         },
     )

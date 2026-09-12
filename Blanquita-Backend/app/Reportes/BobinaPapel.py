@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from app.Models.BobinaPapel.Reportes import (
@@ -6,6 +6,7 @@ from app.Models.BobinaPapel.Reportes import (
     ReporteProduccionBobinaTuboDetalleResponse,
     ReporteLoteBobinaPapelDetalleResponse,
     ReporteCancelacionProduccionBobinaTuboResponse,
+    ReporteProduccionPorPeriodoResponse,
 )
 from app.Reportes.reporte import Reporte
 from app.utils.dates import ZONA_BOLIVIA
@@ -312,3 +313,109 @@ def construir_reporte_cancelacion_produccion_bobina_papel(
 def nombre_archivo_cancelacion_produccion(id_produccion: int) -> str:
     ahora = datetime.now(ZONA_BOLIVIA)
     return f"cancelacion-produccion-bobina-papel-{id_produccion}-{ahora:%Y%m%d-%H%M}.pdf"
+
+
+def construir_reporte_produccion_por_periodo(
+    data: ReporteProduccionPorPeriodoResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Producción por período - Bobina de papel",
+        subtitulo=(
+            f"Del {data.PeriodoInicio.strftime('%d/%m/%Y')} "
+            f"al {data.PeriodoFin.strftime('%d/%m/%Y')}"
+        ),
+        filtros={
+            "Producciones": f"{data.TotalProducciones:,}".replace(",", "."),
+            "Logs": f"{data.TotalLogs:,}".replace(",", "."),
+        },
+        generado_en=datetime.now(ZONA_BOLIVIA),
+    )
+
+    reporte.titulo_seccion("Resumen")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=[
+            {
+                "campo": "Total de producciones",
+                "valor": f"{data.TotalProducciones:,}".replace(",", "."),
+            },
+            {
+                "campo": "Total de logs",
+                "valor": f"{data.TotalLogs:,}".replace(",", "."),
+            },
+            {
+                "campo": "Total de pausas",
+                "valor": f"{data.TotalPausas:,}".replace(",", "."),
+            },
+            {
+                "campo": "Tiempo total pausado",
+                "valor": _formatear_duracion(data.TotalTiempoPausado),
+            },
+        ],
+    )
+
+    reporte.titulo_seccion(f"Producciones ({data.TotalProducciones})")
+    if data.Producciones:
+        reporte.tabla(
+            columnas=[
+                ("Turno", "NombreTurno"),
+                (
+                    "Operador",
+                    lambda p: reporte.celda_multilinea(
+                        [f"{p.Operador},", p.Ci, p.NombreRol]
+                    ),
+                ),
+                ("Tipo", "TipoBobina"),
+                ("Bobina 1", "CodigoBobina1"),
+                ("Bobina 2", "CodigoBobina2"),
+                ("Inicio", "FechaInicioProduccion"),
+                ("Fin", "FechaFinProduccion"),
+                ("Logs", "CantidadLogsActual"),
+                ("Estado", "NombreEstadoProduccion"),
+            ],
+            filas=data.Producciones,
+        )
+    else:
+        reporte.parrafo("No hubo producciones en este período.")
+
+    reporte.titulo_seccion("Pausas por motivo")
+    if data.PausasPorMotivo:
+        reporte.tabla(
+            columnas=[
+                ("Motivo", "Motivo"),
+                ("Cantidad", "CantidadPausas"),
+                ("Tiempo total", lambda p: _formatear_duracion(p.TiempoTotal)),
+            ],
+            filas=data.PausasPorMotivo,
+        )
+    else:
+        reporte.parrafo("No hubo pausas registradas en este período.")
+
+    if data.Cancelaciones is not None:
+        reporte.titulo_seccion(f"Cancelaciones ({len(data.Cancelaciones)})")
+        if data.Cancelaciones:
+            reporte.tabla(
+                columnas=[
+                    ("Producción", "IdProduccionBobinaTubo"),
+                    ("Fecha y hora", "FechaHoraCancelacion"),
+                    ("Motivo", "MotivoCancelacion"),
+                    (
+                        "Cancelado por",
+                        lambda c: f"{c.PrimerNombre} {c.ApellidoPaterno}",
+                    ),
+                    ("Rol", "NombreRol"),
+                ],
+                filas=data.Cancelaciones,
+            )
+        else:
+            reporte.parrafo("No hubo cancelaciones en este período.")
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_produccion_por_periodo(fecha_inicio: date, fecha_fin: date) -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return (
+        f"produccion-periodo-{fecha_inicio:%Y%m%d}-{fecha_fin:%Y%m%d}"
+        f"-{ahora:%Y%m%d-%H%M}.pdf"
+    )

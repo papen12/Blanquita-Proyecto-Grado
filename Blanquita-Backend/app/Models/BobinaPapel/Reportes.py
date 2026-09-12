@@ -58,6 +58,7 @@ class ProduccionBobinaTuboCatalogoResponse(BaseModel):
     NombreTurno: str
     Operador: str
     Ci: str
+    NombreRol: str
     TipoBobina: str
     CodigoBobina1: str
     CodigoBobina2: str
@@ -185,3 +186,37 @@ class ReporteCancelacionProduccionBobinaTuboResponse(
     Pausas: list[PausaProduccionBobinaTuboResponse]
     TotalTiempoPausado: timedelta
     Cancelacion: CancelacionProduccionBobinaTuboResponse
+
+
+class ReporteProduccionPorPeriodoRequest(BaseModel):
+    FechaInicio: date
+    FechaFin: date
+    VerCancelaciones: bool = False
+
+
+class PausaPorMotivoResponse(BaseModel):
+    Motivo: str
+    CantidadPausas: int
+    TiempoTotal: timedelta
+
+
+class CancelacionPeriodoResponse(BaseModel):
+    IdProduccionBobinaTubo: int
+    FechaHoraCancelacion: datetime
+    MotivoCancelacion: Optional[str]
+    Ci: str
+    PrimerNombre: str
+    ApellidoPaterno: str
+    NombreRol: str
+
+
+class ReporteProduccionPorPeriodoResponse(BaseModel):
+    PeriodoInicio: date
+    PeriodoFin: date
+    TotalProducciones: int
+    TotalLogs: int
+    Producciones: list[ProduccionBobinaTuboCatalogoResponse]
+    PausasPorMotivo: list[PausaPorMotivoResponse]
+    TotalPausas: int
+    TotalTiempoPausado: timedelta
+    Cancelaciones: Optional[list[CancelacionPeriodoResponse]] = None

@@ -74,3 +74,12 @@ class ReporteBobinaPapelRepository:
             )
         """
         return self.caller.LlamarUnRegistro(sql, params)
+
+    def VerCancelacionesProduccionBobinaTubo(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerCancelacionesProduccionBobinaTubo"(
+                :p_FechaInicio,
+                :p_FechaFin
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
