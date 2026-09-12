@@ -1,8 +1,23 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Optional
 
-from app.Models.BobinaPapel.Reportes import ReporteInventarioBobinaPapelResponse
+from app.Models.BobinaPapel.Reportes import (
+    ReporteInventarioBobinaPapelResponse,
+    ReporteProduccionBobinaTuboDetalleResponse,
+    ReporteLoteBobinaPapelDetalleResponse,
+    ReporteCancelacionProduccionBobinaTuboResponse,
+)
 from app.Reportes.reporte import Reporte
 from app.utils.dates import ZONA_BOLIVIA
+
+
+def _formatear_duracion(duracion: Optional[timedelta]) -> str:
+    if duracion is None:
+        return "—"
+    total_segundos = int(duracion.total_seconds())
+    horas, resto = divmod(total_segundos, 3600)
+    minutos = resto // 60
+    return f"{horas}h {minutos:02d}m"
 
 
 def construir_reporte_inventario_bobina_papel(
@@ -62,3 +77,227 @@ def construir_reporte_inventario_bobina_papel(
 def nombre_archivo_inventario() -> str:
     ahora = datetime.now(ZONA_BOLIVIA)
     return f"informe-inventario-bobina-papel-{ahora:%Y%m%d-%H%M}.pdf"
+
+
+def construir_reporte_detalle_produccion_bobina_papel(
+    data: ReporteProduccionBobinaTuboDetalleResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Detalle de producción - Bobina de papel",
+        subtitulo=f"Producción #{data.IdProduccionBobinaTubo} — {data.TipoBobina}",
+        filtros={"Estado": data.NombreEstadoProduccion, "Turno": data.NombreTurno},
+        generado_en=datetime.now(ZONA_BOLIVIA),
+    )
+
+    reporte.titulo_seccion("Datos generales")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=[
+            {"campo": "Operador", "valor": data.Operador},
+            {"campo": "CI", "valor": data.Ci},
+            {"campo": "Fecha inicio", "valor": data.FechaInicioProduccion},
+            {"campo": "Fecha fin", "valor": data.FechaFinProduccion},
+            {"campo": "Duración total", "valor": _formatear_duracion(data.DuracionTotal)},
+            {
+                "campo": "Cantidad de logs",
+                "valor": f"{data.CantidadLogsActual:,}".replace(",", "."),
+            },
+        ],
+    )
+
+    reporte.titulo_seccion("Bobinas utilizadas")
+    reporte.tabla(
+        columnas=[
+            ("Bobina", "etiqueta"),
+            ("Código", "codigo"),
+            ("Peso neto (kg)", "peso"),
+            ("Gramaje", "gramaje"),
+            ("Proveedor", "proveedor"),
+            ("Recepción", "recepcion"),
+        ],
+        filas=[
+            {
+                "etiqueta": "Bobina 1",
+                "codigo": data.CodigoBobina1,
+                "peso": data.PesoNeto1,
+                "gramaje": data.Gramaje1,
+                "proveedor": data.Proveedor1,
+                "recepcion": data.Recepcion1,
+            },
+            {
+                "etiqueta": "Bobina 2",
+                "codigo": data.CodigoBobina2,
+                "peso": data.PesoNeto2,
+                "gramaje": data.Gramaje2,
+                "proveedor": data.Proveedor2,
+                "recepcion": data.Recepcion2,
+            },
+        ],
+    )
+
+    if data.Pausas is not None:
+        reporte.titulo_seccion(f"Pausas ({len(data.Pausas)})")
+        if data.Pausas:
+            reporte.tabla(
+                columnas=[
+                    ("Inicio", "FechaHoraPausa"),
+                    ("Reanudación", "FechaHoraReanudacion"),
+                    ("Duración", lambda p: _formatear_duracion(p.DuracionPausa)),
+                    ("Motivo", "MotivoPausaProduccion"),
+                    ("Operador", "OperadorPausa"),
+                    ("Estado", "EstadoPausa"),
+                ],
+                filas=data.Pausas,
+            )
+            reporte.parrafo(
+                f"Tiempo total pausado: {_formatear_duracion(data.TotalTiempoPausado)}"
+            )
+        else:
+            reporte.parrafo("Esta producción no registró pausas.")
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_detalle_produccion(id_produccion: int) -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return f"detalle-produccion-bobina-papel-{id_produccion}-{ahora:%Y%m%d-%H%M}.pdf"
+
+
+def construir_reporte_lote_bobina_papel_detalle(
+    data: ReporteLoteBobinaPapelDetalleResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Detalle de lote - Bobina de papel",
+        subtitulo=f"Lote #{data.IdLoteBobina} — {data.NombreProveedor}",
+        filtros={
+            "Proveedor": data.NombreProveedor,
+            "Recepción": data.FechaRecepcion.strftime("%d/%m/%Y"),
+        },
+        generado_en=datetime.now(ZONA_BOLIVIA),
+    )
+
+    reporte.titulo_seccion("Datos generales")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=[
+            {"campo": "Proveedor", "valor": data.NombreProveedor},
+            {"campo": "Fecha de recepción", "valor": data.FechaRecepcion},
+            {
+                "campo": "Cantidad de bobinas",
+                "valor": f"{data.CantidadBobinas:,}".replace(",", "."),
+            },
+        ],
+    )
+
+    reporte.titulo_seccion(f"Bobinas del lote ({data.CantidadBobinas})")
+    reporte.tabla(
+        columnas=[
+            ("Código", "CodigoBobina"),
+            ("Tipo", "NombreTipoBobina"),
+            ("P. bruto (kg)", "PesoBrutoKg"),
+            ("P. neto (kg)", "PesoNetoKg"),
+            ("Gramaje", "Gramaje"),
+        ],
+        filas=data.Bobinas,
+    )
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_lote_detalle(id_lote_bobina: int) -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return f"detalle-lote-bobina-papel-{id_lote_bobina}-{ahora:%Y%m%d-%H%M}.pdf"
+
+
+def construir_reporte_cancelacion_produccion_bobina_papel(
+    data: ReporteCancelacionProduccionBobinaTuboResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Producción cancelada - Bobina de papel",
+        subtitulo=f"Producción #{data.IdProduccionBobinaTubo} — {data.TipoBobina}",
+        filtros={"Turno": data.NombreTurno, "Cancelada por": data.Cancelacion.Operador},
+        generado_en=datetime.now(ZONA_BOLIVIA),
+    )
+
+    reporte.titulo_seccion("Motivo de cancelación")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=[
+            {"campo": "Fecha y hora", "valor": data.Cancelacion.FechaHoraCancelacion},
+            {"campo": "Motivo", "valor": data.Cancelacion.MotivoCancelacion},
+            {"campo": "Cancelado por", "valor": data.Cancelacion.Operador},
+            {"campo": "CI", "valor": data.Cancelacion.Ci},
+        ],
+    )
+
+    reporte.titulo_seccion("Datos generales")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=[
+            {"campo": "Operador de producción", "valor": data.Operador},
+            {"campo": "CI", "valor": data.Ci},
+            {"campo": "Fecha inicio", "valor": data.FechaInicioProduccion},
+            {"campo": "Fecha fin", "valor": data.FechaFinProduccion},
+            {"campo": "Duración total", "valor": _formatear_duracion(data.DuracionTotal)},
+            {
+                "campo": "Cantidad de logs",
+                "valor": f"{data.CantidadLogsActual:,}".replace(",", "."),
+            },
+        ],
+    )
+
+    reporte.titulo_seccion("Bobinas utilizadas")
+    reporte.tabla(
+        columnas=[
+            ("Bobina", "etiqueta"),
+            ("Código", "codigo"),
+            ("Peso neto (kg)", "peso"),
+            ("Gramaje", "gramaje"),
+            ("Proveedor", "proveedor"),
+            ("Recepción", "recepcion"),
+        ],
+        filas=[
+            {
+                "etiqueta": "Bobina 1",
+                "codigo": data.CodigoBobina1,
+                "peso": data.PesoNeto1,
+                "gramaje": data.Gramaje1,
+                "proveedor": data.Proveedor1,
+                "recepcion": data.Recepcion1,
+            },
+            {
+                "etiqueta": "Bobina 2",
+                "codigo": data.CodigoBobina2,
+                "peso": data.PesoNeto2,
+                "gramaje": data.Gramaje2,
+                "proveedor": data.Proveedor2,
+                "recepcion": data.Recepcion2,
+            },
+        ],
+    )
+
+    reporte.titulo_seccion(f"Pausas ({len(data.Pausas)})")
+    if data.Pausas:
+        reporte.tabla(
+            columnas=[
+                ("Inicio", "FechaHoraPausa"),
+                ("Reanudación", "FechaHoraReanudacion"),
+                ("Duración", lambda p: _formatear_duracion(p.DuracionPausa)),
+                ("Motivo", "MotivoPausaProduccion"),
+                ("Operador", "OperadorPausa"),
+                ("Estado", "EstadoPausa"),
+            ],
+            filas=data.Pausas,
+        )
+        reporte.parrafo(
+            f"Tiempo total pausado: {_formatear_duracion(data.TotalTiempoPausado)}"
+        )
+    else:
+        reporte.parrafo("Esta producción no registró pausas antes de cancelarse.")
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_cancelacion_produccion(id_produccion: int) -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return f"cancelacion-produccion-bobina-papel-{id_produccion}-{ahora:%Y%m%d-%H%M}.pdf"
