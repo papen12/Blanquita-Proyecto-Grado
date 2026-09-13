@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Icon, ChevronDown, ChevronLeft, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { RutasNavBar } from "@/constants/NavBarRoutes";
-import { PREFIJO_POR_ROL } from "@/constants/Values";
+import { RutasNavBar, RutasReportes } from "@/constants/NavBarRoutes";
+import { PREFIJO_POR_ROL, Roles } from "@/constants/Values";
 import { cerrarSesion } from "@/lib/logout-client";
 import {
   SidebarProvider,
@@ -51,12 +51,15 @@ function IconoItem({ item, size = 22 }) {
   return <IconoComp size={size} />;
 }
 
-function EntradaSimple({ item, basePath }) {
+function EntradaSimple({ item, basePath, prefijo }) {
+  const rutaCompleta =
+    item.ruta === "" ? `${prefijo}/inicio` : `${basePath}/${item.ruta}`;
+
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
         size="lg"
-        render={<a href={`/${basePath}/${item.ruta}`} />}
+        render={<a href={`/${rutaCompleta}`} />}
         className={CLASE_ITEM}
       >
         <IconoItem item={item} size={20} />
@@ -111,8 +114,13 @@ function GrupoColapsable({ item, basePath }) {
   );
 }
 
-export default function SideBar({ idRol }) {
+export default function SideBar({ idRol, seccion }) {
   const prefijo = PREFIJO_POR_ROL[idRol];
+  const enReportes = seccion === "reportes";
+  const basePath = enReportes ? `${prefijo}/reportes` : prefijo;
+  const rutas = enReportes
+    ? RutasReportes
+    : RutasNavBar.filter((item) => !item.isLider || idRol === Roles.Encargado);
 
   // Arranca abierto para coincidir con el HTML del servidor (evita desajuste de
   // hidratacion); el estado guardado se aplica ya en el cliente.
@@ -175,11 +183,16 @@ export default function SideBar({ idRol }) {
 
         <SidebarContent className="p-3">
           <SidebarMenu className="gap-1.5">
-            {RutasNavBar.map((item) =>
+            {rutas.map((item) =>
               item.subrutas ? (
-                <GrupoColapsable key={item.ruta} item={item} basePath={prefijo} />
+                <GrupoColapsable key={item.ruta} item={item} basePath={basePath} />
               ) : (
-                <EntradaSimple key={item.ruta} item={item} basePath={prefijo} />
+                <EntradaSimple
+                  key={item.ruta}
+                  item={item}
+                  basePath={basePath}
+                  prefijo={prefijo}
+                />
               )
             )}
           </SidebarMenu>

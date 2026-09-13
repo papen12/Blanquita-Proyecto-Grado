@@ -1,7 +1,14 @@
-import { 
-        Home, Boxes, Factory,Database,
-        ShelvingUnit,SquareStack, Container,CircleUserRound
-      } from "lucide-react";
+import {
+  Home,
+  Boxes,
+  Factory,
+  Database,
+  ShelvingUnit,
+  SquareStack,
+  Container,
+  CircleUserRound,
+  ClipboardList,
+} from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 export const RutasNavBar = [
   {
@@ -9,12 +16,20 @@ export const RutasNavBar = [
     icono: Home,
     ruta: "inicio",
   },
-  
   {
     titulo: "Bobina Papel",
     icono: toiletRoll,
-    esIconoLab: true, 
+    esIconoLab: true,
     ruta: "bobina-papel",
+    subrutas: [
+      { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
+      { titulo: "Producción", icono: Factory, ruta: "produccion" },
+    ],
+  },
+  {
+    titulo: "Bobina Servilleta",
+    icono: SquareStack,
+    ruta: "bobina-servilleta",
     subrutas: [
       { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
       { titulo: "Producción", icono: Factory, ruta: "produccion" },
@@ -29,32 +44,31 @@ export const RutasNavBar = [
       { titulo: "Producción", icono: Factory, ruta: "produccion" },
     ],
   },
+
   {
-    titulo:"Bobina Servilleta",
-    icono:SquareStack,
-    ruta:"bobina-servilleta",
-     subrutas: [
-      { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
-      { titulo: "Producción", icono: Factory, ruta: "produccion" },
-    ],
-  },
-  {
-    titulo:"Empaque",
-    icono:Container,
-    ruta:"empaque",
-    subrutas:[
-      {
-        titulo:"Bobina",icono:Database,ruta:"bobina-inventario"
-      }
-    ]
-  },
-  {
-    titulo:"Productos",
-    icono:ShelvingUnit,
-    ruta:"producto",
+    titulo: "Empaque",
+    icono: Container,
+    ruta: "empaque",
     subrutas: [
-      { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
+      {
+        titulo: "Bobina",
+        icono: Database,
+        ruta: "bobina-inventario",
+      },
     ],
+  },
+
+  {
+    titulo: "Productos",
+    icono: ShelvingUnit,
+    ruta: "producto",
+    subrutas: [{ titulo: "Inventario", icono: Boxes, ruta: "inventario" }],
+  },
+  {
+    titulo: "Reportes",
+    icono: ClipboardList,
+    ruta: "reportes/inicio",
+    isLider: true,
   },
   {
     titulo: "Perfil",
@@ -63,3 +77,25 @@ export const RutasNavBar = [
   },
 ];
 
+export const RutasReportes = [
+  {
+    titulo: "Inicio",
+    icono: Home,
+    ruta: "inicio",
+  },
+  {
+    titulo: "Volver a la Planta",
+    icono: Factory,
+    ruta: "",
+  },
+  {
+    titulo: "Bobina Papel",
+    icono: toiletRoll,
+    esIconoLab: true,
+    ruta: "bobina-papel",
+    subrutas: [
+      { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
+      { titulo: "Producción", icono: Factory, ruta: "produccion" },
+    ],
+  },
+];

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RutasNavBar } from "@/constants/NavBarRoutes";
+import { RutasNavBar, RutasReportes } from "@/constants/NavBarRoutes";
 import { Icon, Menu, ChevronDown, LogOut } from "lucide-react";
 import { cerrarSesion } from "@/lib/logout-client";
 import {
@@ -23,7 +23,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { PREFIJO_POR_ROL } from "@/constants/Values";
+import { PREFIJO_POR_ROL, Roles } from "@/constants/Values";
 
 function IconoItem({ item, size = 18 }) {
   if (item.esIconoLab) {
@@ -33,8 +33,9 @@ function IconoItem({ item, size = 18 }) {
   return <IconoComp size={size} />;
 }
 
-function ItemNav({ item, basePath }) {
-  const rutaCompleta = `${basePath}/${item.ruta}`;
+function ItemNav({ item, basePath, prefijo }) {
+  const rutaCompleta =
+    item.ruta === "" ? `${prefijo}/inicio` : `${basePath}/${item.ruta}`;
 
   if (item.subrutas) {
     return (
@@ -77,8 +78,9 @@ function ItemNav({ item, basePath }) {
   );
 }
 
-function ItemNavMovil({ item, basePath, alNavegar }) {
-  const rutaCompleta = `${basePath}/${item.ruta}`;
+function ItemNavMovil({ item, basePath, prefijo, alNavegar }) {
+  const rutaCompleta =
+    item.ruta === "" ? `${prefijo}/inicio` : `${basePath}/${item.ruta}`;
 
   if (!item.subrutas) {
     return (
@@ -125,8 +127,13 @@ function ItemNavMovil({ item, basePath, alNavegar }) {
   );
 }
 
-export default function NavBar({ idRol }) {
+export default function NavBar({ idRol, seccion }) {
   const prefijo = PREFIJO_POR_ROL[idRol];
+  const enReportes = seccion === "reportes";
+  const basePath = enReportes ? `${prefijo}/reportes` : prefijo;
+  const rutas = enReportes
+    ? RutasReportes
+    : RutasNavBar.filter((item) => !item.isLider || idRol === Roles.Encargado);
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   return (
@@ -166,11 +173,12 @@ export default function NavBar({ idRol }) {
             openMultiple={false}
             className="flex flex-1 flex-col gap-1 overflow-y-auto p-3"
           >
-            {RutasNavBar.map((item) => (
+            {rutas.map((item) => (
               <ItemNavMovil
                 key={item.ruta}
                 item={item}
-                basePath={prefijo}
+                basePath={basePath}
+                prefijo={prefijo}
                 alNavegar={() => setMenuAbierto(false)}
               />
             ))}
@@ -200,8 +208,8 @@ export default function NavBar({ idRol }) {
 
         <NavigationMenu className="hidden md:flex">
           <NavigationMenuList>
-            {RutasNavBar.map((item) => (
-              <ItemNav key={item.ruta} item={item} basePath={prefijo} />
+            {rutas.map((item) => (
+              <ItemNav key={item.ruta} item={item} basePath={basePath} prefijo={prefijo} />
             ))}
             <NavigationMenuItem>
               <button
