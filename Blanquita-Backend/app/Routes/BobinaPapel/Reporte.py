@@ -18,6 +18,9 @@ from app.Models.BobinaPapel.Reportes import (
     ReporteLoteBobinaPapelDetalleRequest,
     ReporteCancelacionProduccionBobinaTuboRequest,
     ReporteProduccionPorPeriodoRequest,
+    VerBobinasPapelRequest,
+    VerBobinasPapelResponse,
+    ReporteHistorialMovimientosBobinaRequest,
 )
 from app.Services.BobinaPapel.Reportes import ReporteBobinaPapelService
 from app.Reportes.BobinaPapel import (
@@ -31,6 +34,8 @@ from app.Reportes.BobinaPapel import (
     nombre_archivo_cancelacion_produccion,
     construir_reporte_produccion_por_periodo,
     nombre_archivo_produccion_por_periodo,
+    construir_reporte_historial_movimientos_bobina,
+    nombre_archivo_historial_movimientos_bobina,
 )
 
 
@@ -237,5 +242,56 @@ def ReporteProduccionPorPeriodo(
         media_type="application/pdf",
         headers={
             "Content-Disposition": f'attachment; filename="{nombre_archivo_produccion_por_periodo(FechaInicio, FechaFin)}"'
+        },
+    )
+
+@bpReporteRouter.get(
+    "/movimientos/catalogo",
+    response_model=VerBobinasPapelResponse,
+    status_code=200,
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION]))],
+)
+def CatalogoBobinas(
+    CodigoBobina: str | None = None,
+    IdProveedor: int | None = None,
+    IdsTipoBobina: list[int] | None = Query(default=None),
+    IdEstadoMateriaPrima: int | None = None,
+    Pagina: int = 1,
+    TamanoPagina: int = 50,
+    service: ReporteBobinaPapelService = Depends(reporte_bobina_papel_service),
+):
+    return service.VerBobinasPapel(
+        VerBobinasPapelRequest(
+            CodigoBobina=CodigoBobina,
+            IdProveedor=IdProveedor,
+            IdsTipoBobina=IdsTipoBobina,
+            IdEstadoMateriaPrima=IdEstadoMateriaPrima,
+            Pagina=Pagina,
+            TamanoPagina=TamanoPagina,
+        )
+    )
+
+
+@bpReporteRouter.get(
+    "/movimientos/reporte/{id_bobina_papel}",
+    status_code=200,
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION]))],
+)
+def ReporteBobinaMovimientos(
+    id_bobina_papel: int,
+    service: ReporteBobinaPapelService = Depends(reporte_bobina_papel_service),
+):
+    data = service.ReporteHistorialMovimientosBobina(
+        ReporteHistorialMovimientosBobinaRequest(IdBobinaPapel=id_bobina_papel)
+    )
+    pdf = construir_reporte_historial_movimientos_bobina(data)
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo_historial_movimientos_bobina(id_bobina_papel)}"'
         },
     )

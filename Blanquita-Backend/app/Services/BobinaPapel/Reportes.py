@@ -28,6 +28,12 @@ from app.Models.BobinaPapel.Reportes import (
     ReporteProduccionPorPeriodoResponse,
     PausaPorMotivoResponse,
     CancelacionPeriodoResponse,
+    VerBobinasPapelRequest,
+    VerBobinasPapelResponse,
+    BobinaPapelCatalogoResponse,
+    ReporteHistorialMovimientosBobinaRequest,
+    ReporteHistorialMovimientosBobinaResponse,
+    MovimientoBobinaResponse,
 )
 from app.Repository.BobinaPapel.Reportes import ReporteBobinaPapelRepository
 
@@ -432,4 +438,90 @@ class ReporteBobinaPapelService:
             TotalPausas=len(filas_pausas),
             TotalTiempoPausado=total_tiempo_pausado,
             Cancelaciones=cancelaciones,
+        )
+
+    def VerBobinasPapel(
+        self, data: VerBobinasPapelRequest
+    ) -> VerBobinasPapelResponse:
+        params = {
+            "p_CodigoBobina": data.CodigoBobina,
+            "p_IdProveedor": data.IdProveedor,
+            "p_IdsTipoBobina": data.IdsTipoBobina or None,
+            "p_IdEstadoMateriaPrima": data.IdEstadoMateriaPrima,
+            "p_IdBobinaPapel": data.IdBobinaPapel,
+        }
+
+        try:
+            filas = self.repository.VerBobinasPapel(params)
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener el catálogo de bobinas, verifica los datos ingresados",
+            )
+
+        total = len(filas)
+        inicio = (data.Pagina - 1) * data.TamanoPagina
+        fin = inicio + data.TamanoPagina
+        filas_pagina = filas[inicio:fin]
+
+        bobinas = [BobinaPapelCatalogoResponse(**fila) for fila in filas_pagina]
+
+        return VerBobinasPapelResponse(
+            Total=total,
+            Pagina=data.Pagina,
+            TamanoPagina=data.TamanoPagina,
+            Bobinas=bobinas,
+        )
+
+    def ReporteHistorialMovimientosBobina(
+        self, data: ReporteHistorialMovimientosBobinaRequest
+    ) -> ReporteHistorialMovimientosBobinaResponse:
+        try:
+            filas_bobina = self.repository.VerBobinasPapel(
+                {
+                    "p_CodigoBobina": None,
+                    "p_IdProveedor": None,
+                    "p_IdsTipoBobina": None,
+                    "p_IdEstadoMateriaPrima": None,
+                    "p_IdBobinaPapel": data.IdBobinaPapel,
+                }
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener la información de la bobina, verifica los datos ingresados",
+            )
+
+        if not filas_bobina:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró la bobina solicitada",
+            )
+
+        bobina = filas_bobina[0]
+
+        try:
+            filas = self.repository.ReporteHistorialMovimientosBobina(
+                {"p_IdBobinaPapel": data.IdBobinaPapel}
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener el historial de movimientos, verifica los datos ingresados",
+            )
+
+        if not filas:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró historial de movimientos para esta bobina",
+            )
+
+        movimientos = [MovimientoBobinaResponse(**fila) for fila in filas]
+
+        return ReporteHistorialMovimientosBobinaResponse(
+            IdBobinaPapel=data.IdBobinaPapel,
+            CodigoBobina=bobina["CodigoBobina"],
+            NombreTipoBobina=bobina["NombreTipoBobina"],
+            TipoEstado=bobina["TipoEstado"],
+            Movimientos=movimientos,
         )

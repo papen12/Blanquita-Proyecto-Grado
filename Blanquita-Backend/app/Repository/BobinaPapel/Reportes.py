@@ -83,3 +83,23 @@ class ReporteBobinaPapelRepository:
             )
         """
         return self.caller.LlamarFuncion(sql, params)
+
+    def VerBobinasPapel(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerBobinasPapel"(
+                :p_CodigoBobina,
+                :p_IdProveedor,
+                CAST(:p_IdsTipoBobina AS integer[]),
+                :p_IdEstadoMateriaPrima,
+                :p_IdBobinaPapel
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+
+    def ReporteHistorialMovimientosBobina(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "ReporteHistorialMovimientosBobina"(
+                :p_IdBobinaPapel
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)

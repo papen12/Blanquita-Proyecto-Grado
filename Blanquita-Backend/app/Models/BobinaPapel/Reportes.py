@@ -220,3 +220,53 @@ class ReporteProduccionPorPeriodoResponse(BaseModel):
     TotalPausas: int
     TotalTiempoPausado: timedelta
     Cancelaciones: Optional[list[CancelacionPeriodoResponse]] = None
+
+
+class VerBobinasPapelRequest(BaseModel):
+    CodigoBobina: Optional[str] = None
+    IdProveedor: Optional[int] = None
+    IdsTipoBobina: Optional[list[int]] = None
+    IdEstadoMateriaPrima: Optional[int] = None
+    IdBobinaPapel: Optional[int] = None
+    Pagina: int = 1
+    TamanoPagina: int = 50
+
+
+class BobinaPapelCatalogoResponse(BaseModel):
+    IdBobinaPapel: int
+    CodigoBobina: str
+    PesoBrutoKg: Optional[Decimal]
+    Gramaje: Optional[Decimal]
+    NombreTipoBobina: str
+    TipoEstado: str
+    NombreProveedor: str
+
+
+class VerBobinasPapelResponse(BaseModel):
+    Total: int
+    Pagina: int
+    TamanoPagina: int
+    Bobinas: list[BobinaPapelCatalogoResponse]
+
+
+class ReporteHistorialMovimientosBobinaRequest(BaseModel):
+    IdBobinaPapel: int
+
+
+class MovimientoBobinaResponse(BaseModel):
+    IdMovimientoBobina: int
+    NombreMovimiento: str
+    FechaMovimiento: datetime
+    Observacion: Optional[str]
+    Ci: str
+    PrimerNombre: str
+    ApellidoPaterno: str
+    NombreRol: str
+
+
+class ReporteHistorialMovimientosBobinaResponse(BaseModel):
+    IdBobinaPapel: int
+    CodigoBobina: str
+    NombreTipoBobina: str
+    TipoEstado: str
+    Movimientos: list[MovimientoBobinaResponse]

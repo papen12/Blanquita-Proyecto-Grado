@@ -7,6 +7,7 @@ from app.Models.BobinaPapel.Reportes import (
     ReporteLoteBobinaPapelDetalleResponse,
     ReporteCancelacionProduccionBobinaTuboResponse,
     ReporteProduccionPorPeriodoResponse,
+    ReporteHistorialMovimientosBobinaResponse,
 )
 from app.Reportes.reporte import Reporte
 from app.utils.dates import ZONA_BOLIVIA
@@ -418,4 +419,46 @@ def nombre_archivo_produccion_por_periodo(fecha_inicio: date, fecha_fin: date) -
     return (
         f"produccion-periodo-{fecha_inicio:%Y%m%d}-{fecha_fin:%Y%m%d}"
         f"-{ahora:%Y%m%d-%H%M}.pdf"
+    )
+
+
+def construir_reporte_historial_movimientos_bobina(
+    data: ReporteHistorialMovimientosBobinaResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Historial de movimientos - Bobina de papel",
+        subtitulo=f"Bobina {data.CodigoBobina} — {data.NombreTipoBobina}",
+        filtros={
+            "Estado actual": data.TipoEstado,
+            "Movimientos": f"{len(data.Movimientos):,}".replace(",", "."),
+        },
+        generado_en=datetime.now(ZONA_BOLIVIA),
+    )
+
+    reporte.titulo_seccion(f"Movimientos ({len(data.Movimientos)})")
+    if data.Movimientos:
+        reporte.tabla(
+            columnas=[
+                ("Fecha", "FechaMovimiento"),
+                ("Movimiento", "NombreMovimiento"),
+                (
+                    "Operador",
+                    lambda m: reporte.celda_multilinea(
+                        [f"{m.PrimerNombre} {m.ApellidoPaterno},", m.Ci, m.NombreRol]
+                    ),
+                ),
+                ("Observación", "Observacion"),
+            ],
+            filas=data.Movimientos,
+        )
+    else:
+        reporte.parrafo("No hay movimientos registrados para esta bobina.")
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_historial_movimientos_bobina(id_bobina_papel: int) -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return (
+        f"historial-movimientos-bobina-{id_bobina_papel}-{ahora:%Y%m%d-%H%M}.pdf"
     )
