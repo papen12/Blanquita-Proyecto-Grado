@@ -9,6 +9,29 @@ export const Roles = {
 };
 
 
+
+
+export const turnos=[
+  {
+    "IdTurno": 1,
+    "NombreTurno": "Mañana"
+  },
+  {
+    "IdTurno": 2,
+    "NombreTurno": "Tarde"
+  },
+  {
+    "IdTurno": 3,
+    "NombreTurno": "Horas Extra"
+  }
+]
+
+
+
+
+
+
+
 export const MOTIVO_CANCELACION_MIN = 5;
 export const MOTIVO_CANCELACION_MAX = 150;
 

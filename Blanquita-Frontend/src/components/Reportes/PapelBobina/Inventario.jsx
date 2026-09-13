@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   Search,
   Download,
-  Eye,
+  FileDown,
   Loader2,
   RefreshCcw,
   ChevronLeft,
@@ -376,7 +376,7 @@ export default function InventarioReporteBobinaPapel() {
                                 {descargandoId === b.IdBobinaPapel ? (
                                   <Loader2 size={16} className="animate-spin" />
                                 ) : (
-                                  <Eye size={16} strokeWidth={2.25} />
+                                  <FileDown size={16} strokeWidth={2.25} />
                                 )}
                               </Button>
                             }
@@ -448,7 +448,7 @@ export default function InventarioReporteBobinaPapel() {
                             {descargandoId === b.IdBobinaPapel ? (
                               <Loader2 size={16} className="animate-spin" />
                             ) : (
-                              <Eye size={16} strokeWidth={2.25} />
+                              <FileDown size={16} strokeWidth={2.25} />
                             )}
                           </Button>
                         }

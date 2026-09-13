@@ -83,11 +83,7 @@ export const RutasReportes = [
     icono: Home,
     ruta: "inicio",
   },
-  {
-    titulo: "Volver a la Planta",
-    icono: Factory,
-    ruta: "",
-  },
+
   {
     titulo: "Bobina Papel",
     icono: toiletRoll,
@@ -97,5 +93,10 @@ export const RutasReportes = [
       { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
       { titulo: "Producción", icono: Factory, ruta: "produccion" },
     ],
+  },
+  {
+    titulo: "Volver a la Planta",
+    icono: Factory,
+    ruta: "",
   },
 ];
