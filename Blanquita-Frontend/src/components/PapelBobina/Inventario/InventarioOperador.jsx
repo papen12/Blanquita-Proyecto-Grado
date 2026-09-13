@@ -1,11 +1,17 @@
 import { useState, useEffect } from "react";
-import { Plus, X, ArrowRight, Loader2, Search, Cylinder } from "lucide-react";
+import { Plus, X, ArrowRight, Loader2, Search, Cylinder, Download } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 import {
   verResumenInventarioBobinaPapel,
   verDetalleInventarioBobinaPapel,
@@ -14,6 +20,7 @@ import {
   darDeBajaBobina,
 } from "../../../services/BobinaPapel/Inventario";
 import { iniciarProduccion } from "../../../services/BobinaPapel/Produccion";
+import { descargarReporteInventarioBobinaPapel } from "../../../services/BobinaPapel/Reportes";
 import { dateFormatter } from "@/utils/dates";
 
 import { ACENTOS, fmt } from "./constantes";
@@ -44,6 +51,20 @@ export default function InventarioBobinasPapel({ usuario }) {
   const [errorFuera, setErrorFuera] = useState("");
   const [procesandoId, setProcesandoId] = useState(null);
   const [busquedaCodigoFuera, setBusquedaCodigoFuera] = useState("");
+
+  const [descargandoInventario, setDescargandoInventario] = useState(false);
+
+  const descargarInventarioCompleto = async () => {
+    setDescargandoInventario(true);
+    try {
+      await descargarReporteInventarioBobinaPapel(null);
+      toast.success("Informe de inventario descargado");
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setDescargandoInventario(false);
+    }
+  };
 
   useEffect(() => {
     cargarResumen();
@@ -227,6 +248,7 @@ export default function InventarioBobinasPapel({ usuario }) {
   };
 
   return (
+    <TooltipProvider>
     <div className="contenido-con-sidebar mt-20 md:mt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <Header
         titulo="Almacén · Materia Prima"
@@ -240,7 +262,31 @@ export default function InventarioBobinasPapel({ usuario }) {
               }
             : null
         }
-      />
+      >
+        {usuario?.IdRol === Roles.Encargado && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  onClick={descargarInventarioCompleto}
+                  disabled={descargandoInventario}
+                  className="h-11 gap-2 bg-white font-bold text-c3 shadow-md hover:bg-slate-100"
+                >
+                  {descargandoInventario ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Download size={16} strokeWidth={2.75} />
+                  )}
+                  Descargar inventario
+                </Button>
+              }
+            />
+            <TooltipContent>
+              PDF con el inventario completo de todos los tipos de bobina
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </Header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
@@ -587,5 +633,6 @@ export default function InventarioBobinasPapel({ usuario }) {
         )}
       </main>
     </div>
+    </TooltipProvider>
   );
 }
