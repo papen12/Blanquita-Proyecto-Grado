@@ -103,12 +103,18 @@ CREATE TABLE "TipoMedidaSubBobina" (
   "Descripcion" TEXT
 );
 
+CREATE TABLE "LoteBobinaServilleta" (
+  "IdLoteBobinaServilleta" SERIAL PRIMARY KEY,
+  "IdProveedor" INTEGER NOT NULL REFERENCES "Proveedor"("IdProveedor") ON DELETE CASCADE,
+  "IdUsuario" INTEGER REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "FechaRecepcion" DATE NOT NULL
+);
+
 CREATE TABLE "BobinaServilleta" (
   "IdBobinaServilleta" SERIAL PRIMARY KEY,
-  "IdLoteBobina" INTEGER NOT NULL REFERENCES "LoteBobina"("IdLoteBobina") ON DELETE CASCADE,
+  "IdLoteBobinaServilleta" INTEGER NOT NULL REFERENCES "LoteBobinaServilleta"("IdLoteBobinaServilleta") ON DELETE CASCADE,
   "IdTipoBobinaServilleta" INTEGER NOT NULL REFERENCES "TipoBobinaServilleta"("IdTipoBobinaServilleta") ON DELETE CASCADE,
-  "IdEstadoMateriaPrima" INTEGER NOT NULL REFERENCES "EstadoMateriaPrima"("IdEstadoMateriaPrima") ON DELETE CASCADE,
-  "FechaRecepcion" DATE NOT NULL
+  "IdEstadoMateriaPrima" INTEGER NOT NULL REFERENCES "EstadoMateriaPrima"("IdEstadoMateriaPrima") ON DELETE CASCADE
 );
 CREATE INDEX "idx_bobinaserv_tipo" ON "BobinaServilleta"("IdTipoBobinaServilleta");
 CREATE INDEX "idx_bobinaserv_estado" ON "BobinaServilleta"("IdEstadoMateriaPrima");
