@@ -23,6 +23,28 @@ def _formatear_duracion(duracion: Optional[timedelta]) -> str:
     return f"{horas}h {minutos:02d}m"
 
 
+def _seccion_movimientos_logs(reporte: Reporte, movimientos) -> None:
+    reporte.titulo_seccion(f"Movimientos de logs ({len(movimientos)})")
+    if movimientos:
+        reporte.tabla(
+            columnas=[
+                ("Fecha", "FechaMovimiento"),
+                ("Movimiento", "NombreMovimiento"),
+                ("Cantidad", "CantidadLogs"),
+                (
+                    "Operador",
+                    lambda m: reporte.celda_multilinea(
+                        [f"{m.PrimerNombre} {m.ApellidoPaterno},", m.Ci, m.NombreRol]
+                    ),
+                ),
+                ("Observación", "Observacion"),
+            ],
+            filas=movimientos,
+        )
+    else:
+        reporte.parrafo("Esta producción no registró movimientos de logs.")
+
+
 def construir_reporte_inventario_bobina_papel(
     data: ReporteInventarioBobinaPapelResponse,
 ) -> bytes:
@@ -159,6 +181,9 @@ def construir_reporte_detalle_produccion_bobina_papel(
             )
         else:
             reporte.parrafo("Esta producción no registró pausas.")
+
+    if data.Movimientos is not None:
+        _seccion_movimientos_logs(reporte, data.Movimientos)
 
     return reporte.a_pdf()
 
@@ -365,6 +390,8 @@ def construir_reporte_cancelacion_produccion_bobina_papel(
         )
     else:
         reporte.parrafo("Esta producción no registró pausas antes de cancelarse.")
+
+    _seccion_movimientos_logs(reporte, data.Movimientos)
 
     return reporte.a_pdf()
 

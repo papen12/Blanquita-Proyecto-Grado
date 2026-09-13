@@ -67,6 +67,14 @@ class ReporteBobinaPapelRepository:
         """
         return self.caller.LlamarFuncion(sql, params)
 
+    def ReporteMovimientosOperadorLogs(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "ReporteMovimientosOperadorLogs"(
+                :p_IdProduccion
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+
     def ReporteCancelacionProduccionBobinaTubo(self, params: dict) -> dict | None:
         sql = """
             SELECT * FROM "ReporteCancelacionProduccionBobinaTubo"(

@@ -90,6 +90,7 @@ export default function ProduccionReporteBobinaPapel({ usuario }) {
 
   const [descargandoInforme, setDescargandoInforme] = useState(false);
   const [verCancelacionesPeriodo, setVerCancelacionesPeriodo] = useState(false);
+  const [verMovimientosDetalle, setVerMovimientosDetalle] = useState(false);
   const [descargandoId, setDescargandoId] = useState(null);
 
   useEffect(() => {
@@ -205,7 +206,11 @@ export default function ProduccionReporteBobinaPapel({ usuario }) {
       if (produccion.NombreEstadoProduccion === "Cancelada") {
         await descargarReporteProduccionCancelada(produccion.IdProduccionBobinaTubo);
       } else {
-        await descargarReporteDetalleProduccion(produccion.IdProduccionBobinaTubo, true);
+        await descargarReporteDetalleProduccion(
+          produccion.IdProduccionBobinaTubo,
+          true,
+          verMovimientosDetalle,
+        );
       }
     } catch (e) {
       toast.error(e.message);
@@ -400,6 +405,21 @@ export default function ProduccionReporteBobinaPapel({ usuario }) {
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Detalle por producción
+              </Label>
+              <label className="flex w-fit cursor-pointer items-center gap-2 text-[12.5px] font-bold text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={verMovimientosDetalle}
+                  onChange={(e) => setVerMovimientosDetalle(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 accent-c3"
+                />
+                Incluir movimientos de logs al descargar el detalle
+              </label>
+            </div>
           </div>
         </section>
 
@@ -505,8 +525,8 @@ export default function ProduccionReporteBobinaPapel({ usuario }) {
                               />
                               <TooltipContent>
                                 {p.NombreEstadoProduccion === "Cancelada"
-                                  ? "Descargar detalle de la cancelación (incluye pausas)"
-                                  : "Descargar detalle de esta producción (con pausas)"}
+                                  ? "Descargar detalle de la cancelación (incluye pausas y movimientos)"
+                                  : `Descargar detalle de esta producción (con pausas${verMovimientosDetalle ? " y movimientos" : ""})`}
                               </TooltipContent>
                             </Tooltip>
                           </div>
@@ -574,8 +594,8 @@ export default function ProduccionReporteBobinaPapel({ usuario }) {
                         />
                         <TooltipContent>
                           {p.NombreEstadoProduccion === "Cancelada"
-                            ? "Descargar detalle de la cancelación (incluye pausas)"
-                            : "Descargar detalle de esta producción (con pausas)"}
+                            ? "Descargar detalle de la cancelación (incluye pausas y movimientos)"
+                            : `Descargar detalle de esta producción (con pausas${verMovimientosDetalle ? " y movimientos" : ""})`}
                         </TooltipContent>
                       </Tooltip>
                     </div>

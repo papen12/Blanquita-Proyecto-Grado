@@ -15,6 +15,7 @@ from app.Models.BobinaPapel.Reportes import (
     ReporteProduccionBobinaTuboDetalleRequest,
     ReporteProduccionBobinaTuboDetalleResponse,
     PausaProduccionBobinaTuboResponse,
+    MovimientoOperadorLogsResponse,
     VerLotesBobinaPapelRequest,
     VerLotesBobinaPapelResponse,
     LoteBobinaPapelCatalogoResponse,
@@ -144,6 +145,24 @@ class ReporteBobinaPapelService:
             Producciones=producciones,
         )
 
+    def _ObtenerMovimientosLogs(
+        self, id_produccion: int
+    ) -> list[MovimientoOperadorLogsResponse]:
+        try:
+            filas_movimientos = self.repository.ReporteMovimientosOperadorLogs(
+                {"p_IdProduccion": id_produccion}
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudieron obtener los movimientos de logs de la producción",
+            )
+
+        return [
+            MovimientoOperadorLogsResponse(**fila_movimiento)
+            for fila_movimiento in filas_movimientos
+        ]
+
     def ReporteDetalleProduccion(
         self, data: ReporteProduccionBobinaTuboDetalleRequest
     ) -> ReporteProduccionBobinaTuboDetalleResponse:
@@ -192,10 +211,17 @@ class ReporteBobinaPapelService:
                 timedelta(),
             )
 
+        movimientos = (
+            self._ObtenerMovimientosLogs(data.IdProduccion)
+            if data.VerMovimientos
+            else None
+        )
+
         return ReporteProduccionBobinaTuboDetalleResponse(
             **fila,
             Pausas=pausas,
             TotalTiempoPausado=total_tiempo_pausado,
+            Movimientos=movimientos,
         )
 
     def VerLotesBobinaPapel(
@@ -374,11 +400,13 @@ class ReporteBobinaPapelService:
             )
 
         cancelacion = CancelacionProduccionBobinaTuboResponse(**fila_cancelacion)
+        movimientos = self._ObtenerMovimientosLogs(data.IdProduccion)
 
         return ReporteCancelacionProduccionBobinaTuboResponse(
             **fila,
             Pausas=pausas,
             TotalTiempoPausado=total_tiempo_pausado,
+            Movimientos=movimientos,
             Cancelacion=cancelacion,
         )
 

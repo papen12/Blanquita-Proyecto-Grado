@@ -78,6 +78,7 @@ class VerProduccionesBobinaTuboResponse(BaseModel):
 class ReporteProduccionBobinaTuboDetalleRequest(BaseModel):
     IdProduccion: int
     VerPausas: bool = False
+    VerMovimientos: bool = False
 
 
 class PausaProduccionBobinaTuboResponse(BaseModel):
@@ -93,6 +94,19 @@ class PausaProduccionBobinaTuboResponse(BaseModel):
     OperadorPausa: str
     RolPausa: str
     EstadoPausa: str
+
+
+class MovimientoOperadorLogsResponse(BaseModel):
+    IdMovimientoOperadorLogs: int
+    IdProduccionBobinaTubo: int
+    CantidadLogs: int
+    FechaMovimiento: datetime
+    Observacion: Optional[str]
+    NombreMovimiento: str
+    Ci: str
+    PrimerNombre: str
+    ApellidoPaterno: str
+    NombreRol: str
 
 
 class ReporteProduccionBobinaTuboDetalleResponse(BaseModel):
@@ -119,6 +133,7 @@ class ReporteProduccionBobinaTuboDetalleResponse(BaseModel):
     CantidadLogsActual: int
     Pausas: Optional[list[PausaProduccionBobinaTuboResponse]] = None
     TotalTiempoPausado: Optional[timedelta] = None
+    Movimientos: Optional[list[MovimientoOperadorLogsResponse]] = None
 
 
 class VerLotesBobinaPapelRequest(BaseModel):
@@ -198,6 +213,7 @@ class ReporteCancelacionProduccionBobinaTuboResponse(
 ):
     Pausas: list[PausaProduccionBobinaTuboResponse]
     TotalTiempoPausado: timedelta
+    Movimientos: list[MovimientoOperadorLogsResponse]
     Cancelacion: CancelacionProduccionBobinaTuboResponse
 
 

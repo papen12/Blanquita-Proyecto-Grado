@@ -37,9 +37,10 @@ export const VerProduccionesBobinaTuboResponse = (data) => ({
   Producciones: (data.Producciones ?? []).map(ProduccionBobinaTuboCatalogoResponse)
 });
 
-export const ReporteProduccionBobinaTuboDetalleRequest = (idProduccion, verPausas) => ({
+export const ReporteProduccionBobinaTuboDetalleRequest = (idProduccion, verPausas, verMovimientos) => ({
   IdProduccion: idProduccion,
-  VerPausas: verPausas ?? false
+  VerPausas: verPausas ?? false,
+  VerMovimientos: verMovimientos ?? false
 });
 
 export const ReporteCancelacionProduccionBobinaTuboRequest = (idProduccion) => ({

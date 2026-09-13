@@ -124,12 +124,14 @@ def ObtenerCatalogoProduccion(
 def ObtenerDetalleProduccion(
     id_produccion: int,
     VerPausas: bool = False,
+    VerMovimientos: bool = False,
     service: ReporteBobinaPapelService = Depends(reporte_bobina_papel_service),
 ):
     data = service.ReporteDetalleProduccion(
         ReporteProduccionBobinaTuboDetalleRequest(
             IdProduccion=id_produccion,
             VerPausas=VerPausas,
+            VerMovimientos=VerMovimientos,
         )
     )
     pdf = construir_reporte_detalle_produccion_bobina_papel(data)

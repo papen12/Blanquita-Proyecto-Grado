@@ -84,8 +84,11 @@ export async function verProduccionesBobinaTubo(filtros) {
   return VerProduccionesBobinaTuboResponse(data);
 }
 
-export async function descargarReporteDetalleProduccion(idProduccion, verPausas) {
-  const params = construirQueryParams({ VerPausas: verPausas ?? false });
+export async function descargarReporteDetalleProduccion(idProduccion, verPausas, verMovimientos) {
+  const params = construirQueryParams({
+    VerPausas: verPausas ?? false,
+    VerMovimientos: verMovimientos ?? false
+  });
 
   await descargarReportePDF(
     `${BASE_URL}/produccion/detalle/${idProduccion}?${params.toString()}`,
