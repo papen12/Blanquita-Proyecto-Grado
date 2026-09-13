@@ -73,6 +73,11 @@ export const ReporteLoteBobinaPapelDetalleRequest = (idLoteBobina) => ({
   IdLoteBobina: idLoteBobina
 });
 
+export const ReporteLotesPorPeriodoRequest = (fechaInicio, fechaFin) => ({
+  FechaInicio: fechaInicio,
+  FechaFin: fechaFin
+});
+
 export const ReporteProduccionPorPeriodoRequest = (fechaInicio, fechaFin, verCancelaciones) => ({
   FechaInicio: fechaInicio,
   FechaFin: fechaFin,

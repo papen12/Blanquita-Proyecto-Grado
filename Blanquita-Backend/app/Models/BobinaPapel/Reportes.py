@@ -168,6 +168,19 @@ class ReporteLoteBobinaPapelDetalleResponse(BaseModel):
     Bobinas: list[BobinaLoteDetalleResponse]
 
 
+class ReporteLotesPorPeriodoRequest(BaseModel):
+    FechaInicio: date
+    FechaFin: date
+
+
+class ReporteLotesPorPeriodoResponse(BaseModel):
+    PeriodoInicio: date
+    PeriodoFin: date
+    TotalLotes: int
+    TotalBobinas: int
+    Lotes: list[ReporteLoteBobinaPapelDetalleResponse]
+
+
 class ReporteCancelacionProduccionBobinaTuboRequest(BaseModel):
     IdProduccion: int
 

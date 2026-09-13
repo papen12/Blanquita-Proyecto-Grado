@@ -122,6 +122,18 @@ export async function descargarReporteLoteDetalle(idLoteBobina) {
   );
 }
 
+export async function descargarReporteLotesPorPeriodo(fechaInicio, fechaFin) {
+  const params = construirQueryParams({
+    FechaInicio: fechaInicio,
+    FechaFin: fechaFin
+  });
+
+  await descargarReportePDF(
+    `${BASE_URL}/lote/periodo?${params.toString()}`,
+    `ingresos-lotes-periodo-${fechaInicio}-${fechaFin}.pdf`
+  );
+}
+
 export async function descargarReporteProduccionPorPeriodo(fechaInicio, fechaFin, verCancelaciones) {
   const params = construirQueryParams({
     FechaInicio: fechaInicio,

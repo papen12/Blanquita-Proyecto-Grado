@@ -5,6 +5,7 @@ from app.Models.BobinaPapel.Reportes import (
     ReporteInventarioBobinaPapelResponse,
     ReporteProduccionBobinaTuboDetalleResponse,
     ReporteLoteBobinaPapelDetalleResponse,
+    ReporteLotesPorPeriodoResponse,
     ReporteCancelacionProduccionBobinaTuboResponse,
     ReporteProduccionPorPeriodoResponse,
     ReporteHistorialMovimientosBobinaResponse,
@@ -217,6 +218,63 @@ def construir_reporte_lote_bobina_papel_detalle(
 def nombre_archivo_lote_detalle(id_lote_bobina: int) -> str:
     ahora = datetime.now(ZONA_BOLIVIA)
     return f"detalle-lote-bobina-papel-{id_lote_bobina}-{ahora:%Y%m%d-%H%M}.pdf"
+
+
+def construir_reporte_lotes_por_periodo(
+    data: ReporteLotesPorPeriodoResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Ingresos por período - Bobina de papel",
+        subtitulo=(
+            f"Del {data.PeriodoInicio.strftime('%d/%m/%Y')} "
+            f"al {data.PeriodoFin.strftime('%d/%m/%Y')}"
+        ),
+        filtros={
+            "Lotes": f"{data.TotalLotes:,}".replace(",", "."),
+            "Bobinas": f"{data.TotalBobinas:,}".replace(",", "."),
+        },
+        generado_en=datetime.now(ZONA_BOLIVIA),
+    )
+
+    if not data.Lotes:
+        reporte.parrafo("No se encontraron lotes en este período.")
+        return reporte.a_pdf()
+
+    for lote in data.Lotes:
+        reporte.titulo_seccion(
+            f"Lote #{lote.IdLoteBobina} - {lote.FechaRecepcion.strftime('%d/%m/%Y')} "
+            f"- {lote.NombreProveedor} ({lote.CantidadBobinas})"
+        )
+        reporte.tabla(
+            columnas=[
+                ("Código", "CodigoBobina"),
+                ("Tipo", "NombreTipoBobina"),
+                ("P. bruto (kg)", "PesoBrutoKg"),
+                ("P. neto (kg)", "PesoNetoKg"),
+                ("Gramaje", "Gramaje"),
+                (
+                    "Registrado por",
+                    lambda _bobina, lote=lote: reporte.celda_multilinea(
+                        [
+                            f"{lote.PrimerNombre} {lote.ApellidoPaterno}",
+                            f"CI {lote.Ci}",
+                            lote.NombreRol,
+                        ]
+                    ),
+                ),
+            ],
+            filas=lote.Bobinas,
+        )
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_lotes_periodo(fecha_inicio: date, fecha_fin: date) -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return (
+        f"ingresos-lotes-periodo-{fecha_inicio:%Y%m%d}-{fecha_fin:%Y%m%d}"
+        f"-{ahora:%Y%m%d-%H%M}.pdf"
+    )
 
 
 def construir_reporte_cancelacion_produccion_bobina_papel(

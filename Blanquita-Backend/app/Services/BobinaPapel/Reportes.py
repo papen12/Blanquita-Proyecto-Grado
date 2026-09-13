@@ -21,6 +21,8 @@ from app.Models.BobinaPapel.Reportes import (
     ReporteLoteBobinaPapelDetalleRequest,
     ReporteLoteBobinaPapelDetalleResponse,
     BobinaLoteDetalleResponse,
+    ReporteLotesPorPeriodoRequest,
+    ReporteLotesPorPeriodoResponse,
     ReporteCancelacionProduccionBobinaTuboRequest,
     ReporteCancelacionProduccionBobinaTuboResponse,
     CancelacionProduccionBobinaTuboResponse,
@@ -228,12 +230,12 @@ class ReporteBobinaPapelService:
             Lotes=lotes,
         )
 
-    def ReporteLoteBobinaPapelDetalle(
-        self, data: ReporteLoteBobinaPapelDetalleRequest
-    ) -> ReporteLoteBobinaPapelDetalleResponse:
+    def _ObtenerDetalleLote(
+        self, id_lote_bobina: int
+    ) -> ReporteLoteBobinaPapelDetalleResponse | None:
         try:
             filas = self.repository.ReporteLoteBobinaPapelDetalle(
-                {"p_IdLoteBobina": data.IdLoteBobina}
+                {"p_IdLoteBobina": id_lote_bobina}
             )
         except SQLAlchemyError:
             raise HTTPException(
@@ -242,17 +244,13 @@ class ReporteBobinaPapelService:
             )
 
         if not filas:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No se encontró el lote solicitado",
-            )
+            return None
 
         primera = filas[0]
-
         bobinas = [BobinaLoteDetalleResponse(**fila) for fila in filas]
 
         return ReporteLoteBobinaPapelDetalleResponse(
-            IdLoteBobina=data.IdLoteBobina,
+            IdLoteBobina=id_lote_bobina,
             FechaRecepcion=primera["FechaRecepcion"],
             NombreProveedor=primera["NombreProveedor"],
             CantidadBobinas=primera["CantidadBobinas"],
@@ -261,6 +259,52 @@ class ReporteBobinaPapelService:
             ApellidoPaterno=primera["ApellidoPaterno"],
             NombreRol=primera["NombreRol"],
             Bobinas=bobinas,
+        )
+
+    def ReporteLoteBobinaPapelDetalle(
+        self, data: ReporteLoteBobinaPapelDetalleRequest
+    ) -> ReporteLoteBobinaPapelDetalleResponse:
+        detalle = self._ObtenerDetalleLote(data.IdLoteBobina)
+
+        if detalle is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró el lote solicitado",
+            )
+
+        return detalle
+
+    def ReporteLotesPorPeriodo(
+        self, data: ReporteLotesPorPeriodoRequest
+    ) -> ReporteLotesPorPeriodoResponse:
+        try:
+            filas_lotes = self.repository.VerLotesBobinaPapel(
+                {
+                    "p_FechaInicio": data.FechaInicio,
+                    "p_FechaFin": data.FechaFin,
+                    "p_IdProveedor": None,
+                    "p_IdsTipoBobina": None,
+                }
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudieron obtener los lotes del período, verifica los datos ingresados",
+            )
+
+        lotes = [
+            detalle
+            for fila in filas_lotes
+            if (detalle := self._ObtenerDetalleLote(fila["IdLoteBobina"])) is not None
+        ]
+        total_bobinas = sum(lote.CantidadBobinas for lote in lotes)
+
+        return ReporteLotesPorPeriodoResponse(
+            PeriodoInicio=data.FechaInicio,
+            PeriodoFin=data.FechaFin,
+            TotalLotes=len(lotes),
+            TotalBobinas=total_bobinas,
+            Lotes=lotes,
         )
 
     def ReporteCancelacionProduccion(
