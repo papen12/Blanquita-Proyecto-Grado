@@ -29,3 +29,25 @@ export const EstadosMateriaPrima=
     "TipoEstado": "Terminada"
   }
 ]
+
+
+
+export const EstadosProduccion=
+[
+  {
+    "IdEstadoProduccion": 1,
+    "NombreEstadoProduccion": "En Producción"
+  },
+  {
+    "IdEstadoProduccion": 2,
+    "NombreEstadoProduccion": "Pausa"
+  },
+  {
+    "IdEstadoProduccion": 3,
+    "NombreEstadoProduccion": "Finalizado"
+  },
+  {
+    "IdEstadoProduccion": 4,
+    "NombreEstadoProduccion": "Cancelada"
+  }
+]
