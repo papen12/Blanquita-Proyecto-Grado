@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import {
   Download,
   FileText,
@@ -33,11 +32,9 @@ import {
 } from "@/services/BobinaPapel/Reportes";
 import { ObtenerTiposPapelBobina } from "@/services/BobinaPapel/BobinaPapel";
 import { ObtenerProveedoresForm } from "@/services/Proveedor/Proveedor";
+import { dateOnlyFormatter } from "@/utils/dates";
 
 const TAMANO_PAGINA = 15;
-
-const formatFecha = (fecha) =>
-  format(new Date(`${fecha}T00:00:00`), "d 'de' LLL, y", { locale: es });
 
 const aFechaISO = (fecha) => (fecha ? format(fecha, "yyyy-MM-dd") : null);
 
@@ -147,7 +144,7 @@ export default function IngresoReporteBobinaPapel() {
 
       const mapa = new Map();
       for (const lote of data.Lotes) {
-        const etiqueta = `Lote #${lote.IdLoteBobina} - ${formatFecha(lote.FechaRecepcion)}`;
+        const etiqueta = `Lote #${lote.IdLoteBobina} - ${dateOnlyFormatter(lote.FechaRecepcion)}`;
         const lista = mapa.get(lote.FechaRecepcion) ?? [];
         lista.push(etiqueta);
         mapa.set(lote.FechaRecepcion, lista);
@@ -319,7 +316,7 @@ export default function IngresoReporteBobinaPapel() {
                   {catalogo.Lotes.map((l) => (
                     <TableRow key={l.IdLoteBobina}>
                       <TableCell className="font-semibold text-slate-900">
-                        {formatFecha(l.FechaRecepcion)}
+                        {dateOnlyFormatter(l.FechaRecepcion)}
                       </TableCell>
                       <TableCell>{l.NombreProveedor}</TableCell>
                       <TableCell className="text-right tabular-nums">
@@ -363,7 +360,7 @@ export default function IngresoReporteBobinaPapel() {
                 >
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[15px] font-bold text-slate-900">
-                      {formatFecha(l.FechaRecepcion)}
+                      {dateOnlyFormatter(l.FechaRecepcion)}
                     </span>
                     <span className="text-[12.5px] text-slate-500">
                       {l.NombreProveedor} · {l.CantidadBobinas}{" "}
