@@ -87,7 +87,7 @@ def construir_reporte_detalle_produccion_bobina_papel(
 ) -> bytes:
     reporte = Reporte(
         titulo="Detalle de producción - Bobina de papel",
-        subtitulo=f"Producción #{data.IdProduccionBobinaTubo} — {data.TipoBobina}",
+        subtitulo=f"Producción #{data.IdProduccionBobinaTubo} - {data.TipoBobina}",
         filtros={"Estado": data.NombreEstadoProduccion, "Turno": data.NombreTurno},
         generado_en=datetime.now(ZONA_BOLIVIA),
     )
@@ -173,7 +173,7 @@ def construir_reporte_lote_bobina_papel_detalle(
 ) -> bytes:
     reporte = Reporte(
         titulo="Detalle de lote - Bobina de papel",
-        subtitulo=f"Lote #{data.IdLoteBobina} — {data.NombreProveedor}",
+        subtitulo=f"Lote #{data.IdLoteBobina} - {data.NombreProveedor}",
         filtros={
             "Proveedor": data.NombreProveedor,
             "Recepción": data.FechaRecepcion.strftime("%d/%m/%Y"),
@@ -282,7 +282,7 @@ def construir_reporte_cancelacion_produccion_bobina_papel(
 ) -> bytes:
     reporte = Reporte(
         titulo="Producción cancelada - Bobina de papel",
-        subtitulo=f"Producción #{data.IdProduccionBobinaTubo} — {data.TipoBobina}",
+        subtitulo=f"Producción #{data.IdProduccionBobinaTubo} - {data.TipoBobina}",
         filtros={"Turno": data.NombreTurno, "Cancelada por": data.Cancelacion.Operador},
         generado_en=datetime.now(ZONA_BOLIVIA),
     )
@@ -485,7 +485,7 @@ def construir_reporte_historial_movimientos_bobina(
 ) -> bytes:
     reporte = Reporte(
         titulo="Historial de movimientos - Bobina de papel",
-        subtitulo=f"Bobina {data.CodigoBobina} — {data.NombreTipoBobina}",
+        subtitulo=f"Bobina {data.CodigoBobina} - {data.NombreTipoBobina}",
         filtros={
             "Estado actual": data.TipoEstado,
             "Movimientos": f"{len(data.Movimientos):,}".replace(",", "."),

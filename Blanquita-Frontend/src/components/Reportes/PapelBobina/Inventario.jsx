@@ -50,7 +50,7 @@ const ESTADO_BADGE = {
 
 const fmt = (n) =>
   n === null || n === undefined
-    ? "—"
+    ? "-"
     : Number(n).toLocaleString("es-BO", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,

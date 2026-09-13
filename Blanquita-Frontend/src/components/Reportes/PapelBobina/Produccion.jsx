@@ -4,7 +4,6 @@ import {
   Search,
   Download,
   FileDown,
-  Ban,
   Loader2,
   RefreshCcw,
   ChevronLeft,
@@ -59,11 +58,11 @@ const ESTADO_BADGE = {
 const aFechaISO = (fecha) => (fecha ? format(fecha, "yyyy-MM-dd") : null);
 
 function formatearDuracion(duracionIso) {
-  if (!duracionIso) return "—";
+  if (!duracionIso) return "-";
   const coincidencia = duracionIso.match(
     /^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:[\d.]+S)?$/,
   );
-  if (!coincidencia) return "—";
+  if (!coincidencia) return "-";
   const dias = Number(coincidencia[1] || 0);
   const horas = Number(coincidencia[2] || 0) + dias * 24;
   const minutos = Number(coincidencia[3] || 0);
@@ -198,21 +197,16 @@ export default function ProduccionReporteBobinaPapel({ usuario }) {
     }
   };
 
-  const verDetalle = async (idProduccion) => {
-    setDescargandoId(idProduccion);
+  // Una producción cancelada ya trae el detalle completo (datos + pausas)
+  // dentro del reporte de cancelación, así que no hace falta pedir los dos.
+  const verDetalle = async (produccion) => {
+    setDescargandoId(produccion.IdProduccionBobinaTubo);
     try {
-      await descargarReporteDetalleProduccion(idProduccion, true);
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setDescargandoId(null);
-    }
-  };
-
-  const verCancelacion = async (idProduccion) => {
-    setDescargandoId(idProduccion);
-    try {
-      await descargarReporteProduccionCancelada(idProduccion);
+      if (produccion.NombreEstadoProduccion === "Cancelada") {
+        await descargarReporteProduccionCancelada(produccion.IdProduccionBobinaTubo);
+      } else {
+        await descargarReporteDetalleProduccion(produccion.IdProduccionBobinaTubo, true);
+      }
     } catch (e) {
       toast.error(e.message);
     } finally {
@@ -481,7 +475,7 @@ export default function ProduccionReporteBobinaPapel({ usuario }) {
                         <TableCell className="text-[12.5px]">
                           {p.FechaFinProduccion
                             ? dateFormatter(p.FechaFinProduccion)
-                            : "—"}
+                            : "-"}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {formatearDuracion(p.DuracionTotal)}
@@ -498,7 +492,7 @@ export default function ProduccionReporteBobinaPapel({ usuario }) {
                                     variant="ghost"
                                     size="icon"
                                     disabled={descargandoId === p.IdProduccionBobinaTubo}
-                                    onClick={() => verDetalle(p.IdProduccionBobinaTubo)}
+                                    onClick={() => verDetalle(p)}
                                     className="h-9 w-9 text-slate-400 hover:bg-c4/10 hover:text-c3"
                                   >
                                     {descargandoId === p.IdProduccionBobinaTubo ? (
@@ -510,34 +504,11 @@ export default function ProduccionReporteBobinaPapel({ usuario }) {
                                 }
                               />
                               <TooltipContent>
-                                Descargar detalle de esta producción (con pausas)
+                                {p.NombreEstadoProduccion === "Cancelada"
+                                  ? "Descargar detalle de la cancelación (incluye pausas)"
+                                  : "Descargar detalle de esta producción (con pausas)"}
                               </TooltipContent>
                             </Tooltip>
-
-                            {p.NombreEstadoProduccion === "Cancelada" && (
-                              <Tooltip>
-                                <TooltipTrigger
-                                  render={
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      disabled={descargandoId === p.IdProduccionBobinaTubo}
-                                      onClick={() => verCancelacion(p.IdProduccionBobinaTubo)}
-                                      className="h-9 w-9 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                                    >
-                                      {descargandoId === p.IdProduccionBobinaTubo ? (
-                                        <Loader2 size={16} className="animate-spin" />
-                                      ) : (
-                                        <Ban size={16} strokeWidth={2.25} />
-                                      )}
-                                    </Button>
-                                  }
-                                />
-                                <TooltipContent>
-                                  Descargar el motivo de cancelación
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -590,7 +561,7 @@ export default function ProduccionReporteBobinaPapel({ usuario }) {
                               variant="ghost"
                               size="icon"
                               disabled={descargandoId === p.IdProduccionBobinaTubo}
-                              onClick={() => verDetalle(p.IdProduccionBobinaTubo)}
+                              onClick={() => verDetalle(p)}
                               className="h-9 w-9 text-slate-400 hover:bg-c4/10 hover:text-c3"
                             >
                               {descargandoId === p.IdProduccionBobinaTubo ? (
@@ -602,34 +573,11 @@ export default function ProduccionReporteBobinaPapel({ usuario }) {
                           }
                         />
                         <TooltipContent>
-                          Descargar detalle de esta producción (con pausas)
+                          {p.NombreEstadoProduccion === "Cancelada"
+                            ? "Descargar detalle de la cancelación (incluye pausas)"
+                            : "Descargar detalle de esta producción (con pausas)"}
                         </TooltipContent>
                       </Tooltip>
-
-                      {p.NombreEstadoProduccion === "Cancelada" && (
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled={descargandoId === p.IdProduccionBobinaTubo}
-                                onClick={() => verCancelacion(p.IdProduccionBobinaTubo)}
-                                className="h-9 w-9 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                              >
-                                {descargandoId === p.IdProduccionBobinaTubo ? (
-                                  <Loader2 size={16} className="animate-spin" />
-                                ) : (
-                                  <Ban size={16} strokeWidth={2.25} />
-                                )}
-                              </Button>
-                            }
-                          />
-                          <TooltipContent>
-                            Descargar el motivo de cancelación
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
                     </div>
                   </div>
                 ))}
