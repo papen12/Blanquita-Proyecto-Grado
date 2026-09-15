@@ -75,7 +75,7 @@ export default function Header({
       </div>
 
       {(children || botonAccion || textoContador) && (
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-end">
           {children}
 
           {textoContador && (
