@@ -12,6 +12,7 @@ from app.Routes.BobinaPapel.Reporte import bpReporteRouter
 
 from app.Routes.Rodela.RodelaRouter import RodelaRouter
 from app.Routes.Rodela.InventarioRouter import InventarioRodelaRouter
+from app.Routes.Rodela.Reporte import RodelaReporteRouter
 
 
 from app.Routes.Empaque.EmpaqueBobinaRouter import EmpaqueBobinaRouter
@@ -83,6 +84,7 @@ app.include_router(bpReporteRouter)
 #ROUTERS RODELA
 app.include_router(RodelaRouter)
 app.include_router(InventarioRodelaRouter)
+app.include_router(RodelaReporteRouter)
 
 
 
