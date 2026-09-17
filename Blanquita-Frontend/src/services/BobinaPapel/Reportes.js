@@ -7,25 +7,9 @@ import {
   VerBobinasPapelResponse
 } from "../../models/BobinaPapel/Reportes";
 import { manejarErrorBackend } from "@/utils/validators";
+import { construirQueryParams } from "@/utils/params";
 
 const BASE_URL = "/api/papelbobina/reportes";
-
-function construirQueryParams(filtros = {}) {
-  const params = new URLSearchParams();
-
-  Object.entries(filtros).forEach(([clave, valor]) => {
-    if (valor === null || valor === undefined || valor === "") return;
-
-    if (Array.isArray(valor)) {
-      valor.forEach((item) => params.append(clave, item));
-      return;
-    }
-
-    params.set(clave, valor);
-  });
-
-  return params;
-}
 
 function obtenerNombreArchivo(response, nombrePorDefecto) {
   const disposicion = response.headers.get("Content-Disposition");

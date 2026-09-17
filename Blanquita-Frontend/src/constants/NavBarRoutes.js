@@ -94,15 +94,14 @@ export const RutasReportes = [
       { titulo: "Producción", icono: Factory, ruta: "produccion" },
     ],
   },
-  // {
-  //   titulo: "Rodela",
-  //   icono: Database,
-  //   esIconoLab: true,
-  //   ruta: "rodela",
-  //   subrutas: [
-  //     { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
-  //   ],
-  // },
+  {
+    titulo: "Rodela",
+    icono: Database,
+    ruta: "rodela",
+    subrutas: [
+      { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
+    ],
+  },
   {
     titulo: "Volver a la Planta",
     icono: Factory,

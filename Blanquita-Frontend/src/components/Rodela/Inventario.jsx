@@ -7,6 +7,7 @@ import {
   Search,
   Check,
   Disc,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -23,10 +24,17 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
+import {
   verResumenInventarioRodela,
   verDetalleInventarioRodela,
   trasladarRodelaAProduccion,
 } from "../../services/Rodela/Inventario";
+import { descargarReporteInventarioRodela } from "@/services/Rodela/Reportes";
 import { dateFormatter } from "@/utils/dates";
 import Header from "@/components/layout/Header";
 import { Roles } from "@/constants/Values";
@@ -199,7 +207,21 @@ export default function InventarioRodelas({ usuario }) {
   const [marcadas, setMarcadas] = useState([]);
   const [enviando, setEnviando] = useState(false);
 
+  const [descargandoInventario, setDescargandoInventario] = useState(false);
+
   const requeridas = 1;
+
+  const descargarInventarioCompleto = async () => {
+    setDescargandoInventario(true);
+    try {
+      await descargarReporteInventarioRodela(null);
+      toast.success("Informe de inventario descargado");
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setDescargandoInventario(false);
+    }
+  };
 
   useEffect(() => {
     cargarResumen();
@@ -303,6 +325,7 @@ export default function InventarioRodelas({ usuario }) {
   };
 
   return (
+    <TooltipProvider>
     <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <Header
         titulo="Almacén · Materia Prima"
@@ -316,7 +339,31 @@ export default function InventarioRodelas({ usuario }) {
               }
             : null
         }
-      />
+      >
+        {usuario?.IdRol === Roles.Encargado && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  onClick={descargarInventarioCompleto}
+                  disabled={descargandoInventario}
+                  className="h-11 gap-2 bg-white font-bold text-c3 shadow-md hover:bg-slate-100"
+                >
+                  {descargandoInventario ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Download size={16} strokeWidth={2.75} />
+                  )}
+                  Descargar inventario
+                </Button>
+              }
+            />
+            <TooltipContent>
+              PDF con el inventario completo de todos los tipos de rodela
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </Header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
@@ -513,5 +560,6 @@ export default function InventarioRodelas({ usuario }) {
         )}
       </main>
     </div>
+    </TooltipProvider>
   );
 }

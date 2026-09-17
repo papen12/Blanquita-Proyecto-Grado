@@ -1,0 +1,486 @@
+import { useEffect, useState } from "react";
+import {
+  Search,
+  Download,
+  FileDown,
+  Loader2,
+  RefreshCcw,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { SelectEntidad } from "@/components/layout/Selectentidad";
+import {
+  verRodelasReporte,
+  descargarReporteInventarioRodela,
+  descargarReporteMovimientosRodela,
+} from "@/services/Rodela/Reportes";
+import { ObtenerTiposRodela } from "@/services/Rodela/Rodela";
+import { ObtenerProveedoresForm } from "@/services/Proveedor/Proveedor";
+import { EstadosMateriaPrima } from "@/constants/Estados";
+import { dateOnlyFormatter } from "@/utils/dates";
+import { ArrayFilter } from "@/utils/handlers";
+
+const TAMANO_PAGINA = 15;
+
+// Rodela solo transita entre "En almacén" (1) y "Abierta" (6).
+const ESTADOS_RODELA = ArrayFilter([1, 6], EstadosMateriaPrima);
+
+const ESTADO_BADGE = {
+  "En almacén": "border-emerald-300 bg-emerald-50 text-emerald-700",
+  "En producción": "border-sky-300 bg-sky-50 text-sky-700",
+  Agotado: "border-slate-300 bg-slate-100 text-slate-600",
+  "Dado de baja": "border-red-300 bg-red-50 text-red-600",
+  "Fuera de Inventario": "border-amber-300 bg-amber-50 text-amber-700",
+  Abierta: "border-sky-300 bg-sky-50 text-sky-700",
+  Terminada: "border-slate-300 bg-slate-100 text-slate-600",
+};
+
+export default function InventarioReporteRodela() {
+  const [tipos, setTipos] = useState([]);
+  const [proveedores, setProveedores] = useState([]);
+
+  const [codigoInput, setCodigoInput] = useState("");
+  const [codigoRodela, setCodigoRodela] = useState("");
+  const [idProveedor, setIdProveedor] = useState("");
+  const [idEstadoMateriaPrima, setIdEstadoMateriaPrima] = useState("");
+  const [idsTipoRodela, setIdsTipoRodela] = useState([]);
+  const [pagina, setPagina] = useState(1);
+
+  const [catalogo, setCatalogo] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+
+  const [descargandoInforme, setDescargandoInforme] = useState(false);
+  const [descargandoId, setDescargandoId] = useState(null);
+
+  // Debounce del código de rodela para no disparar una consulta por cada tecla.
+  useEffect(() => {
+    const id = setTimeout(() => setCodigoRodela(codigoInput.trim()), 400);
+    return () => clearTimeout(id);
+  }, [codigoInput]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [dataTipos, dataProveedores] = await Promise.all([
+          ObtenerTiposRodela(),
+          ObtenerProveedoresForm(),
+        ]);
+        setTipos(dataTipos);
+        setProveedores(dataProveedores);
+      } catch (e) {
+        toast.error(e.message);
+      }
+    })();
+  }, []);
+
+  const cargarCatalogo = async () => {
+    setCargando(true);
+    setError("");
+    try {
+      const data = await verRodelasReporte({
+        CodigoRodela: codigoRodela || null,
+        IdProveedor: idProveedor || null,
+        IdsTipoRodela: idsTipoRodela.length ? idsTipoRodela : null,
+        IdEstadoMateriaPrima: idEstadoMateriaPrima || null,
+        Pagina: pagina,
+        TamanoPagina: TAMANO_PAGINA,
+      });
+      setCatalogo(data);
+    } catch (e) {
+      setError(e.message);
+      setCatalogo(null);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarCatalogo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codigoRodela, idProveedor, idEstadoMateriaPrima, idsTipoRodela, pagina]);
+
+  const alternarTipo = (idTipoRodela) => {
+    setIdsTipoRodela((prev) =>
+      prev.includes(idTipoRodela)
+        ? prev.filter((id) => id !== idTipoRodela)
+        : [...prev, idTipoRodela],
+    );
+    setPagina(1);
+  };
+
+  const limpiarFiltros = () => {
+    setCodigoInput("");
+    setCodigoRodela("");
+    setIdProveedor("");
+    setIdEstadoMateriaPrima("");
+    setIdsTipoRodela([]);
+    setPagina(1);
+  };
+
+  const hayFiltros =
+    codigoRodela || idProveedor || idEstadoMateriaPrima || idsTipoRodela.length > 0;
+
+  const descargarInforme = async () => {
+    setDescargandoInforme(true);
+    try {
+      await descargarReporteInventarioRodela(
+        idsTipoRodela.length ? idsTipoRodela : null,
+      );
+      toast.success("Informe de inventario descargado");
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setDescargandoInforme(false);
+    }
+  };
+
+  const verMovimientos = async (idRodela) => {
+    setDescargandoId(idRodela);
+    try {
+      await descargarReporteMovimientosRodela(idRodela);
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setDescargandoId(null);
+    }
+  };
+
+  const totalPaginas = catalogo
+    ? Math.max(1, Math.ceil(catalogo.Total / catalogo.TamanoPagina))
+    : 1;
+
+  return (
+    <>
+      <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+          <div className="text-base font-extrabold text-slate-900">Filtros</div>
+          <div className="flex items-center gap-2">
+            {hayFiltros && (
+              <Button
+                variant="ghost"
+                onClick={limpiarFiltros}
+                className="h-9 gap-1.5 font-bold text-slate-500 hover:text-slate-900"
+              >
+                <X size={14} strokeWidth={2.75} />
+                Limpiar
+              </Button>
+            )}
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    onClick={descargarInforme}
+                    disabled={descargandoInforme}
+                    className="h-9 gap-1.5 bg-gradient-to-r from-c3 to-c4 font-bold text-white hover:opacity-90"
+                  >
+                    {descargandoInforme ? (
+                      <Loader2 size={15} className="animate-spin" />
+                    ) : (
+                      <Download size={15} strokeWidth={2.5} />
+                    )}
+                    Descargar informe
+                  </Button>
+                }
+              />
+              <TooltipContent>
+                PDF con el resumen y detalle de las rodelas en almacén, según
+                los tipos marcados abajo (todos si no marcás ninguno)
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-5 p-5">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Código de rodela
+              </Label>
+              <div className="relative">
+                <Search
+                  size={16}
+                  className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400"
+                />
+                <Input
+                  value={codigoInput}
+                  onChange={(e) => setCodigoInput(e.target.value)}
+                  placeholder="Ej. 963-R20"
+                  className="h-11 pl-9 font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Proveedor
+              </Label>
+              <SelectEntidad
+                opciones={proveedores}
+                valor={idProveedor}
+                onCambio={(v) => {
+                  setIdProveedor(v);
+                  setPagina(1);
+                }}
+                campoValor="IdProveedor"
+                campoEtiqueta="NombreProveedor"
+                placeholder="Todos los proveedores"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Estado
+              </Label>
+              <SelectEntidad
+                opciones={ESTADOS_RODELA}
+                valor={idEstadoMateriaPrima}
+                onCambio={(v) => {
+                  setIdEstadoMateriaPrima(v);
+                  setPagina(1);
+                }}
+                campoValor="IdEstadoMateriaPrima"
+                campoEtiqueta="TipoEstado"
+                placeholder="Todos los estados"
+              />
+            </div>
+          </div>
+
+          {tipos.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                Tipo de rodela
+              </Label>
+              <ToggleGroup
+                value={idsTipoRodela.map(String)}
+                className="flex flex-wrap justify-start gap-2"
+              >
+                {tipos.map((t) => (
+                  <ToggleGroupItem
+                    key={t.IdTipoRodela}
+                    value={String(t.IdTipoRodela)}
+                    onClick={() => alternarTipo(t.IdTipoRodela)}
+                    className="h-auto rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+                  >
+                    {t.NombreTipoRodela}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-6 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+        {cargando && (
+          <div className="flex flex-col gap-2 p-5">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-12 w-full rounded-lg" />
+            ))}
+          </div>
+        )}
+
+        {!cargando && error && (
+          <div className="flex flex-wrap items-center justify-between gap-3 p-6 text-sm font-semibold text-red-600">
+            {error}
+            <Button
+              variant="outline"
+              onClick={cargarCatalogo}
+              className="h-9 gap-1.5 border-red-300 font-bold text-red-600 hover:bg-red-50"
+            >
+              <RefreshCcw size={14} strokeWidth={2.5} />
+              Reintentar
+            </Button>
+          </div>
+        )}
+
+        {!cargando && !error && catalogo && catalogo.Rodelas.length === 0 && (
+          <div className="p-10 text-center text-sm text-slate-400">
+            No hay rodelas que coincidan con los filtros seleccionados.
+          </div>
+        )}
+
+        {!cargando && !error && catalogo && catalogo.Rodelas.length > 0 && (
+          <>
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Proveedor</TableHead>
+                    <TableHead>Recepción</TableHead>
+                    <TableHead className="text-right">Lote</TableHead>
+                    <TableHead className="w-12" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {catalogo.Rodelas.map((r) => (
+                    <TableRow key={r.IdRodela}>
+                      <TableCell className="font-mono font-bold text-slate-900">
+                        {r.CodigoRodela}
+                      </TableCell>
+                      <TableCell>{r.NombreTipoRodela}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "font-bold",
+                            ESTADO_BADGE[r.TipoEstado] ??
+                              "border-slate-300 bg-slate-100 text-slate-600",
+                          )}
+                        >
+                          {r.TipoEstado}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{r.NombreProveedor}</TableCell>
+                      <TableCell>{dateOnlyFormatter(r.FechaRecepcion)}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        #{r.IdLoteRodela}
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={descargandoId === r.IdRodela}
+                                onClick={() => verMovimientos(r.IdRodela)}
+                                className="h-9 w-9 text-slate-400 hover:bg-c4/10 hover:text-c3"
+                              >
+                                {descargandoId === r.IdRodela ? (
+                                  <Loader2 size={16} className="animate-spin" />
+                                ) : (
+                                  <FileDown size={16} strokeWidth={2.25} />
+                                )}
+                              </Button>
+                            }
+                          />
+                          <TooltipContent>
+                            Descargar historial de movimientos de esta rodela
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="flex flex-col gap-3 p-4 md:hidden">
+              {catalogo.Rodelas.map((r) => (
+                <div
+                  key={r.IdRodela}
+                  className="flex flex-col gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-4"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-mono text-[15px] font-bold text-slate-900">
+                        {r.CodigoRodela}
+                      </span>
+                      <span className="text-[12.5px] text-slate-500">
+                        {r.NombreTipoRodela} · {r.NombreProveedor}
+                      </span>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "shrink-0 font-bold",
+                        ESTADO_BADGE[r.TipoEstado] ??
+                          "border-slate-300 bg-slate-100 text-slate-600",
+                      )}
+                    >
+                      {r.TipoEstado}
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-2.5">
+                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[12.5px] text-slate-600">
+                      <span>{dateOnlyFormatter(r.FechaRecepcion)}</span>
+                      <span>
+                        Lote{" "}
+                        <strong className="text-slate-900">
+                          #{r.IdLoteRodela}
+                        </strong>
+                      </span>
+                    </div>
+
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={descargandoId === r.IdRodela}
+                            onClick={() => verMovimientos(r.IdRodela)}
+                            className="h-9 w-9 shrink-0 text-slate-400 hover:bg-c4/10 hover:text-c3"
+                          >
+                            {descargandoId === r.IdRodela ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                              <FileDown size={16} strokeWidth={2.25} />
+                            )}
+                          </Button>
+                        }
+                      />
+                      <TooltipContent>
+                        Descargar historial de movimientos de esta rodela
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3.5">
+              <span className="text-[12.5px] font-semibold text-slate-500">
+                Página {catalogo.Pagina} de {totalPaginas} · {catalogo.Total}{" "}
+                {catalogo.Total === 1 ? "rodela" : "rodelas"}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={pagina <= 1}
+                  onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                  className="h-9 w-9"
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={pagina >= totalPaginas}
+                  onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+                  className="h-9 w-9"
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </section>
+    </>
+  );
+}

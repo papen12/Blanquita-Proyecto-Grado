@@ -13,3 +13,10 @@ export const codigoKeyDown = (e, onCambio) => {
     input.setSelectionRange(inicio + 1, inicio + 1);
   });
 };
+
+
+
+export const ArrayFilter = (ids, arr) => {
+  const clave = Object.keys(arr[0] ?? {}).find((k) => k.startsWith("Id"));
+  return arr.filter((obj) => ids.includes(obj[clave]));
+};
