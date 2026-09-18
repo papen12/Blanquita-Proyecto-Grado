@@ -4,6 +4,7 @@ from app.Models.BobinaServilleta.Reporte import (
     ReporteInventarioBobinaServilletaResponse,
     ReporteInventarioSubBobinaServilletaResponse,
     ReporteHistorialMovimientosUnidadServilletaResponse,
+    ReporteDetalleBobinaServilletaResponse,
 )
 from app.Reportes.reporte import Reporte
 from app.utils.dates import ZONA_BOLIVIA
@@ -171,3 +172,64 @@ def construir_reporte_historial_movimientos_unidad_servilleta(
 def nombre_archivo_historial_movimientos_unidad_servilleta(id_unidad: int) -> str:
     ahora = datetime.now(ZONA_BOLIVIA)
     return f"historial-movimientos-unidad-servilleta-{id_unidad}-{ahora:%Y%m%d-%H%M}.pdf"
+
+
+def construir_reporte_detalle_bobina_servilleta(
+    data: ReporteDetalleBobinaServilletaResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Detalle de bobina - Servilleta",
+        subtitulo=f"Bobina #{data.IdBobinaServilleta} - {data.NombreTipoBobinaServilleta}",
+        filtros={"Estado": data.TipoEstado, "Lote": data.CodigoLote},
+        generado_en=datetime.now(ZONA_BOLIVIA),
+    )
+
+    reporte.titulo_seccion("Datos generales")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=[
+            {"campo": "Tipo de bobina", "valor": data.NombreTipoBobinaServilleta},
+            {"campo": "Estado", "valor": data.TipoEstado},
+            {"campo": "Lote", "valor": data.CodigoLote},
+            {"campo": "Recepción", "valor": data.FechaRecepcion},
+            {"campo": "Proveedor", "valor": data.NombreProveedor},
+        ],
+    )
+
+    for unidad in data.Unidades:
+        reporte.titulo_seccion(f"Unidad {unidad.CodigoUnidad} - {unidad.DescripcionFormato}")
+        reporte.tabla(
+            columnas=[("Campo", "campo"), ("Valor", "valor")],
+            filas=[
+                {"campo": "Peso bruto (kg)", "valor": unidad.PesoBrutoKg},
+                {"campo": "Gramaje", "valor": unidad.GramajeGr},
+            ],
+        )
+
+        reporte.titulo_seccion(f"Movimientos ({len(unidad.Movimientos)})")
+        if unidad.Movimientos:
+            reporte.tabla(
+                columnas=[
+                    ("Fecha", "FechaMovimiento"),
+                    ("Movimiento", "NombreMovimiento"),
+                    ("Sub-bobina", "IdSubBobinaServilleta"),
+                    ("Formato", "NombreTipoMedida"),
+                    (
+                        "Operador",
+                        lambda m: reporte.celda_multilinea(
+                            [f"{m.PrimerNombre} {m.ApellidoPaterno},", m.Ci, m.NombreRol]
+                        ),
+                    ),
+                    ("Observación", "Observacion"),
+                ],
+                filas=unidad.Movimientos,
+            )
+        else:
+            reporte.parrafo("Esta unidad aún no registra movimientos (no ha sido abierta).")
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_detalle_bobina_servilleta(id_bobina: int) -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return f"detalle-bobina-servilleta-{id_bobina}-{ahora:%Y%m%d-%H%M}.pdf"

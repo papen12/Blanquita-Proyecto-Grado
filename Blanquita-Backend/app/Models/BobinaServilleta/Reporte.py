@@ -61,10 +61,12 @@ class BobinaServilletaCatalogoResponse(BaseModel):
     CodigoLote: str
     FechaRecepcion: date
     NombreProveedor: str
+    IdUnidad1: Optional[int]
     CodigoUnidad1: Optional[str]
     DescripcionFormato1: Optional[str]
     PesoBrutoKg1: Optional[Decimal]
     GramajeGr1: Optional[Decimal]
+    IdUnidad2: Optional[int]
     CodigoUnidad2: Optional[str]
     DescripcionFormato2: Optional[str]
     PesoBrutoKg2: Optional[Decimal]
@@ -151,3 +153,26 @@ class ReporteHistorialMovimientosUnidadServilletaResponse(BaseModel):
     NombreTipoBobinaServilleta: str
     TipoEstado: str
     Movimientos: list[MovimientoSubBobinaHistorialResponse]
+
+
+class ReporteDetalleBobinaServilletaRequest(BaseModel):
+    IdBobinaServilleta: int
+
+
+class UnidadDetalleBobinaServilletaResponse(BaseModel):
+    IdUnidadBobinaServilleta: int
+    CodigoUnidad: str
+    DescripcionFormato: str
+    PesoBrutoKg: Optional[Decimal]
+    GramajeGr: Optional[Decimal]
+    Movimientos: list[MovimientoSubBobinaHistorialResponse]
+
+
+class ReporteDetalleBobinaServilletaResponse(BaseModel):
+    IdBobinaServilleta: int
+    NombreTipoBobinaServilleta: str
+    TipoEstado: str
+    CodigoLote: str
+    FechaRecepcion: date
+    NombreProveedor: str
+    Unidades: list[UnidadDetalleBobinaServilletaResponse]

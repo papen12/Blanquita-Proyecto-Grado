@@ -13,6 +13,7 @@ from app.Models.BobinaServilleta.Reporte import (
     VerSubBobinasServilletaRequest,
     VerSubBobinasServilletaResponse,
     ReporteHistorialMovimientosUnidadServilletaRequest,
+    ReporteDetalleBobinaServilletaRequest,
 )
 from app.Services.BobinaServilleta.Reporte import ReporteBobinaServilletaService
 from app.Reportes.BobinaServilleta import (
@@ -22,6 +23,8 @@ from app.Reportes.BobinaServilleta import (
     nombre_archivo_inventario_subbobina_servilleta,
     construir_reporte_historial_movimientos_unidad_servilleta,
     nombre_archivo_historial_movimientos_unidad_servilleta,
+    construir_reporte_detalle_bobina_servilleta,
+    nombre_archivo_detalle_bobina_servilleta,
 )
 
 
@@ -177,5 +180,32 @@ def ReporteHistorialMovimientosUnidadServilleta(
         media_type="application/pdf",
         headers={
             "Content-Disposition": f'attachment; filename="{nombre_archivo_historial_movimientos_unidad_servilleta(id_unidad_bobina_servilleta)}"'
+        },
+    )
+
+
+@bs_ReporteRouter.get(
+    "/bobina/detalle/{id_bobina_servilleta}",
+    status_code=200,
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+def ReporteDetalleBobinaServilletaRoute(
+    id_bobina_servilleta: int,
+    usuario_actual: dict = Depends(
+        require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
+    ),
+    service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
+):
+    data = service.ReporteDetalleBobinaServilleta(
+        ReporteDetalleBobinaServilletaRequest(IdBobinaServilleta=id_bobina_servilleta)
+    )
+    pdf = construir_reporte_detalle_bobina_servilleta(data)
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo_detalle_bobina_servilleta(id_bobina_servilleta)}"'
         },
     )

@@ -53,3 +53,11 @@ class ReporteBobinaServilletaRepository:
             )
         """
         return self.caller.LlamarFuncion(sql, params)
+
+    def ReporteDetalleBobinaServilleta(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "ReporteDetalleBobinaServilleta"(
+                :p_IdBobinaServilleta
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)

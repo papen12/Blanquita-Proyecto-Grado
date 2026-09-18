@@ -20,6 +20,9 @@ from app.Models.BobinaServilleta.Reporte import (
     ReporteHistorialMovimientosUnidadServilletaRequest,
     ReporteHistorialMovimientosUnidadServilletaResponse,
     MovimientoSubBobinaHistorialResponse,
+    ReporteDetalleBobinaServilletaRequest,
+    ReporteDetalleBobinaServilletaResponse,
+    UnidadDetalleBobinaServilletaResponse,
 )
 from app.Repository.BobinaServilleta.Reporte import ReporteBobinaServilletaRepository
 from app.utils.dates import ZONA_BOLIVIA
@@ -252,4 +255,55 @@ class ReporteBobinaServilletaService:
             NombreTipoBobinaServilleta=primera["NombreTipoBobinaServilleta"],
             TipoEstado=primera["TipoEstado"],
             Movimientos=movimientos,
+        )
+
+    def ReporteDetalleBobinaServilleta(
+        self, data: ReporteDetalleBobinaServilletaRequest
+    ) -> ReporteDetalleBobinaServilletaResponse:
+        try:
+            filas = self.repository.ReporteDetalleBobinaServilleta(
+                {"p_IdBobinaServilleta": data.IdBobinaServilleta}
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener el detalle de la bobina de servilleta, verifica los datos ingresados",
+            )
+
+        if not filas:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró la bobina de servilleta solicitada",
+            )
+
+        primera = filas[0]
+
+        unidades: dict[int, UnidadDetalleBobinaServilletaResponse] = {}
+
+        for fila in filas:
+            id_unidad = fila["IdUnidadBobinaServilleta"]
+
+            if id_unidad not in unidades:
+                unidades[id_unidad] = UnidadDetalleBobinaServilletaResponse(
+                    IdUnidadBobinaServilleta=id_unidad,
+                    CodigoUnidad=fila["CodigoUnidad"],
+                    DescripcionFormato=fila["DescripcionFormato"],
+                    PesoBrutoKg=fila["PesoBrutoKg"],
+                    GramajeGr=fila["GramajeGr"],
+                    Movimientos=[],
+                )
+
+            if fila["IdMovimientoSubBobina"] is not None:
+                unidades[id_unidad].Movimientos.append(
+                    MovimientoSubBobinaHistorialResponse(**fila)
+                )
+
+        return ReporteDetalleBobinaServilletaResponse(
+            IdBobinaServilleta=primera["IdBobinaServilleta"],
+            NombreTipoBobinaServilleta=primera["NombreTipoBobinaServilleta"],
+            TipoEstado=primera["TipoEstado"],
+            CodigoLote=primera["CodigoLote"],
+            FechaRecepcion=primera["FechaRecepcion"],
+            NombreProveedor=primera["NombreProveedor"],
+            Unidades=list(unidades.values()),
         )
