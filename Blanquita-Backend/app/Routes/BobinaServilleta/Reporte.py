@@ -20,6 +20,11 @@ from app.Models.BobinaServilleta.Reporte import (
     VerLotesBobinaServilletaResponse,
     ReporteLoteBobinaServilletaDetalleRequest,
     ReporteLotesServilletaPorPeriodoRequest,
+    VerProduccionesServilletaRequest,
+    VerProduccionesServilletaResponse,
+    ReporteProduccionServilletaDetalleRequest,
+    ReporteCancelacionProduccionServilletaRequest,
+    ReporteProduccionServilletaPorPeriodoRequest,
 )
 from app.Services.BobinaServilleta.Reporte import ReporteBobinaServilletaService
 from app.Reportes.BobinaServilleta import (
@@ -35,6 +40,12 @@ from app.Reportes.BobinaServilleta import (
     nombre_archivo_lote_servilleta_detalle,
     construir_reporte_lotes_servilleta_por_periodo,
     nombre_archivo_lotes_servilleta_periodo,
+    construir_reporte_detalle_produccion_servilleta,
+    nombre_archivo_detalle_produccion_servilleta,
+    construir_reporte_cancelacion_produccion_servilleta,
+    nombre_archivo_cancelacion_produccion_servilleta,
+    construir_reporte_produccion_servilleta_por_periodo,
+    nombre_archivo_produccion_servilleta_por_periodo,
 )
 
 
@@ -305,5 +316,131 @@ def ReporteLotesServilletaPorPeriodo(
         media_type="application/pdf",
         headers={
             "Content-Disposition": f'attachment; filename="{nombre_archivo_lotes_servilleta_periodo(FechaInicio, FechaFin)}"'
+        },
+    )
+
+
+@bs_ReporteRouter.get(
+    "/produccion/catalogo",
+    response_model=VerProduccionesServilletaResponse,
+    status_code=200,
+)
+def CatalogoProduccionServilleta(
+    FechaInicio: date | None = None,
+    FechaFin: date | None = None,
+    IdTurno: int | None = None,
+    IdsTipoBobinaServilleta: list[int] | None = Query(default=None),
+    CodigoBobina: str | None = None,
+    Operador: str | None = None,
+    IdEstadoProduccion: int | None = None,
+    Pagina: int = 1,
+    TamanoPagina: int = 50,
+    usuario_actual: dict = Depends(
+        require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
+    ),
+    service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
+):
+    return service.VerProduccionesServilleta(
+        VerProduccionesServilletaRequest(
+            FechaInicio=FechaInicio,
+            FechaFin=FechaFin,
+            IdTurno=IdTurno,
+            IdsTipoBobinaServilleta=IdsTipoBobinaServilleta,
+            CodigoBobina=CodigoBobina,
+            Operador=Operador,
+            IdEstadoProduccion=IdEstadoProduccion,
+            Pagina=Pagina,
+            TamanoPagina=TamanoPagina,
+        )
+    )
+
+
+@bs_ReporteRouter.get(
+    "/produccion/detalle/{id_produccion}",
+    status_code=200,
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+def ObtenerDetalleProduccionServilleta(
+    id_produccion: int,
+    VerPausas: bool = False,
+    usuario_actual: dict = Depends(
+        require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
+    ),
+    service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
+):
+    data = service.ReporteDetalleProduccion(
+        ReporteProduccionServilletaDetalleRequest(
+            IdProduccion=id_produccion,
+            VerPausas=VerPausas,
+        )
+    )
+    pdf = construir_reporte_detalle_produccion_servilleta(data)
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo_detalle_produccion_servilleta(id_produccion)}"'
+        },
+    )
+
+
+@bs_ReporteRouter.get(
+    "/produccion/cancelada/{id_produccion}",
+    status_code=200,
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+def ReporteProduccionServilletaCancelada(
+    id_produccion: int,
+    usuario_actual: dict = Depends(
+        require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
+    ),
+    service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
+):
+    data = service.ReporteCancelacionProduccion(
+        ReporteCancelacionProduccionServilletaRequest(IdProduccion=id_produccion)
+    )
+    pdf = construir_reporte_cancelacion_produccion_servilleta(data)
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo_cancelacion_produccion_servilleta(id_produccion)}"'
+        },
+    )
+
+
+@bs_ReporteRouter.get(
+    "/produccion/periodo",
+    status_code=200,
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+def ReporteProduccionServilletaPorPeriodo(
+    FechaInicio: date,
+    FechaFin: date,
+    VerCancelaciones: bool = False,
+    usuario_actual: dict = Depends(
+        require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
+    ),
+    service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
+):
+    data = service.ReporteProduccionPorPeriodo(
+        ReporteProduccionServilletaPorPeriodoRequest(
+            FechaInicio=FechaInicio,
+            FechaFin=FechaFin,
+            VerCancelaciones=VerCancelaciones,
+        )
+    )
+    pdf = construir_reporte_produccion_servilleta_por_periodo(data)
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo_produccion_servilleta_por_periodo(FechaInicio, FechaFin)}"'
         },
     )

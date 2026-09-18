@@ -60,3 +60,38 @@ export const VerLotesBobinaServilletaResponse = (data) => ({
   TamanoPagina: data.TamanoPagina,
   Lotes: (data.Lotes ?? []).map(LoteBobinaServilletaCatalogoResponse)
 });
+
+export const VerProduccionesServilletaRequest = (filtros = {}) => ({
+  FechaInicio: filtros.FechaInicio ?? null,
+  FechaFin: filtros.FechaFin ?? null,
+  IdTurno: filtros.IdTurno ?? null,
+  IdsTipoBobinaServilleta: filtros.IdsTipoBobinaServilleta ?? null,
+  CodigoBobina: filtros.CodigoBobina ?? null,
+  Operador: filtros.Operador ?? null,
+  IdEstadoProduccion: filtros.IdEstadoProduccion ?? null,
+  Pagina: filtros.Pagina ?? 1,
+  TamanoPagina: filtros.TamanoPagina ?? 50
+});
+
+export const ProduccionServilletaCatalogoResponse = (data) => ({
+  IdProduccionServilleta: data.IdProduccionServilleta,
+  NombreEstadoProduccion: data.NombreEstadoProduccion,
+  NombreTurno: data.NombreTurno,
+  Operador: data.Operador,
+  Ci: data.Ci,
+  NombreRol: data.NombreRol,
+  NombreTipoBobinaServilleta: data.NombreTipoBobinaServilleta,
+  CodigoBobina: data.CodigoBobina,
+  DescripcionMedida: data.DescripcionMedida,
+  IdSubBobinaServilleta: data.IdSubBobinaServilleta,
+  FechaInicioProduccion: data.FechaInicioProduccion,
+  FechaFinProduccion: data.FechaFinProduccion ?? null,
+  DuracionTotal: data.DuracionTotal ?? null
+});
+
+export const VerProduccionesServilletaResponse = (data) => ({
+  Total: data.Total,
+  Pagina: data.Pagina,
+  TamanoPagina: data.TamanoPagina,
+  Producciones: (data.Producciones ?? []).map(ProduccionServilletaCatalogoResponse)
+});

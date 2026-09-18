@@ -2,7 +2,9 @@ import {
   VerBobinasServilletaRequest,
   VerBobinasServilletaResponse,
   VerLotesBobinaServilletaRequest,
-  VerLotesBobinaServilletaResponse
+  VerLotesBobinaServilletaResponse,
+  VerProduccionesServilletaRequest,
+  VerProduccionesServilletaResponse
 } from "../../models/BobinaServilleta/Reportes";
 import { manejarErrorBackend } from "@/utils/validators";
 import { construirQueryParams } from "@/utils/params";
@@ -111,5 +113,53 @@ export async function descargarReporteLotesServilletaPorPeriodo(fechaInicio, fec
   await descargarReportePDF(
     `${BASE_URL}/lote/periodo?${params.toString()}`,
     `ingresos-lotes-servilleta-periodo-${fechaInicio}-${fechaFin}.pdf`
+  );
+}
+
+export async function verProduccionesServilleta(filtros) {
+  const payload = VerProduccionesServilletaRequest(filtros);
+  const params = construirQueryParams(payload);
+
+  const response = await fetch(`${BASE_URL}/produccion/catalogo?${params.toString()}`);
+
+  if (!response.ok) {
+    await manejarErrorBackend(response);
+  }
+
+  const data = await response.json();
+
+  return VerProduccionesServilletaResponse(data);
+}
+
+export async function descargarReporteDetalleProduccionServilleta(idProduccion, verPausas) {
+  const params = construirQueryParams({ VerPausas: verPausas ?? false });
+
+  await descargarReportePDF(
+    `${BASE_URL}/produccion/detalle/${idProduccion}?${params.toString()}`,
+    `reporte-produccion-servilleta-${idProduccion}.pdf`
+  );
+}
+
+export async function descargarReporteProduccionServilletaCancelada(idProduccion) {
+  await descargarReportePDF(
+    `${BASE_URL}/produccion/cancelada/${idProduccion}`,
+    `reporte-produccion-servilleta-cancelada-${idProduccion}.pdf`
+  );
+}
+
+export async function descargarReporteProduccionServilletaPorPeriodo(
+  fechaInicio,
+  fechaFin,
+  verCancelaciones,
+) {
+  const params = construirQueryParams({
+    FechaInicio: fechaInicio,
+    FechaFin: fechaFin,
+    VerCancelaciones: verCancelaciones ?? false
+  });
+
+  await descargarReportePDF(
+    `${BASE_URL}/produccion/periodo?${params.toString()}`,
+    `reporte-produccion-servilleta-periodo-${fechaInicio}-${fechaFin}.pdf`
   );
 }

@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Optional
 
@@ -237,3 +237,132 @@ class ReporteLotesServilletaPorPeriodoResponse(BaseModel):
     TotalLotes: int
     TotalBobinas: int
     Lotes: list[ReporteLoteBobinaServilletaDetalleResponse]
+
+
+class VerProduccionesServilletaRequest(BaseModel):
+    FechaInicio: Optional[date] = None
+    FechaFin: Optional[date] = None
+    IdTurno: Optional[int] = None
+    IdsTipoBobinaServilleta: Optional[list[int]] = None
+    CodigoBobina: Optional[str] = None
+    Operador: Optional[str] = None
+    IdEstadoProduccion: Optional[int] = None
+    Pagina: int = 1
+    TamanoPagina: int = 50
+
+
+class ProduccionServilletaCatalogoResponse(BaseModel):
+    IdProduccionServilleta: int
+    NombreEstadoProduccion: str
+    NombreTurno: str
+    Operador: str
+    Ci: str
+    NombreRol: str
+    NombreTipoBobinaServilleta: str
+    CodigoBobina: str
+    DescripcionMedida: str
+    IdSubBobinaServilleta: int
+    FechaInicioProduccion: datetime
+    FechaFinProduccion: Optional[datetime]
+    DuracionTotal: Optional[timedelta]
+
+
+class VerProduccionesServilletaResponse(BaseModel):
+    Total: int
+    Pagina: int
+    TamanoPagina: int
+    Producciones: list[ProduccionServilletaCatalogoResponse]
+
+
+class ReporteProduccionServilletaDetalleRequest(BaseModel):
+    IdProduccion: int
+    VerPausas: bool = False
+
+
+class PausaProduccionServilletaResponse(BaseModel):
+    IdPausaProduccionServilleta: int
+    IdProduccionServilleta: int
+    CodigoBobina: str
+    NombreTurno: str
+    FechaHoraPausa: datetime
+    MotivoPausaProduccion: Optional[str]
+    FechaHoraReanudacion: Optional[datetime]
+    DuracionPausa: Optional[timedelta]
+    OperadorPausa: str
+    RolPausa: str
+    EstadoPausa: str
+
+
+class ReporteProduccionServilletaDetalleResponse(BaseModel):
+    IdProduccionServilleta: int
+    NombreEstadoProduccion: str
+    NombreTurno: str
+    Operador: str
+    Ci: str
+    NombreRol: str
+    NombreTipoBobinaServilleta: str
+    CodigoBobina: str
+    DescripcionMedida: str
+    IdSubBobinaServilleta: int
+    PesoBrutoKg: Optional[Decimal]
+    GramajeGr: Optional[Decimal]
+    NombreProveedor: str
+    FechaRecepcion: date
+    FechaInicioProduccion: datetime
+    FechaFinProduccion: Optional[datetime]
+    DuracionTotal: Optional[timedelta]
+    Pausas: Optional[list[PausaProduccionServilletaResponse]] = None
+    TotalTiempoPausado: Optional[timedelta] = None
+
+
+class ReporteCancelacionProduccionServilletaRequest(BaseModel):
+    IdProduccion: int
+
+
+class CancelacionProduccionServilletaResponse(BaseModel):
+    FechaHoraCancelacion: datetime
+    MotivoCancelacion: Optional[str]
+    Ci: str
+    Operador: str
+    NombreRol: str
+
+
+class ReporteCancelacionProduccionServilletaResponse(
+    ReporteProduccionServilletaDetalleResponse
+):
+    Pausas: list[PausaProduccionServilletaResponse]
+    TotalTiempoPausado: timedelta
+    Cancelacion: CancelacionProduccionServilletaResponse
+
+
+class ReporteProduccionServilletaPorPeriodoRequest(BaseModel):
+    FechaInicio: date
+    FechaFin: date
+    VerCancelaciones: bool = False
+
+
+class PausaServilletaPorMotivoResponse(BaseModel):
+    Motivo: str
+    CantidadPausas: int
+    TiempoTotal: timedelta
+
+
+class CancelacionServilletaPeriodoResponse(BaseModel):
+    IdProduccionServilleta: int
+    FechaHoraCancelacion: datetime
+    MotivoCancelacion: Optional[str]
+    Ci: str
+    PrimerNombre: str
+    ApellidoPaterno: str
+    NombreRol: str
+
+
+class ReporteProduccionServilletaPorPeriodoResponse(BaseModel):
+    PeriodoInicio: date
+    PeriodoFin: date
+    TotalProducciones: int
+    Producciones: list[ProduccionServilletaCatalogoResponse]
+    PausasPorMotivo: list[PausaServilletaPorMotivoResponse]
+    TotalPausas: int
+    TotalTiempoPausado: timedelta
+    Cancelaciones: Optional[list[CancelacionServilletaPeriodoResponse]] = None

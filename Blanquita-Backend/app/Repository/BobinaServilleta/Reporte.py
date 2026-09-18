@@ -80,3 +80,54 @@ class ReporteBobinaServilletaRepository:
             )
         """
         return self.caller.LlamarFuncion(sql, params)
+
+    def VerProduccionesServilleta(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerProduccionesServilleta"(
+                :p_FechaInicio,
+                :p_FechaFin,
+                :p_IdTurno,
+                CAST(:p_IdsTipoBobinaServilleta AS integer[]),
+                :p_CodigoBobina,
+                :p_Operador,
+                :p_IdEstadoProduccion
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+
+    def ReporteProduccionServilletaDetalle(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "ReporteProduccionServilletaDetalle"(
+                :p_IdProduccion
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)
+
+    def ReportePausasProduccionServilleta(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "ReportePausasProduccionServilleta"(
+                :p_IdProduccion,
+                :p_FechaInicio,
+                :p_FechaFin,
+                :p_IdTurno,
+                :p_SoloAbiertas
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+
+    def VerCancelacionesProduccionServilleta(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerCancelacionesProduccionServilleta"(
+                :p_FechaInicio,
+                :p_FechaFin
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+
+    def ReporteCancelacionProduccionServilleta(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "ReporteCancelacionProduccionServilleta"(
+                :p_IdProduccion
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)

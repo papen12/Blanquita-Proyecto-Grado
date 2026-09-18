@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -31,6 +31,19 @@ from app.Models.BobinaServilleta.Reporte import (
     BobinaLoteServilletaDetalleResponse,
     ReporteLotesServilletaPorPeriodoRequest,
     ReporteLotesServilletaPorPeriodoResponse,
+    VerProduccionesServilletaRequest,
+    VerProduccionesServilletaResponse,
+    ProduccionServilletaCatalogoResponse,
+    ReporteProduccionServilletaDetalleRequest,
+    ReporteProduccionServilletaDetalleResponse,
+    PausaProduccionServilletaResponse,
+    ReporteCancelacionProduccionServilletaRequest,
+    ReporteCancelacionProduccionServilletaResponse,
+    CancelacionProduccionServilletaResponse,
+    ReporteProduccionServilletaPorPeriodoRequest,
+    ReporteProduccionServilletaPorPeriodoResponse,
+    PausaServilletaPorMotivoResponse,
+    CancelacionServilletaPeriodoResponse,
 )
 from app.Repository.BobinaServilleta.Reporte import ReporteBobinaServilletaRepository
 from app.utils.dates import ZONA_BOLIVIA
@@ -426,4 +439,271 @@ class ReporteBobinaServilletaService:
             TotalLotes=len(lotes),
             TotalBobinas=total_bobinas,
             Lotes=lotes,
+        )
+
+    def VerProduccionesServilleta(
+        self, data: VerProduccionesServilletaRequest
+    ) -> VerProduccionesServilletaResponse:
+        params = {
+            "p_FechaInicio": data.FechaInicio,
+            "p_FechaFin": data.FechaFin,
+            "p_IdTurno": data.IdTurno,
+            "p_IdsTipoBobinaServilleta": data.IdsTipoBobinaServilleta or None,
+            "p_CodigoBobina": data.CodigoBobina,
+            "p_Operador": data.Operador,
+            "p_IdEstadoProduccion": data.IdEstadoProduccion,
+        }
+
+        try:
+            filas = self.repository.VerProduccionesServilleta(params)
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener el catálogo de producciones, verifica los datos ingresados",
+            )
+
+        total = len(filas)
+        inicio = (data.Pagina - 1) * data.TamanoPagina
+        fin = inicio + data.TamanoPagina
+        filas_pagina = filas[inicio:fin]
+
+        producciones = [
+            ProduccionServilletaCatalogoResponse(**fila) for fila in filas_pagina
+        ]
+
+        return VerProduccionesServilletaResponse(
+            Total=total,
+            Pagina=data.Pagina,
+            TamanoPagina=data.TamanoPagina,
+            Producciones=producciones,
+        )
+
+    def ReporteDetalleProduccion(
+        self, data: ReporteProduccionServilletaDetalleRequest
+    ) -> ReporteProduccionServilletaDetalleResponse:
+        try:
+            fila = self.repository.ReporteProduccionServilletaDetalle(
+                {"p_IdProduccion": data.IdProduccion}
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener el detalle de la producción, verifica los datos ingresados",
+            )
+
+        if not fila:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró la producción solicitada",
+            )
+
+        pausas = None
+        total_tiempo_pausado = None
+
+        if data.VerPausas:
+            try:
+                filas_pausas = self.repository.ReportePausasProduccionServilleta(
+                    {
+                        "p_IdProduccion": data.IdProduccion,
+                        "p_FechaInicio": None,
+                        "p_FechaFin": None,
+                        "p_IdTurno": None,
+                        "p_SoloAbiertas": None,
+                    }
+                )
+            except SQLAlchemyError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No se pudieron obtener las pausas de la producción",
+                )
+
+            pausas = [
+                PausaProduccionServilletaResponse(**fila_pausa)
+                for fila_pausa in filas_pausas
+            ]
+            total_tiempo_pausado = sum(
+                (p.DuracionPausa for p in pausas if p.DuracionPausa is not None),
+                timedelta(),
+            )
+
+        return ReporteProduccionServilletaDetalleResponse(
+            **fila,
+            Pausas=pausas,
+            TotalTiempoPausado=total_tiempo_pausado,
+        )
+
+    def ReporteCancelacionProduccion(
+        self, data: ReporteCancelacionProduccionServilletaRequest
+    ) -> ReporteCancelacionProduccionServilletaResponse:
+        try:
+            fila = self.repository.ReporteProduccionServilletaDetalle(
+                {"p_IdProduccion": data.IdProduccion}
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener el detalle de la producción, verifica los datos ingresados",
+            )
+
+        if not fila:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró la producción solicitada",
+            )
+
+        if fila["NombreEstadoProduccion"] != "Cancelada":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="La producción solicitada no está cancelada",
+            )
+
+        try:
+            filas_pausas = self.repository.ReportePausasProduccionServilleta(
+                {
+                    "p_IdProduccion": data.IdProduccion,
+                    "p_FechaInicio": None,
+                    "p_FechaFin": None,
+                    "p_IdTurno": None,
+                    "p_SoloAbiertas": None,
+                }
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudieron obtener las pausas de la producción",
+            )
+
+        pausas = [
+            PausaProduccionServilletaResponse(**fila_pausa)
+            for fila_pausa in filas_pausas
+        ]
+        total_tiempo_pausado = sum(
+            (p.DuracionPausa for p in pausas if p.DuracionPausa is not None),
+            timedelta(),
+        )
+
+        try:
+            fila_cancelacion = self.repository.ReporteCancelacionProduccionServilleta(
+                {"p_IdProduccion": data.IdProduccion}
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener la información de cancelación de la producción",
+            )
+
+        if not fila_cancelacion:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró el registro de cancelación de la producción",
+            )
+
+        cancelacion = CancelacionProduccionServilletaResponse(**fila_cancelacion)
+
+        return ReporteCancelacionProduccionServilletaResponse(
+            **fila,
+            Pausas=pausas,
+            TotalTiempoPausado=total_tiempo_pausado,
+            Cancelacion=cancelacion,
+        )
+
+    def ReporteProduccionPorPeriodo(
+        self, data: ReporteProduccionServilletaPorPeriodoRequest
+    ) -> ReporteProduccionServilletaPorPeriodoResponse:
+        try:
+            filas_producciones = self.repository.VerProduccionesServilleta(
+                {
+                    "p_FechaInicio": data.FechaInicio,
+                    "p_FechaFin": data.FechaFin,
+                    "p_IdTurno": None,
+                    "p_IdsTipoBobinaServilleta": None,
+                    "p_CodigoBobina": None,
+                    "p_Operador": None,
+                    "p_IdEstadoProduccion": None,
+                }
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudieron obtener las producciones del período, verifica los datos ingresados",
+            )
+
+        producciones = [
+            ProduccionServilletaCatalogoResponse(**fila) for fila in filas_producciones
+        ]
+
+        try:
+            filas_pausas = self.repository.ReportePausasProduccionServilleta(
+                {
+                    "p_IdProduccion": None,
+                    "p_FechaInicio": data.FechaInicio,
+                    "p_FechaFin": data.FechaFin,
+                    "p_IdTurno": None,
+                    "p_SoloAbiertas": None,
+                }
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudieron obtener las pausas del período",
+            )
+
+        pausas_por_motivo: dict[str, dict] = {}
+        for fila_pausa in filas_pausas:
+            motivo = fila_pausa["MotivoPausaProduccion"] or "Sin motivo especificado"
+            duracion = fila_pausa["DuracionPausa"] or timedelta()
+
+            if motivo not in pausas_por_motivo:
+                pausas_por_motivo[motivo] = {
+                    "CantidadPausas": 0,
+                    "TiempoTotal": timedelta(),
+                }
+
+            pausas_por_motivo[motivo]["CantidadPausas"] += 1
+            pausas_por_motivo[motivo]["TiempoTotal"] += duracion
+
+        pausas_agrupadas = [
+            PausaServilletaPorMotivoResponse(
+                Motivo=motivo,
+                CantidadPausas=datos["CantidadPausas"],
+                TiempoTotal=datos["TiempoTotal"],
+            )
+            for motivo, datos in pausas_por_motivo.items()
+        ]
+        total_tiempo_pausado = sum(
+            (p.TiempoTotal for p in pausas_agrupadas), timedelta()
+        )
+
+        cancelaciones = None
+
+        if data.VerCancelaciones:
+            try:
+                filas_cancelaciones = (
+                    self.repository.VerCancelacionesProduccionServilleta(
+                        {
+                            "p_FechaInicio": data.FechaInicio,
+                            "p_FechaFin": data.FechaFin,
+                        }
+                    )
+                )
+            except SQLAlchemyError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No se pudieron obtener las cancelaciones del período",
+                )
+
+            cancelaciones = [
+                CancelacionServilletaPeriodoResponse(**fila)
+                for fila in filas_cancelaciones
+            ]
+
+        return ReporteProduccionServilletaPorPeriodoResponse(
+            PeriodoInicio=data.FechaInicio,
+            PeriodoFin=data.FechaFin,
+            TotalProducciones=len(producciones),
+            Producciones=producciones,
+            PausasPorMotivo=pausas_agrupadas,
+            TotalPausas=len(filas_pausas),
+            TotalTiempoPausado=total_tiempo_pausado,
+            Cancelaciones=cancelaciones,
         )

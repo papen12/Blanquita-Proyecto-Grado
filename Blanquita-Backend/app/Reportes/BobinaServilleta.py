@@ -1,4 +1,5 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from typing import Optional
 
 from app.Models.BobinaServilleta.Reporte import (
     ReporteInventarioBobinaServilletaResponse,
@@ -7,9 +8,36 @@ from app.Models.BobinaServilleta.Reporte import (
     ReporteDetalleBobinaServilletaResponse,
     ReporteLoteBobinaServilletaDetalleResponse,
     ReporteLotesServilletaPorPeriodoResponse,
+    ReporteProduccionServilletaDetalleResponse,
+    ReporteCancelacionProduccionServilletaResponse,
+    ReporteProduccionServilletaPorPeriodoResponse,
 )
 from app.Reportes.reporte import Reporte
 from app.utils.dates import ZONA_BOLIVIA
+
+
+def _formatear_duracion(duracion: Optional[timedelta]) -> str:
+    if duracion is None:
+        return "—"
+    total_segundos = int(duracion.total_seconds())
+    horas, resto = divmod(total_segundos, 3600)
+    minutos = resto // 60
+    return f"{horas}h {minutos:02d}m"
+
+
+def _tabla_pausas_servilleta(reporte: Reporte, pausas) -> None:
+    reporte.tabla(
+        columnas=[
+            ("Inicio", "FechaHoraPausa"),
+            ("Reanudación", "FechaHoraReanudacion"),
+            ("Duración", lambda p: _formatear_duracion(p.DuracionPausa)),
+            ("Motivo", "MotivoPausaProduccion"),
+            ("Operador", "OperadorPausa"),
+            ("Rol", "RolPausa"),
+            ("Estado", "EstadoPausa"),
+        ],
+        filas=pausas,
+    )
 
 
 def construir_reporte_inventario_bobina_servilleta(
@@ -332,5 +360,221 @@ def nombre_archivo_lotes_servilleta_periodo(fecha_inicio: date, fecha_fin: date)
     ahora = datetime.now(ZONA_BOLIVIA)
     return (
         f"ingresos-lotes-servilleta-periodo-{fecha_inicio:%Y%m%d}-{fecha_fin:%Y%m%d}"
+        f"-{ahora:%Y%m%d-%H%M}.pdf"
+    )
+
+
+def _datos_generales_produccion_servilleta(data) -> list[dict]:
+    return [
+        {"campo": "Operador", "valor": data.Operador},
+        {"campo": "CI", "valor": data.Ci},
+        {"campo": "Rol", "valor": data.NombreRol},
+        {"campo": "Fecha inicio", "valor": data.FechaInicioProduccion},
+        {"campo": "Fecha fin", "valor": data.FechaFinProduccion},
+        {"campo": "Duración total", "valor": _formatear_duracion(data.DuracionTotal)},
+    ]
+
+
+def _subbobina_utilizada_servilleta(data) -> list[dict]:
+    return [
+        {"campo": "Código de unidad", "valor": data.CodigoBobina},
+        {"campo": "Formato", "valor": data.DescripcionMedida},
+        {"campo": "Sub-bobina", "valor": data.IdSubBobinaServilleta},
+        {"campo": "Peso bruto (kg)", "valor": data.PesoBrutoKg},
+        {"campo": "Gramaje", "valor": data.GramajeGr},
+        {"campo": "Proveedor", "valor": data.NombreProveedor},
+        {"campo": "Recepción", "valor": data.FechaRecepcion},
+    ]
+
+
+def construir_reporte_detalle_produccion_servilleta(
+    data: ReporteProduccionServilletaDetalleResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Detalle de producción - Servilleta",
+        subtitulo=f"Producción #{data.IdProduccionServilleta} - {data.NombreTipoBobinaServilleta}",
+        filtros={"Estado": data.NombreEstadoProduccion, "Turno": data.NombreTurno},
+        generado_en=datetime.now(ZONA_BOLIVIA),
+    )
+
+    reporte.titulo_seccion("Datos generales")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=_datos_generales_produccion_servilleta(data),
+    )
+
+    reporte.titulo_seccion("Sub-bobina utilizada")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=_subbobina_utilizada_servilleta(data),
+    )
+
+    if data.Pausas is not None:
+        reporte.titulo_seccion(f"Pausas ({len(data.Pausas)})")
+        if data.Pausas:
+            _tabla_pausas_servilleta(reporte, data.Pausas)
+            reporte.parrafo(
+                f"Tiempo total pausado: {_formatear_duracion(data.TotalTiempoPausado)}"
+            )
+        else:
+            reporte.parrafo("Esta producción no registró pausas.")
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_detalle_produccion_servilleta(id_produccion: int) -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return f"detalle-produccion-servilleta-{id_produccion}-{ahora:%Y%m%d-%H%M}.pdf"
+
+
+def construir_reporte_cancelacion_produccion_servilleta(
+    data: ReporteCancelacionProduccionServilletaResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Producción cancelada - Servilleta",
+        subtitulo=f"Producción #{data.IdProduccionServilleta} - {data.NombreTipoBobinaServilleta}",
+        filtros={"Turno": data.NombreTurno, "Cancelada por": data.Cancelacion.Operador},
+        generado_en=datetime.now(ZONA_BOLIVIA),
+    )
+
+    reporte.titulo_seccion("Motivo de cancelación")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=[
+            {"campo": "Fecha y hora", "valor": data.Cancelacion.FechaHoraCancelacion},
+            {"campo": "Motivo", "valor": data.Cancelacion.MotivoCancelacion},
+            {"campo": "Cancelado por", "valor": data.Cancelacion.Operador},
+            {"campo": "CI", "valor": data.Cancelacion.Ci},
+            {"campo": "Rol", "valor": data.Cancelacion.NombreRol},
+        ],
+    )
+
+    reporte.titulo_seccion("Datos generales")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=_datos_generales_produccion_servilleta(data),
+    )
+
+    reporte.titulo_seccion("Sub-bobina utilizada")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=_subbobina_utilizada_servilleta(data),
+    )
+
+    reporte.titulo_seccion(f"Pausas ({len(data.Pausas)})")
+    if data.Pausas:
+        _tabla_pausas_servilleta(reporte, data.Pausas)
+        reporte.parrafo(
+            f"Tiempo total pausado: {_formatear_duracion(data.TotalTiempoPausado)}"
+        )
+    else:
+        reporte.parrafo("Esta producción no registró pausas antes de cancelarse.")
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_cancelacion_produccion_servilleta(id_produccion: int) -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return f"cancelacion-produccion-servilleta-{id_produccion}-{ahora:%Y%m%d-%H%M}.pdf"
+
+
+def construir_reporte_produccion_servilleta_por_periodo(
+    data: ReporteProduccionServilletaPorPeriodoResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Producción por período - Servilleta",
+        subtitulo=(
+            f"Del {data.PeriodoInicio.strftime('%d/%m/%Y')} "
+            f"al {data.PeriodoFin.strftime('%d/%m/%Y')}"
+        ),
+        filtros={
+            "Producciones": f"{data.TotalProducciones:,}".replace(",", "."),
+        },
+        generado_en=datetime.now(ZONA_BOLIVIA),
+    )
+
+    reporte.titulo_seccion("Resumen")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=[
+            {
+                "campo": "Total de producciones",
+                "valor": f"{data.TotalProducciones:,}".replace(",", "."),
+            },
+            {
+                "campo": "Total de pausas",
+                "valor": f"{data.TotalPausas:,}".replace(",", "."),
+            },
+            {
+                "campo": "Tiempo total pausado",
+                "valor": _formatear_duracion(data.TotalTiempoPausado),
+            },
+        ],
+    )
+
+    reporte.titulo_seccion(f"Producciones ({data.TotalProducciones})")
+    if data.Producciones:
+        reporte.tabla(
+            columnas=[
+                ("Turno", "NombreTurno"),
+                (
+                    "Operador",
+                    lambda p: reporte.celda_multilinea(
+                        [f"{p.Operador},", p.Ci, p.NombreRol]
+                    ),
+                ),
+                ("Tipo", "NombreTipoBobinaServilleta"),
+                ("Código", "CodigoBobina"),
+                ("Formato", "DescripcionMedida"),
+                ("Inicio", "FechaInicioProduccion"),
+                ("Fin", "FechaFinProduccion"),
+                ("Estado", "NombreEstadoProduccion"),
+            ],
+            filas=data.Producciones,
+        )
+    else:
+        reporte.parrafo("No hubo producciones en este período.")
+
+    reporte.titulo_seccion("Pausas por motivo")
+    if data.PausasPorMotivo:
+        reporte.tabla(
+            columnas=[
+                ("Motivo", "Motivo"),
+                ("Cantidad", "CantidadPausas"),
+                ("Tiempo total", lambda p: _formatear_duracion(p.TiempoTotal)),
+            ],
+            filas=data.PausasPorMotivo,
+        )
+    else:
+        reporte.parrafo("No hubo pausas registradas en este período.")
+
+    if data.Cancelaciones is not None:
+        reporte.titulo_seccion(f"Cancelaciones ({len(data.Cancelaciones)})")
+        if data.Cancelaciones:
+            reporte.tabla(
+                columnas=[
+                    ("Producción", "IdProduccionServilleta"),
+                    ("Fecha y hora", "FechaHoraCancelacion"),
+                    ("Motivo", "MotivoCancelacion"),
+                    (
+                        "Cancelado por",
+                        lambda c: f"{c.PrimerNombre} {c.ApellidoPaterno}",
+                    ),
+                    ("Rol", "NombreRol"),
+                ],
+                filas=data.Cancelaciones,
+            )
+        else:
+            reporte.parrafo("No hubo cancelaciones en este período.")
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_produccion_servilleta_por_periodo(
+    fecha_inicio: date, fecha_fin: date
+) -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return (
+        f"produccion-servilleta-periodo-{fecha_inicio:%Y%m%d}-{fecha_fin:%Y%m%d}"
         f"-{ahora:%Y%m%d-%H%M}.pdf"
     )
