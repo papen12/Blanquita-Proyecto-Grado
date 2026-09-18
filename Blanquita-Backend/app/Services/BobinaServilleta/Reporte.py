@@ -17,6 +17,7 @@ from app.Models.BobinaServilleta.Reporte import (
     SubBobinaServilletaCatalogoResponse,
     ReporteInventarioResumenMedidaResponse,
     ReporteInventarioSubBobinaServilletaResponse,
+    ReporteInventarioCompletoServilletaResponse,
     ReporteHistorialMovimientosUnidadServilletaRequest,
     ReporteHistorialMovimientosUnidadServilletaResponse,
     MovimientoSubBobinaHistorialResponse,
@@ -53,15 +54,13 @@ class ReporteBobinaServilletaService:
     def __init__(self, db: Session):
         self.repository = ReporteBobinaServilletaRepository(db)
 
-    def ReporteInventario(
-        self, data: ReporteInventarioBobinaServilletaRequest
-    ) -> ReporteInventarioBobinaServilletaResponse:
-        params = {
-            "p_IdsTipoBobinaServilleta": data.IdsTipoBobinaServilleta or None,
-        }
-
+    def _ObtenerInventarioBobinas(
+        self, ids_tipo: list[int] | None
+    ) -> ReporteInventarioBobinaServilletaResponse | None:
         try:
-            filas = self.repository.ReporteInventario(params)
+            filas = self.repository.ReporteInventario(
+                {"p_IdsTipoBobinaServilleta": ids_tipo}
+            )
         except SQLAlchemyError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -69,10 +68,7 @@ class ReporteBobinaServilletaService:
             )
 
         if not filas:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No hay bobinas de servilleta en almacén para el informe solicitado",
-            )
+            return None
 
         primera = filas[0]
 
@@ -119,6 +115,19 @@ class ReporteBobinaServilletaService:
             Resumen=list(resumen.values()),
             Bobinas=bobinas,
         )
+
+    def ReporteInventario(
+        self, data: ReporteInventarioBobinaServilletaRequest
+    ) -> ReporteInventarioBobinaServilletaResponse:
+        resultado = self._ObtenerInventarioBobinas(data.IdsTipoBobinaServilleta or None)
+
+        if resultado is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No hay bobinas de servilleta en almacén para el informe solicitado",
+            )
+
+        return resultado
 
     def VerBobinasServilleta(
         self, data: VerBobinasServilletaRequest
@@ -190,7 +199,9 @@ class ReporteBobinaServilletaService:
             SubBobinas=sub_bobinas,
         )
 
-    def ReporteInventarioSubBobina(self) -> ReporteInventarioSubBobinaServilletaResponse:
+    def _ObtenerInventarioSubBobinas(
+        self,
+    ) -> ReporteInventarioSubBobinaServilletaResponse | None:
         try:
             filas_resumen = self.repository.VerResumenSubBobinas()
         except SQLAlchemyError:
@@ -205,10 +216,7 @@ class ReporteBobinaServilletaService:
         total = sum(r.CantidadSubBobinas for r in resumen)
 
         if total == 0:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No hay sub-bobinas de servilleta en almacén para el informe solicitado",
-            )
+            return None
 
         try:
             filas_detalle = self.repository.VerSubBobinasServilleta(
@@ -236,6 +244,32 @@ class ReporteBobinaServilletaService:
             FechaGeneracion=datetime.now(ZONA_BOLIVIA),
             TotalSubBobinas=total,
             Resumen=resumen,
+            SubBobinas=sub_bobinas,
+        )
+
+    def ReporteInventarioSubBobina(self) -> ReporteInventarioSubBobinaServilletaResponse:
+        resultado = self._ObtenerInventarioSubBobinas()
+
+        if resultado is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No hay sub-bobinas de servilleta en almacén para el informe solicitado",
+            )
+
+        return resultado
+
+    def ReporteInventarioCompleto(self) -> ReporteInventarioCompletoServilletaResponse:
+        bobinas = self._ObtenerInventarioBobinas(None)
+        sub_bobinas = self._ObtenerInventarioSubBobinas()
+
+        if bobinas is None and sub_bobinas is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No hay bobinas ni sub-bobinas de servilleta en almacén para el informe solicitado",
+            )
+
+        return ReporteInventarioCompletoServilletaResponse(
+            Bobinas=bobinas,
             SubBobinas=sub_bobinas,
         )
 

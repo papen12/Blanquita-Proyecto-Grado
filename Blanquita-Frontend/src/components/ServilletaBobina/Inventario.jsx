@@ -11,6 +11,7 @@ import {
   Disc,
   PackageX,
   Check,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
+import {
   verResumenInventarioBobinaServilleta,
   verDetalleInventarioBobinaServilleta,
   verResumenInventarioSubBobinaServilleta,
@@ -48,6 +55,7 @@ import {
   abrirBobinaServilleta,
   iniciarProduccionServilleta,
 } from "../../services/BobinaServilleta/Produccion";
+import { descargarReporteInventarioCompletoServilleta } from "../../services/BobinaServilleta/Reportes";
 import { dateFormatter } from "@/utils/dates";
 import Header from "@/components/layout/Header";
 import { Roles } from "@/constants/Values";
@@ -417,6 +425,20 @@ export default function InventarioBobinaServilleta({ usuario }) {
   const [motivoBaja, setMotivoBaja] = useState("");
   const [enviandoBaja, setEnviandoBaja] = useState(false);
 
+  const [descargandoInventario, setDescargandoInventario] = useState(false);
+
+  const descargarInventarioCompleto = async () => {
+    setDescargandoInventario(true);
+    try {
+      await descargarReporteInventarioCompletoServilleta();
+      toast.success("Informe de inventario descargado");
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setDescargandoInventario(false);
+    }
+  };
+
   useEffect(() => {
     cargarResumen();
     cargarFuera();
@@ -644,6 +666,7 @@ export default function InventarioBobinaServilleta({ usuario }) {
   };
 
   return (
+    <TooltipProvider>
     <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <Header
         titulo="Almacén · Materia Prima"
@@ -657,7 +680,32 @@ export default function InventarioBobinaServilleta({ usuario }) {
               }
             : null
         }
-      />
+      >
+        {usuario?.IdRol === Roles.Encargado && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  onClick={descargarInventarioCompleto}
+                  disabled={descargandoInventario}
+                  className="h-11 gap-2 bg-white font-bold text-c3 shadow-md hover:bg-slate-100"
+                >
+                  {descargandoInventario ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Download size={16} strokeWidth={2.75} />
+                  )}
+                  Descargar inventario
+                </Button>
+              }
+            />
+            <TooltipContent>
+              PDF con la cantidad de bobinas de servilleta en almacén (y sus
+              unidades) más todas las sub-bobinas en inventario
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </Header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
@@ -1113,5 +1161,6 @@ export default function InventarioBobinaServilleta({ usuario }) {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

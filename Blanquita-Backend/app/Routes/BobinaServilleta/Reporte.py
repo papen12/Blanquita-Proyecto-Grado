@@ -46,6 +46,8 @@ from app.Reportes.BobinaServilleta import (
     nombre_archivo_cancelacion_produccion_servilleta,
     construir_reporte_produccion_servilleta_por_periodo,
     nombre_archivo_produccion_servilleta_por_periodo,
+    construir_reporte_inventario_completo_servilleta,
+    nombre_archivo_inventario_completo_servilleta,
 )
 
 
@@ -58,6 +60,30 @@ def reporte_bobina_servilleta_service(
     db: Session = Depends(get_db),
 ) -> ReporteBobinaServilletaService:
     return ReporteBobinaServilletaService(db)
+
+
+@bs_ReporteRouter.get(
+    "/inventario/completo",
+    status_code=200,
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+def ReporteInventarioCompletoServilleta(
+    usuario_actual: dict = Depends(
+        require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
+    ),
+    service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
+):
+    data = service.ReporteInventarioCompleto()
+    pdf = construir_reporte_inventario_completo_servilleta(data)
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo_inventario_completo_servilleta()}"'
+        },
+    )
 
 
 @bs_ReporteRouter.get(

@@ -4,6 +4,7 @@ from typing import Optional
 from app.Models.BobinaServilleta.Reporte import (
     ReporteInventarioBobinaServilletaResponse,
     ReporteInventarioSubBobinaServilletaResponse,
+    ReporteInventarioCompletoServilletaResponse,
     ReporteHistorialMovimientosUnidadServilletaResponse,
     ReporteDetalleBobinaServilletaResponse,
     ReporteLoteBobinaServilletaDetalleResponse,
@@ -40,18 +41,9 @@ def _tabla_pausas_servilleta(reporte: Reporte, pausas) -> None:
     )
 
 
-def construir_reporte_inventario_bobina_servilleta(
-    data: ReporteInventarioBobinaServilletaResponse,
-) -> bytes:
-    tipos = ", ".join(r.NombreTipoBobinaServilleta for r in data.Resumen) or "Todos"
-
-    reporte = Reporte(
-        titulo="Informe de inventario - Bobina de servilleta",
-        subtitulo="Bobinas en almacén",
-        filtros={"Tipos": tipos},
-        generado_en=data.FechaGeneracion,
-    )
-
+def _escribir_inventario_bobina_servilleta(
+    reporte: Reporte, data: ReporteInventarioBobinaServilletaResponse
+) -> None:
     reporte.titulo_seccion("Resumen por tipo")
     reporte.tabla(
         columnas=[
@@ -109,6 +101,21 @@ def construir_reporte_inventario_bobina_servilleta(
             filas=bobinas_tipo,
         )
 
+
+def construir_reporte_inventario_bobina_servilleta(
+    data: ReporteInventarioBobinaServilletaResponse,
+) -> bytes:
+    tipos = ", ".join(r.NombreTipoBobinaServilleta for r in data.Resumen) or "Todos"
+
+    reporte = Reporte(
+        titulo="Informe de inventario - Bobina de servilleta",
+        subtitulo="Bobinas en almacén",
+        filtros={"Tipos": tipos},
+        generado_en=data.FechaGeneracion,
+    )
+
+    _escribir_inventario_bobina_servilleta(reporte, data)
+
     return reporte.a_pdf()
 
 
@@ -117,15 +124,9 @@ def nombre_archivo_inventario_servilleta() -> str:
     return f"informe-inventario-bobina-servilleta-{ahora:%Y%m%d-%H%M}.pdf"
 
 
-def construir_reporte_inventario_subbobina_servilleta(
-    data: ReporteInventarioSubBobinaServilletaResponse,
-) -> bytes:
-    reporte = Reporte(
-        titulo="Informe de inventario - Sub-bobina de servilleta",
-        subtitulo="Sub-bobinas en almacén",
-        generado_en=data.FechaGeneracion,
-    )
-
+def _escribir_inventario_subbobina_servilleta(
+    reporte: Reporte, data: ReporteInventarioSubBobinaServilletaResponse
+) -> None:
     reporte.titulo_seccion("Resumen por formato")
     reporte.tabla(
         columnas=[
@@ -157,12 +158,61 @@ def construir_reporte_inventario_subbobina_servilleta(
         else:
             reporte.parrafo("No hay sub-bobinas en almacén con este formato.")
 
+
+def construir_reporte_inventario_subbobina_servilleta(
+    data: ReporteInventarioSubBobinaServilletaResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Informe de inventario - Sub-bobina de servilleta",
+        subtitulo="Sub-bobinas en almacén",
+        generado_en=data.FechaGeneracion,
+    )
+
+    _escribir_inventario_subbobina_servilleta(reporte, data)
+
     return reporte.a_pdf()
 
 
 def nombre_archivo_inventario_subbobina_servilleta() -> str:
     ahora = datetime.now(ZONA_BOLIVIA)
     return f"informe-inventario-subbobina-servilleta-{ahora:%Y%m%d-%H%M}.pdf"
+
+
+def construir_reporte_inventario_completo_servilleta(
+    data: ReporteInventarioCompletoServilletaResponse,
+) -> bytes:
+    generado_en = (
+        data.Bobinas.FechaGeneracion
+        if data.Bobinas
+        else data.SubBobinas.FechaGeneracion
+        if data.SubBobinas
+        else datetime.now(ZONA_BOLIVIA)
+    )
+
+    reporte = Reporte(
+        titulo="Informe de inventario - Bobina de servilleta",
+        subtitulo="Bobinas y sub-bobinas en almacén",
+        generado_en=generado_en,
+    )
+
+    reporte.titulo_seccion("Bobinas de servilleta")
+    if data.Bobinas:
+        _escribir_inventario_bobina_servilleta(reporte, data.Bobinas)
+    else:
+        reporte.parrafo("No hay bobinas de servilleta en almacén.")
+
+    reporte.titulo_seccion("Sub-bobinas de servilleta")
+    if data.SubBobinas:
+        _escribir_inventario_subbobina_servilleta(reporte, data.SubBobinas)
+    else:
+        reporte.parrafo("No hay sub-bobinas de servilleta en almacén.")
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_inventario_completo_servilleta() -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return f"informe-inventario-servilleta-{ahora:%Y%m%d-%H%M}.pdf"
 
 
 def construir_reporte_historial_movimientos_unidad_servilleta(

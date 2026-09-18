@@ -126,6 +126,11 @@ class ReporteInventarioSubBobinaServilletaResponse(BaseModel):
     SubBobinas: list[SubBobinaServilletaCatalogoResponse]
 
 
+class ReporteInventarioCompletoServilletaResponse(BaseModel):
+    Bobinas: Optional[ReporteInventarioBobinaServilletaResponse] = None
+    SubBobinas: Optional[ReporteInventarioSubBobinaServilletaResponse] = None
+
+
 class ReporteHistorialMovimientosUnidadServilletaRequest(BaseModel):
     IdUnidadBobinaServilleta: int
 

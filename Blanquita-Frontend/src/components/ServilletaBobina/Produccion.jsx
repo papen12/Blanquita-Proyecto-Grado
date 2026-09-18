@@ -7,6 +7,7 @@ import {
   Loader2,
   Clock,
   Layers,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,12 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
+import {
   verProduccionServilletaActivas,
   verPausasProduccionServilletaActivas,
   pausarProduccionServilleta,
@@ -41,13 +48,22 @@ import {
   finalizarProduccionServilleta,
   cancelarProduccionServilleta,
 } from "../../services/BobinaServilleta/Produccion";
+import { descargarReporteProduccionServilletaPorPeriodo } from "../../services/BobinaServilleta/Reportes";
 import { ObservacionServilleta } from "@/constants/OperadorConfig";
-import { MOTIVO_CANCELACION_MIN, MOTIVO_CANCELACION_MAX } from "@/constants/Values";
+import { MOTIVO_CANCELACION_MIN, MOTIVO_CANCELACION_MAX, Roles } from "@/constants/Values";
 import { dateFormatter } from "@/utils/dates";
 import { extraerMensajeError } from "@/utils/validators";
 import Header from "@/components/layout/Header";
 
 const SEPARADOR = ". ";
+
+function hoyISO() {
+  const ahora = new Date();
+  const anio = ahora.getFullYear();
+  const mes = String(ahora.getMonth() + 1).padStart(2, "0");
+  const dia = String(ahora.getDate()).padStart(2, "0");
+  return `${anio}-${mes}-${dia}`;
+}
 
 function alternarMotivoEnTexto(motivo, actual) {
   if (actual.includes(motivo)) {
@@ -212,6 +228,21 @@ export default function ProduccionBobinaServilleta({ usuario }) {
   const [alertFinalizar, setAlertFinalizar] = useState({ open: false, produccion: null });
   const [enviandoFinalizar, setEnviandoFinalizar] = useState(false);
 
+  const [descargandoReporteDia, setDescargandoReporteDia] = useState(false);
+
+  const descargarReporteDia = async () => {
+    setDescargandoReporteDia(true);
+    try {
+      const hoy = hoyISO();
+      await descargarReporteProduccionServilletaPorPeriodo(hoy, hoy, true);
+      toast.success("Reporte del día descargado");
+    } catch (e) {
+      toast.error(extraerMensajeError(e, e.message));
+    } finally {
+      setDescargandoReporteDia(false);
+    }
+  };
+
   useEffect(() => {
     cargarActivas();
     cargarPausadas();
@@ -350,8 +381,34 @@ export default function ProduccionBobinaServilleta({ usuario }) {
   };
 
   return (
+    <TooltipProvider>
     <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
-      <Header titulo="Producción" subtitulo="Producción de Bobinas de Servilleta" />
+      <Header titulo="Producción" subtitulo="Producción de Bobinas de Servilleta">
+        {usuario?.IdRol === Roles.Encargado && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  onClick={descargarReporteDia}
+                  disabled={descargandoReporteDia}
+                  className="h-11 gap-2 bg-white font-bold text-c3 shadow-md hover:bg-slate-100"
+                >
+                  {descargandoReporteDia ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Download size={16} strokeWidth={2.75} />
+                  )}
+                  Reporte del día
+                </Button>
+              }
+            />
+            <TooltipContent>
+              PDF con todas las producciones de hoy, incluyendo pausas y
+              cancelaciones
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </Header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
         <Tabs value={vista} onValueChange={setVista} className="mb-5">
@@ -633,5 +690,6 @@ export default function ProduccionBobinaServilleta({ usuario }) {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }

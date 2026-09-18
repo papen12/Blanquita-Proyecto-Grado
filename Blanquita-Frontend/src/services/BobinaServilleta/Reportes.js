@@ -43,6 +43,13 @@ async function descargarReportePDF(url, nombrePorDefecto) {
   descargarArchivo(blob, nombreArchivo);
 }
 
+export async function descargarReporteInventarioCompletoServilleta() {
+  await descargarReportePDF(
+    `${BASE_URL}/inventario/completo`,
+    "reporte-inventario-servilleta.pdf"
+  );
+}
+
 export async function descargarReporteInventarioBobinaServilleta(idsTipoBobinaServilleta) {
   const params = construirQueryParams({ tipos: idsTipoBobinaServilleta });
   const query = params.toString();

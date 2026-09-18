@@ -22,7 +22,7 @@ export default function ServilletaBobinaReportes({ usuario }) {
       <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
         <Header
           volver={`/${prefijo}/reportes/inicio`}
-          titulo="Reportes · Bobina Servilleta"
+          titulo="Reportes · Inventario Bobina Servilleta"
           subtitulo={SUBTITULOS[tab]}
         />
 
