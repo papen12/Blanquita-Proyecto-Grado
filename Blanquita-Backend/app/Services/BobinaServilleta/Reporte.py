@@ -23,6 +23,14 @@ from app.Models.BobinaServilleta.Reporte import (
     ReporteDetalleBobinaServilletaRequest,
     ReporteDetalleBobinaServilletaResponse,
     UnidadDetalleBobinaServilletaResponse,
+    VerLotesBobinaServilletaRequest,
+    VerLotesBobinaServilletaResponse,
+    LoteBobinaServilletaCatalogoResponse,
+    ReporteLoteBobinaServilletaDetalleRequest,
+    ReporteLoteBobinaServilletaDetalleResponse,
+    BobinaLoteServilletaDetalleResponse,
+    ReporteLotesServilletaPorPeriodoRequest,
+    ReporteLotesServilletaPorPeriodoResponse,
 )
 from app.Repository.BobinaServilleta.Reporte import ReporteBobinaServilletaRepository
 from app.utils.dates import ZONA_BOLIVIA
@@ -306,4 +314,116 @@ class ReporteBobinaServilletaService:
             FechaRecepcion=primera["FechaRecepcion"],
             NombreProveedor=primera["NombreProveedor"],
             Unidades=list(unidades.values()),
+        )
+
+    def VerLotesBobinaServilleta(
+        self, data: VerLotesBobinaServilletaRequest
+    ) -> VerLotesBobinaServilletaResponse:
+        params = {
+            "p_FechaInicio": data.FechaInicio,
+            "p_FechaFin": data.FechaFin,
+            "p_IdProveedor": data.IdProveedor,
+            "p_IdsTipoBobinaServilleta": data.IdsTipoBobinaServilleta or None,
+        }
+
+        try:
+            filas = self.repository.VerLotesBobinaServilleta(params)
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener el catálogo de lotes, verifica los datos ingresados",
+            )
+
+        total = len(filas)
+        inicio = (data.Pagina - 1) * data.TamanoPagina
+        fin = inicio + data.TamanoPagina
+        filas_pagina = filas[inicio:fin]
+
+        lotes = [
+            LoteBobinaServilletaCatalogoResponse(**fila) for fila in filas_pagina
+        ]
+
+        return VerLotesBobinaServilletaResponse(
+            Total=total,
+            Pagina=data.Pagina,
+            TamanoPagina=data.TamanoPagina,
+            Lotes=lotes,
+        )
+
+    def _ObtenerDetalleLoteServilleta(
+        self, id_lote_bobina_servilleta: int
+    ) -> ReporteLoteBobinaServilletaDetalleResponse | None:
+        try:
+            filas = self.repository.ReporteLoteBobinaServilletaDetalle(
+                {"p_IdLoteBobinaServilleta": id_lote_bobina_servilleta}
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener el detalle del lote, verifica los datos ingresados",
+            )
+
+        if not filas:
+            return None
+
+        primera = filas[0]
+        bobinas = [BobinaLoteServilletaDetalleResponse(**fila) for fila in filas]
+
+        return ReporteLoteBobinaServilletaDetalleResponse(
+            IdLoteBobinaServilleta=id_lote_bobina_servilleta,
+            FechaRecepcion=primera["FechaRecepcion"],
+            NombreProveedor=primera["NombreProveedor"],
+            CantidadBobinas=primera["CantidadBobinas"],
+            Bobinas=bobinas,
+        )
+
+    def ReporteLoteBobinaServilletaDetalle(
+        self, data: ReporteLoteBobinaServilletaDetalleRequest
+    ) -> ReporteLoteBobinaServilletaDetalleResponse:
+        detalle = self._ObtenerDetalleLoteServilleta(data.IdLoteBobinaServilleta)
+
+        if detalle is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró el lote solicitado",
+            )
+
+        return detalle
+
+    def ReporteLotesServilletaPorPeriodo(
+        self, data: ReporteLotesServilletaPorPeriodoRequest
+    ) -> ReporteLotesServilletaPorPeriodoResponse:
+        try:
+            filas_lotes = self.repository.VerLotesBobinaServilleta(
+                {
+                    "p_FechaInicio": data.FechaInicio,
+                    "p_FechaFin": data.FechaFin,
+                    "p_IdProveedor": None,
+                    "p_IdsTipoBobinaServilleta": None,
+                }
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudieron obtener los lotes del período, verifica los datos ingresados",
+            )
+
+        lotes = [
+            detalle
+            for fila in filas_lotes
+            if (
+                detalle := self._ObtenerDetalleLoteServilleta(
+                    fila["IdLoteBobinaServilleta"]
+                )
+            )
+            is not None
+        ]
+        total_bobinas = sum(lote.CantidadBobinas for lote in lotes)
+
+        return ReporteLotesServilletaPorPeriodoResponse(
+            PeriodoInicio=data.FechaInicio,
+            PeriodoFin=data.FechaFin,
+            TotalLotes=len(lotes),
+            TotalBobinas=total_bobinas,
+            Lotes=lotes,
         )

@@ -37,3 +37,26 @@ export const VerBobinasServilletaResponse = (data) => ({
   TamanoPagina: data.TamanoPagina,
   Bobinas: (data.Bobinas ?? []).map(BobinaServilletaCatalogoResponse)
 });
+
+export const VerLotesBobinaServilletaRequest = (filtros = {}) => ({
+  FechaInicio: filtros.FechaInicio ?? null,
+  FechaFin: filtros.FechaFin ?? null,
+  IdProveedor: filtros.IdProveedor ?? null,
+  IdsTipoBobinaServilleta: filtros.IdsTipoBobinaServilleta ?? null,
+  Pagina: filtros.Pagina ?? 1,
+  TamanoPagina: filtros.TamanoPagina ?? 50
+});
+
+export const LoteBobinaServilletaCatalogoResponse = (data) => ({
+  IdLoteBobinaServilleta: data.IdLoteBobinaServilleta,
+  FechaRecepcion: data.FechaRecepcion,
+  NombreProveedor: data.NombreProveedor,
+  CantidadBobinas: data.CantidadBobinas
+});
+
+export const VerLotesBobinaServilletaResponse = (data) => ({
+  Total: data.Total,
+  Pagina: data.Pagina,
+  TamanoPagina: data.TamanoPagina,
+  Lotes: (data.Lotes ?? []).map(LoteBobinaServilletaCatalogoResponse)
+});

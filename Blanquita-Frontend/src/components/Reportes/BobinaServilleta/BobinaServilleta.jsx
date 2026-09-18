@@ -5,10 +5,12 @@ import Header from "@/components/layout/Header";
 import { PREFIJO_POR_ROL } from "@/constants/Values";
 import BobinaReporteServilleta from "./Bobina";
 import UnidadBobinaReporteServilleta from "./UnidadBobina";
+import LoteReporteServilleta from "./Lote";
 
 const SUBTITULOS = {
   bobina: "Bobina",
   unidad: "Unidad Bobina",
+  lote: "Lote",
 };
 
 export default function ServilletaBobinaReportes({ usuario }) {
@@ -33,6 +35,9 @@ export default function ServilletaBobinaReportes({ usuario }) {
               <TabsTrigger value="unidad" className="flex-1 font-bold sm:flex-none sm:px-6">
                 Unidad Bobina
               </TabsTrigger>
+              <TabsTrigger value="lote" className="flex-1 font-bold sm:flex-none sm:px-6">
+                Lote
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="bobina">
@@ -41,6 +46,10 @@ export default function ServilletaBobinaReportes({ usuario }) {
 
             <TabsContent value="unidad">
               <UnidadBobinaReporteServilleta />
+            </TabsContent>
+
+            <TabsContent value="lote">
+              <LoteReporteServilleta />
             </TabsContent>
           </Tabs>
         </main>

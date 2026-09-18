@@ -176,3 +176,64 @@ class ReporteDetalleBobinaServilletaResponse(BaseModel):
     FechaRecepcion: date
     NombreProveedor: str
     Unidades: list[UnidadDetalleBobinaServilletaResponse]
+
+
+class VerLotesBobinaServilletaRequest(BaseModel):
+    FechaInicio: Optional[date] = None
+    FechaFin: Optional[date] = None
+    IdProveedor: Optional[int] = None
+    IdsTipoBobinaServilleta: Optional[list[int]] = None
+    Pagina: int = 1
+    TamanoPagina: int = 50
+
+
+class LoteBobinaServilletaCatalogoResponse(BaseModel):
+    IdLoteBobinaServilleta: int
+    FechaRecepcion: date
+    NombreProveedor: str
+    CantidadBobinas: int
+
+
+class VerLotesBobinaServilletaResponse(BaseModel):
+    Total: int
+    Pagina: int
+    TamanoPagina: int
+    Lotes: list[LoteBobinaServilletaCatalogoResponse]
+
+
+class ReporteLoteBobinaServilletaDetalleRequest(BaseModel):
+    IdLoteBobinaServilleta: int
+
+
+class BobinaLoteServilletaDetalleResponse(BaseModel):
+    IdBobinaServilleta: int
+    NombreTipoBobinaServilleta: str
+    CodigoUnidad1: Optional[str]
+    DescripcionFormato1: Optional[str]
+    PesoBrutoKg1: Optional[Decimal]
+    GramajeGr1: Optional[Decimal]
+    CodigoUnidad2: Optional[str]
+    DescripcionFormato2: Optional[str]
+    PesoBrutoKg2: Optional[Decimal]
+    GramajeGr2: Optional[Decimal]
+
+
+class ReporteLoteBobinaServilletaDetalleResponse(BaseModel):
+    IdLoteBobinaServilleta: int
+    FechaRecepcion: date
+    NombreProveedor: str
+    CantidadBobinas: int
+    Bobinas: list[BobinaLoteServilletaDetalleResponse]
+
+
+class ReporteLotesServilletaPorPeriodoRequest(BaseModel):
+    FechaInicio: date
+    FechaFin: date
+
+
+class ReporteLotesServilletaPorPeriodoResponse(BaseModel):
+    PeriodoInicio: date
+    PeriodoFin: date
+    TotalLotes: int
+    TotalBobinas: int
+    Lotes: list[ReporteLoteBobinaServilletaDetalleResponse]

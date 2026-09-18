@@ -1,10 +1,12 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from app.Models.BobinaServilleta.Reporte import (
     ReporteInventarioBobinaServilletaResponse,
     ReporteInventarioSubBobinaServilletaResponse,
     ReporteHistorialMovimientosUnidadServilletaResponse,
     ReporteDetalleBobinaServilletaResponse,
+    ReporteLoteBobinaServilletaDetalleResponse,
+    ReporteLotesServilletaPorPeriodoResponse,
 )
 from app.Reportes.reporte import Reporte
 from app.utils.dates import ZONA_BOLIVIA
@@ -233,3 +235,102 @@ def construir_reporte_detalle_bobina_servilleta(
 def nombre_archivo_detalle_bobina_servilleta(id_bobina: int) -> str:
     ahora = datetime.now(ZONA_BOLIVIA)
     return f"detalle-bobina-servilleta-{id_bobina}-{ahora:%Y%m%d-%H%M}.pdf"
+
+
+def _columnas_bobinas_lote(reporte: Reporte) -> list:
+    return [
+        ("Tipo", "NombreTipoBobinaServilleta"),
+        (
+            "Código",
+            lambda b: reporte.celda_multilinea([b.CodigoUnidad1, b.CodigoUnidad2]),
+        ),
+        (
+            "Formato",
+            lambda b: reporte.celda_multilinea(
+                [b.DescripcionFormato1, b.DescripcionFormato2]
+            ),
+        ),
+        (
+            "P. bruto (kg)",
+            lambda b: reporte.celda_multilinea([b.PesoBrutoKg1, b.PesoBrutoKg2]),
+        ),
+        (
+            "Gramaje",
+            lambda b: reporte.celda_multilinea([b.GramajeGr1, b.GramajeGr2]),
+        ),
+    ]
+
+
+def construir_reporte_lote_bobina_servilleta_detalle(
+    data: ReporteLoteBobinaServilletaDetalleResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Detalle de lote - Bobina de servilleta",
+        subtitulo=f"Lote #{data.IdLoteBobinaServilleta} - {data.NombreProveedor}",
+        filtros={
+            "Proveedor": data.NombreProveedor,
+            "Recepción": data.FechaRecepcion.strftime("%d/%m/%Y"),
+        },
+        generado_en=datetime.now(ZONA_BOLIVIA),
+    )
+
+    reporte.titulo_seccion("Datos generales")
+    reporte.tabla(
+        columnas=[("Campo", "campo"), ("Valor", "valor")],
+        filas=[
+            {"campo": "Proveedor", "valor": data.NombreProveedor},
+            {"campo": "Fecha de recepción", "valor": data.FechaRecepcion},
+            {
+                "campo": "Cantidad de bobinas",
+                "valor": f"{data.CantidadBobinas:,}".replace(",", "."),
+            },
+        ],
+    )
+
+    reporte.titulo_seccion(f"Bobinas del lote ({data.CantidadBobinas})")
+    reporte.tabla(columnas=_columnas_bobinas_lote(reporte), filas=data.Bobinas)
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_lote_servilleta_detalle(id_lote: int) -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return f"detalle-lote-bobina-servilleta-{id_lote}-{ahora:%Y%m%d-%H%M}.pdf"
+
+
+def construir_reporte_lotes_servilleta_por_periodo(
+    data: ReporteLotesServilletaPorPeriodoResponse,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Ingresos por período - Bobina de servilleta",
+        subtitulo=(
+            f"Del {data.PeriodoInicio.strftime('%d/%m/%Y')} "
+            f"al {data.PeriodoFin.strftime('%d/%m/%Y')}"
+        ),
+        filtros={
+            "Lotes": f"{data.TotalLotes:,}".replace(",", "."),
+            "Bobinas": f"{data.TotalBobinas:,}".replace(",", "."),
+        },
+        generado_en=datetime.now(ZONA_BOLIVIA),
+    )
+
+    if not data.Lotes:
+        reporte.parrafo("No se encontraron lotes en este período.")
+        return reporte.a_pdf()
+
+    for lote in data.Lotes:
+        reporte.titulo_seccion(
+            f"Lote #{lote.IdLoteBobinaServilleta} - {lote.FechaRecepcion.strftime('%d/%m/%Y')} "
+            f"- {lote.NombreProveedor} ({lote.CantidadBobinas})"
+        )
+        reporte.tabla(columnas=_columnas_bobinas_lote(reporte), filas=lote.Bobinas)
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_lotes_servilleta_periodo(fecha_inicio: date, fecha_fin: date) -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return (
+        f"ingresos-lotes-servilleta-periodo-{fecha_inicio:%Y%m%d}-{fecha_fin:%Y%m%d}"
+        f"-{ahora:%Y%m%d-%H%M}.pdf"
+    )

@@ -61,3 +61,22 @@ class ReporteBobinaServilletaRepository:
             )
         """
         return self.caller.LlamarFuncion(sql, params)
+
+    def VerLotesBobinaServilleta(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "VerLotesBobinaServilleta"(
+                :p_FechaInicio,
+                :p_FechaFin,
+                :p_IdProveedor,
+                CAST(:p_IdsTipoBobinaServilleta AS integer[])
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+
+    def ReporteLoteBobinaServilletaDetalle(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "ReporteLoteBobinaServilletaDetalle"(
+                :p_IdLoteBobinaServilleta
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)

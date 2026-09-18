@@ -1,6 +1,8 @@
 import {
   VerBobinasServilletaRequest,
-  VerBobinasServilletaResponse
+  VerBobinasServilletaResponse,
+  VerLotesBobinaServilletaRequest,
+  VerLotesBobinaServilletaResponse
 } from "../../models/BobinaServilleta/Reportes";
 import { manejarErrorBackend } from "@/utils/validators";
 import { construirQueryParams } from "@/utils/params";
@@ -75,5 +77,39 @@ export async function descargarReporteMovimientosUnidadServilleta(idUnidadBobina
   await descargarReportePDF(
     `${BASE_URL}/unidad/movimientos/${idUnidadBobinaServilleta}`,
     `reporte-movimientos-unidad-servilleta-${idUnidadBobinaServilleta}.pdf`
+  );
+}
+
+export async function verLotesBobinaServilleta(filtros) {
+  const payload = VerLotesBobinaServilletaRequest(filtros);
+  const params = construirQueryParams(payload);
+
+  const response = await fetch(`${BASE_URL}/lote/catalogo?${params.toString()}`);
+
+  if (!response.ok) {
+    await manejarErrorBackend(response);
+  }
+
+  const data = await response.json();
+
+  return VerLotesBobinaServilletaResponse(data);
+}
+
+export async function descargarReporteLoteServilletaDetalle(idLoteBobinaServilleta) {
+  await descargarReportePDF(
+    `${BASE_URL}/lote/detalle/${idLoteBobinaServilleta}`,
+    `reporte-lote-servilleta-${idLoteBobinaServilleta}.pdf`
+  );
+}
+
+export async function descargarReporteLotesServilletaPorPeriodo(fechaInicio, fechaFin) {
+  const params = construirQueryParams({
+    FechaInicio: fechaInicio,
+    FechaFin: fechaFin
+  });
+
+  await descargarReportePDF(
+    `${BASE_URL}/lote/periodo?${params.toString()}`,
+    `ingresos-lotes-servilleta-periodo-${fechaInicio}-${fechaFin}.pdf`
   );
 }

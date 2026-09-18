@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
@@ -14,6 +16,10 @@ from app.Models.BobinaServilleta.Reporte import (
     VerSubBobinasServilletaResponse,
     ReporteHistorialMovimientosUnidadServilletaRequest,
     ReporteDetalleBobinaServilletaRequest,
+    VerLotesBobinaServilletaRequest,
+    VerLotesBobinaServilletaResponse,
+    ReporteLoteBobinaServilletaDetalleRequest,
+    ReporteLotesServilletaPorPeriodoRequest,
 )
 from app.Services.BobinaServilleta.Reporte import ReporteBobinaServilletaService
 from app.Reportes.BobinaServilleta import (
@@ -25,6 +31,10 @@ from app.Reportes.BobinaServilleta import (
     nombre_archivo_historial_movimientos_unidad_servilleta,
     construir_reporte_detalle_bobina_servilleta,
     nombre_archivo_detalle_bobina_servilleta,
+    construir_reporte_lote_bobina_servilleta_detalle,
+    nombre_archivo_lote_servilleta_detalle,
+    construir_reporte_lotes_servilleta_por_periodo,
+    nombre_archivo_lotes_servilleta_periodo,
 )
 
 
@@ -207,5 +217,93 @@ def ReporteDetalleBobinaServilletaRoute(
         media_type="application/pdf",
         headers={
             "Content-Disposition": f'attachment; filename="{nombre_archivo_detalle_bobina_servilleta(id_bobina_servilleta)}"'
+        },
+    )
+
+
+@bs_ReporteRouter.get(
+    "/lote/catalogo",
+    response_model=VerLotesBobinaServilletaResponse,
+    status_code=200,
+)
+def CatalogoLotesBobinaServilleta(
+    FechaInicio: date | None = None,
+    FechaFin: date | None = None,
+    IdProveedor: int | None = None,
+    IdsTipoBobinaServilleta: list[int] | None = Query(default=None),
+    Pagina: int = 1,
+    TamanoPagina: int = 50,
+    usuario_actual: dict = Depends(
+        require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
+    ),
+    service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
+):
+    return service.VerLotesBobinaServilleta(
+        VerLotesBobinaServilletaRequest(
+            FechaInicio=FechaInicio,
+            FechaFin=FechaFin,
+            IdProveedor=IdProveedor,
+            IdsTipoBobinaServilleta=IdsTipoBobinaServilleta,
+            Pagina=Pagina,
+            TamanoPagina=TamanoPagina,
+        )
+    )
+
+
+@bs_ReporteRouter.get(
+    "/lote/detalle/{id_lote_bobina_servilleta}",
+    status_code=200,
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+def ReporteLoteServilletaDetalle(
+    id_lote_bobina_servilleta: int,
+    usuario_actual: dict = Depends(
+        require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
+    ),
+    service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
+):
+    data = service.ReporteLoteBobinaServilletaDetalle(
+        ReporteLoteBobinaServilletaDetalleRequest(
+            IdLoteBobinaServilleta=id_lote_bobina_servilleta
+        )
+    )
+    pdf = construir_reporte_lote_bobina_servilleta_detalle(data)
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo_lote_servilleta_detalle(id_lote_bobina_servilleta)}"'
+        },
+    )
+
+
+@bs_ReporteRouter.get(
+    "/lote/periodo",
+    status_code=200,
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+def ReporteLotesServilletaPorPeriodo(
+    FechaInicio: date,
+    FechaFin: date,
+    usuario_actual: dict = Depends(
+        require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
+    ),
+    service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
+):
+    data = service.ReporteLotesServilletaPorPeriodo(
+        ReporteLotesServilletaPorPeriodoRequest(
+            FechaInicio=FechaInicio, FechaFin=FechaFin
+        )
+    )
+    pdf = construir_reporte_lotes_servilleta_por_periodo(data)
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo_lotes_servilleta_periodo(FechaInicio, FechaFin)}"'
         },
     )
