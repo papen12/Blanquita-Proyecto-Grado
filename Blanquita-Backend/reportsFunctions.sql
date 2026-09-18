@@ -485,3 +485,54 @@ AS $$
       AND ("p_IdsTipoBobina" IS NULL OR b."IdTipoBobina" = ANY("p_IdsTipoBobina"))
     ORDER BY t."NombreTipoBobina", l."FechaRecepcion", b."CodigoBobina";
 $$;
+
+CREATE OR REPLACE FUNCTION "VerBobinasServilleta"(
+  p_CodigoBobina text DEFAULT NULL,
+  p_IdProveedor integer DEFAULT NULL,
+  p_IdTipoBobinaServilleta integer DEFAULT NULL,
+  p_IdEstadoMateriaPrima integer DEFAULT NULL,
+  p_IdBobinaServilleta integer DEFAULT NULL
+)
+RETURNS TABLE (
+  "IdBobinaServilleta"         integer,
+  "IdUnidadBobinaServilleta"   integer,
+  "CodigoBobina"               text,
+  "PesoBrutoKg"                numeric,
+  "GramajeGr"                  numeric,
+  "NombreTipoBobinaServilleta" text,
+  "TipoEstado"                 text,
+  "DescripcionFormato"         text,
+  "CantidadBobina435"          integer,
+  "CantidadBobina220"          integer,
+  "NombreProveedor"            text
+)
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT
+    bs."IdBobinaServilleta",
+    ubs."IdUnidadBobinaServilleta",
+    ubs."CodigoBobina",
+    ubs."PesoBrutoKg",
+    ubs."GramajeGr",
+    tbs."NombreTipoBobinaServilleta",
+    emp."TipoEstado",
+    fsb."DescripcionFormato",
+    fsb."CantidadBobina435",
+    fsb."CantidadBobina220",
+    p."NombreProveedor"
+  FROM "UnidadBobinaServilleta" ubs
+  JOIN "BobinaServilleta" bs ON bs."IdBobinaServilleta" = ubs."IdBobinaServilleta"
+  JOIN "EstadoMateriaPrima" emp ON bs."IdEstadoMateriaPrima" = emp."IdEstadoMateriaPrima"
+  JOIN "TipoBobinaServilleta" tbs ON bs."IdTipoBobinaServilleta" = tbs."IdTipoBobinaServilleta"
+  JOIN "FormatoSubBobina" fsb ON ubs."IdFormatoSubBobina" = fsb."IdFormatoSubBobina"
+  JOIN "LoteBobinaServilleta" lbs ON bs."IdLoteBobinaServilleta" = lbs."IdLoteBobinaServilleta"
+  JOIN "Proveedor" p ON p."IdProveedor" = lbs."IdProveedor"
+  WHERE
+    (p_CodigoBobina IS NULL OR ubs."CodigoBobina" = p_CodigoBobina)
+    AND (p_IdProveedor IS NULL OR lbs."IdProveedor" = p_IdProveedor)
+    AND (p_IdTipoBobinaServilleta IS NULL OR bs."IdTipoBobinaServilleta" = p_IdTipoBobinaServilleta)
+    AND (p_IdEstadoMateriaPrima IS NULL OR bs."IdEstadoMateriaPrima" = p_IdEstadoMateriaPrima)
+    AND (p_IdBobinaServilleta IS NULL OR bs."IdBobinaServilleta" = p_IdBobinaServilleta)
+  ORDER BY ubs."CodigoBobina";
+$$;

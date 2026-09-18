@@ -205,8 +205,31 @@ class Reporte:
             )
             x_texto = self.MARGEN + ancho_dibujo + 0.35 * cm
 
+        texto_generado = f"Generado: {date_formatter(self.generado_en)}"
+        texto_filtros = (
+            "   |   ".join(f"{k}: {v}" for k, v in self.filtros.items())
+            if self.filtros
+            else ""
+        )
+
+        ancho_columna_derecha = max(
+            lienzo.stringWidth(texto_generado, "Helvetica", 9),
+            lienzo.stringWidth(texto_filtros, "Helvetica", 9) if texto_filtros else 0,
+        )
+        ancho_disponible_titulo = (
+            ancho - self.MARGEN - ancho_columna_derecha - 0.5 * cm
+        ) - x_texto
+
+        fuente_titulo = 14
+        while (
+            fuente_titulo > 9
+            and lienzo.stringWidth(self.titulo, "Helvetica-Bold", fuente_titulo)
+            > ancho_disponible_titulo
+        ):
+            fuente_titulo -= 0.5
+
         lienzo.setFillColor(self.COLOR_PRIMARIO)
-        lienzo.setFont("Helvetica-Bold", 14)
+        lienzo.setFont("Helvetica-Bold", fuente_titulo)
         lienzo.drawString(x_texto, tope - 0.4 * cm, self.titulo)
 
         lienzo.setFillColor(colors.black)
@@ -216,13 +239,8 @@ class Reporte:
             lienzo.drawString(x_texto, tope - 1.45 * cm, self.subtitulo)
 
         lienzo.setFont("Helvetica", 9)
-        lienzo.drawRightString(
-            ancho - self.MARGEN,
-            tope - 0.4 * cm,
-            f"Generado: {date_formatter(self.generado_en)}",
-        )
-        if self.filtros:
-            texto_filtros = "   |   ".join(f"{k}: {v}" for k, v in self.filtros.items())
+        lienzo.drawRightString(ancho - self.MARGEN, tope - 0.4 * cm, texto_generado)
+        if texto_filtros:
             lienzo.drawRightString(ancho - self.MARGEN, tope - 1.0 * cm, texto_filtros)
 
         linea_y = alto - self.MARGEN - self.ALTO_ENCABEZADO + 0.35 * cm

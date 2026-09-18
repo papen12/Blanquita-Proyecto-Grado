@@ -94,6 +94,17 @@ export const RutasReportes = [
       { titulo: "Producción", icono: Factory, ruta: "produccion" },
     ],
   },
+
+  {
+    titulo: "Bobina Servilleta",
+    icono: SquareStack,
+    ruta: "bobina-servilleta",
+    subrutas: [
+      { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
+      { titulo: "Producción", icono: Factory, ruta: "produccion" },
+    ],
+  },
+
   {
     titulo: "Rodela",
     icono: Database,
