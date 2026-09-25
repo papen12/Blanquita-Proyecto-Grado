@@ -148,6 +148,17 @@ class MovimientoSubBobinaHistorialResponse(BaseModel):
     NombreRol: str
 
 
+class MovimientoBobinaServilletaResponse(BaseModel):
+    IdMovimientoBobinaServilleta: int
+    NombreMovimiento: str
+    FechaMovimiento: datetime
+    Observacion: Optional[str]
+    Ci: str
+    PrimerNombre: str
+    ApellidoPaterno: str
+    NombreRol: str
+
+
 class ReporteHistorialMovimientosUnidadServilletaResponse(BaseModel):
     IdUnidadBobinaServilleta: int
     CodigoBobina: str
@@ -180,6 +191,7 @@ class ReporteDetalleBobinaServilletaResponse(BaseModel):
     CodigoLote: str
     FechaRecepcion: date
     NombreProveedor: str
+    MovimientosBobina: list[MovimientoBobinaServilletaResponse]
     Unidades: list[UnidadDetalleBobinaServilletaResponse]
 
 

@@ -24,6 +24,7 @@ from app.Models.BobinaServilleta.Reporte import (
     ReporteDetalleBobinaServilletaRequest,
     ReporteDetalleBobinaServilletaResponse,
     UnidadDetalleBobinaServilletaResponse,
+    MovimientoBobinaServilletaResponse,
     VerLotesBobinaServilletaRequest,
     VerLotesBobinaServilletaResponse,
     LoteBobinaServilletaCatalogoResponse,
@@ -353,6 +354,23 @@ class ReporteBobinaServilletaService:
                     MovimientoSubBobinaHistorialResponse(**fila)
                 )
 
+        try:
+            filas_movimientos_bobina = (
+                self.repository.ReporteHistorialMovimientosBobinaServilleta(
+                    {"p_IdBobinaServilleta": data.IdBobinaServilleta}
+                )
+            )
+        except SQLAlchemyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo obtener el historial de movimientos de la bobina, verifica los datos ingresados",
+            )
+
+        movimientos_bobina = [
+            MovimientoBobinaServilletaResponse(**fila_movimiento)
+            for fila_movimiento in filas_movimientos_bobina
+        ]
+
         return ReporteDetalleBobinaServilletaResponse(
             IdBobinaServilleta=primera["IdBobinaServilleta"],
             NombreTipoBobinaServilleta=primera["NombreTipoBobinaServilleta"],
@@ -360,6 +378,7 @@ class ReporteBobinaServilletaService:
             CodigoLote=primera["CodigoLote"],
             FechaRecepcion=primera["FechaRecepcion"],
             NombreProveedor=primera["NombreProveedor"],
+            MovimientosBobina=movimientos_bobina,
             Unidades=list(unidades.values()),
         )
 

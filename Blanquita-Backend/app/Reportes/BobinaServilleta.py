@@ -276,6 +276,25 @@ def construir_reporte_detalle_bobina_servilleta(
         ],
     )
 
+    reporte.titulo_seccion(f"Movimientos de la bobina ({len(data.MovimientosBobina)})")
+    if data.MovimientosBobina:
+        reporte.tabla(
+            columnas=[
+                ("Fecha", "FechaMovimiento"),
+                ("Movimiento", "NombreMovimiento"),
+                (
+                    "Operador",
+                    lambda m: reporte.celda_multilinea(
+                        [f"{m.PrimerNombre} {m.ApellidoPaterno},", m.Ci, m.NombreRol]
+                    ),
+                ),
+                ("Observación", "Observacion"),
+            ],
+            filas=data.MovimientosBobina,
+        )
+    else:
+        reporte.parrafo("Esta bobina aún no registra movimientos.")
+
     for unidad in data.Unidades:
         reporte.titulo_seccion(f"Unidad {unidad.CodigoUnidad} - {unidad.DescripcionFormato}")
         reporte.tabla(

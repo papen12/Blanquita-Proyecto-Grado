@@ -390,7 +390,8 @@ export default function BobinaReporteServilleta() {
                             }
                           />
                           <TooltipContent>
-                            Descargar detalle de esta bobina (unidades y movimientos)
+                            Descargar detalle de esta bobina (movimientos de la
+                            bobina, unidades y sub-bobinas)
                           </TooltipContent>
                         </Tooltip>
                       </TableCell>

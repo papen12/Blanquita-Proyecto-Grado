@@ -62,6 +62,14 @@ class ReporteBobinaServilletaRepository:
         """
         return self.caller.LlamarFuncion(sql, params)
 
+    def ReporteHistorialMovimientosBobinaServilleta(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "ReporteHistorialMovimientosBobinaServilleta"(
+                :p_IdBobinaServilleta
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)
+
     def VerLotesBobinaServilleta(self, params: dict) -> list[dict]:
         sql = """
             SELECT * FROM "VerLotesBobinaServilleta"(

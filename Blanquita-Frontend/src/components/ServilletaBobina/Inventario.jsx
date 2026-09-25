@@ -18,8 +18,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -29,13 +27,6 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipTrigger,
@@ -417,14 +408,6 @@ export default function InventarioBobinaServilleta({ usuario }) {
   const [errorFuera, setErrorFuera] = useState("");
   const [procesandoFueraId, setProcesandoFueraId] = useState(null);
 
-  const [dialogAbrir, setDialogAbrir] = useState({ open: false, bobina: null });
-  const [obsAbrir, setObsAbrir] = useState("");
-  const [enviandoAbrir, setEnviandoAbrir] = useState(false);
-
-  const [dialogBaja, setDialogBaja] = useState({ open: false, sub: null });
-  const [motivoBaja, setMotivoBaja] = useState("");
-  const [enviandoBaja, setEnviandoBaja] = useState(false);
-
   const [descargandoInventario, setDescargandoInventario] = useState(false);
 
   const descargarInventarioCompleto = async () => {
@@ -589,32 +572,18 @@ export default function InventarioBobinaServilleta({ usuario }) {
     if (sel) cargarDetalle(sel.clase, sel.id);
   };
 
-  const abrirDialogAbrir = (bobina) => {
-    setObsAbrir("");
-    setDialogAbrir({ open: true, bobina });
-  };
-
-  const confirmarAbrir = async () => {
-    const bobina = dialogAbrir.bobina;
-    if (!bobina) return;
-
-    setEnviandoAbrir(true);
+  const handleAbrir = async (bobina) => {
     setProcesandoId(bobina.IdBobinaServilleta);
     try {
-      const res = await abrirBobinaServilleta(
-        bobina.IdBobinaServilleta,
-        obsAbrir.trim() || null,
-      );
+      const res = await abrirBobinaServilleta(bobina.IdBobinaServilleta);
       toast.success(
         `Bobina #${bobina.IdBobinaServilleta} abierta · ${res.CantidadSubBobinasTotal} sub-bobinas ` +
           `(${res.CantidadSubBobinas435} de 435 · ${res.CantidadSubBobinas220} de 220)`,
       );
-      setDialogAbrir({ open: false, bobina: null });
       refrescar();
     } catch (e) {
       toast.error(e.message);
     } finally {
-      setEnviandoAbrir(false);
       setProcesandoId(null);
     }
   };
@@ -635,32 +604,17 @@ export default function InventarioBobinaServilleta({ usuario }) {
     }
   };
 
-  const abrirDialogBaja = (sub) => {
-    setMotivoBaja("");
-    setDialogBaja({ open: true, sub });
-  };
-
-  const confirmarBaja = async () => {
-    const sub = dialogBaja.sub;
-    if (!sub) return;
-    if (!motivoBaja.trim()) {
-      toast.error("La observación (motivo de la baja) es obligatoria");
-      return;
-    }
-
-    setEnviandoBaja(true);
+  const handleDarDeBaja = async (sub) => {
     setProcesandoFueraId(sub.IdSubBobinaServilleta);
     try {
-      await darDeBajaSubBobina(sub.IdSubBobinaServilleta, motivoBaja.trim());
+      await darDeBajaSubBobina(sub.IdSubBobinaServilleta);
       toast.success(`Sub-bobina #${sub.IdSubBobinaServilleta} dada de baja`);
-      setDialogBaja({ open: false, sub: null });
       setFuera((prev) =>
         prev.filter((s) => s.IdSubBobinaServilleta !== sub.IdSubBobinaServilleta),
       );
     } catch (e) {
       toast.error(e.message);
     } finally {
-      setEnviandoBaja(false);
       setProcesandoFueraId(null);
     }
   };
@@ -880,7 +834,7 @@ export default function InventarioBobinaServilleta({ usuario }) {
                       bobinas={detalleFiltrado}
                       tipoSel={tipoSel}
                       procesandoId={procesandoId}
-                      onAbrir={abrirDialogAbrir}
+                      onAbrir={handleAbrir}
                     />
                   </div>
                   <div className="md:hidden">
@@ -888,7 +842,7 @@ export default function InventarioBobinaServilleta({ usuario }) {
                       bobinas={detalleFiltrado}
                       tipoSel={tipoSel}
                       procesandoId={procesandoId}
-                      onAbrir={abrirDialogAbrir}
+                      onAbrir={handleAbrir}
                     />
                   </div>
                 </>
@@ -1034,13 +988,19 @@ export default function InventarioBobinaServilleta({ usuario }) {
                         )}
                       </Button>
                       <Button
-                        onClick={() => abrirDialogBaja(s)}
+                        onClick={() => handleDarDeBaja(s)}
                         disabled={procesandoFueraId === s.IdSubBobinaServilleta}
                         variant="outline"
                         className="h-10 gap-2 border-red-300 font-bold text-red-600 hover:bg-red-50"
                       >
-                        <Ban size={14} strokeWidth={2.75} />
-                        Baja
+                        {procesandoFueraId === s.IdSubBobinaServilleta ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <>
+                            <Ban size={14} strokeWidth={2.75} />
+                            Baja
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -1050,116 +1010,6 @@ export default function InventarioBobinaServilleta({ usuario }) {
           </div>
         )}
       </main>
-
-      <Dialog
-        open={dialogAbrir.open}
-        onOpenChange={(open) =>
-          setDialogAbrir({ open, bobina: open ? dialogAbrir.bobina : null })
-        }
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Abrir bobina</DialogTitle>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-4">
-            {dialogAbrir.bobina && (
-              <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
-                <span className="font-mono font-bold text-slate-900">
-                  Bobina #{dialogAbrir.bobina.IdBobinaServilleta}
-                </span>{" "}
-                <span className="text-slate-500">
-                  se dividirá en sub-bobinas y saldrá del stock de bobinas.
-                </span>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-1.5">
-              <Label
-                htmlFor="obs-abrir"
-                className="text-xs font-bold uppercase tracking-wide text-slate-600"
-              >
-                Observación (opcional)
-              </Label>
-              <Textarea
-                id="obs-abrir"
-                value={obsAbrir}
-                onChange={(e) => setObsAbrir(e.target.value)}
-                placeholder="Ej. Bobina con núcleo dañado..."
-                className="min-h-20"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              onClick={confirmarAbrir}
-              disabled={enviandoAbrir}
-              className="h-11 w-full gap-2 bg-gradient-to-r from-c3 to-c4 font-extrabold text-white hover:opacity-90 sm:w-auto"
-            >
-              {enviandoAbrir ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                "Abrir bobina"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={dialogBaja.open}
-        onOpenChange={(open) =>
-          setDialogBaja({ open, sub: open ? dialogBaja.sub : null })
-        }
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Dar de baja</DialogTitle>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-4">
-            {dialogBaja.sub && (
-              <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
-                <span className="font-mono font-bold text-slate-900">
-                  Sub-bobina #{dialogBaja.sub.IdSubBobinaServilleta}
-                </span>{" "}
-                <span className="text-slate-500">se retirará definitivamente</span>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-1.5">
-              <Label
-                htmlFor="motivo-baja"
-                className="text-xs font-bold uppercase tracking-wide text-slate-600"
-              >
-                Motivo de la baja (obligatorio)
-              </Label>
-              <Textarea
-                id="motivo-baja"
-                value={motivoBaja}
-                onChange={(e) => setMotivoBaja(e.target.value)}
-                placeholder="Ej. Sub-bobina contaminada / dañada..."
-                className="min-h-20"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              onClick={confirmarBaja}
-              disabled={enviandoBaja || !motivoBaja.trim()}
-              className="h-11 w-full gap-2 bg-red-600 font-extrabold text-white hover:bg-red-700 sm:w-auto"
-            >
-              {enviandoBaja ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                "Dar de baja"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
     </TooltipProvider>
   );

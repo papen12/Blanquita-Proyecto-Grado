@@ -211,6 +211,16 @@ CREATE TABLE "MovimientoRodela" (
 );
 CREATE INDEX "idx_movrodela_rodela_fecha" ON "MovimientoRodela"("IdRodela", "FechaMovimiento" DESC);
 
+CREATE TABLE "MovimientoBobinaServilleta" (
+  "IdMovimientoBobinaServilleta" SERIAL PRIMARY KEY,
+  "IdBobinaServilleta" INTEGER NOT NULL REFERENCES "BobinaServilleta"("IdBobinaServilleta") ON DELETE CASCADE,
+  "IdTipoMovimiento" INTEGER NOT NULL REFERENCES "TipoMovimientoMateriaPrima"("IdTipoMovimiento") ON DELETE CASCADE,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "FechaMovimiento" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "Observacion" TEXT
+);
+CREATE INDEX "idx_movbobinaservilleta_bobina_fecha" ON "MovimientoBobinaServilleta"("IdBobinaServilleta", "FechaMovimiento" DESC);
+
 CREATE TABLE "MovimientoSubBobina" (
   "IdMovimientoSubBobina" SERIAL PRIMARY KEY,
   "IdSubBobinaServilleta" INTEGER NOT NULL REFERENCES "SubBobinaServilleta"("IdSubBobinaServilleta") ON DELETE CASCADE,
