@@ -24,9 +24,7 @@ INSERT INTO "TipoBobina" ("NombreTipoBobina", "DiametroMm", "Formato", "TaraKg")
 ('Toalla', 1210, 2760, 38),
 ('Económico', 1210, 2760, 38);
 
-INSERT INTO "TipoPallet" ("NumeroRodelas", "Descripcion") VALUES
-(1, 'Pallet estándar de una rodela'),
-(2, 'Pallet doble rodela');
+
 
 INSERT INTO "EstadoMateriaPrima" ("TipoEstado") VALUES
 ('En almacén'),
@@ -50,7 +48,8 @@ INSERT INTO "TipoMovimientoMateriaPrima" ("NombreMovimiento", "AplicaA", "Descri
 ('Baja por defecto', 'Todos', 'Retiro definitivo de materia prima por daño o defecto confirmado'),
 ('Retiro por falla operativa', 'Todos', 'Retiro de materia prima ya cargada en producción que no pudo procesarse; pasa a "Fuera de Inventario"'),
 ('Reingreso a inventario', 'Todos', 'Materia prima "Fuera de Inventario" regresa a "En almacén" para recontarse'),
-('Producción terminada', 'Todos', 'Registra el cierre de una producción.');
+('Producción terminada', 'Todos', 'Registra el cierre de una producción.'),
+('Corrección de registro', 'Todos', 'Corrección de datos registrados por error (código, pesos, gramaje). No cambia el estado de la materia prima; la observación guarda el valor anterior, el nuevo y el motivo.');
 
 INSERT INTO "EstadoProduccion" ("NombreEstadoProduccion", "DescripcionEstadoProduccion") VALUES
 ('En Producción', 'Proceso de producción activo y en curso'),

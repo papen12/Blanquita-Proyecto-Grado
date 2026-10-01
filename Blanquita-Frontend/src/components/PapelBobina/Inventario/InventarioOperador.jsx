@@ -28,6 +28,7 @@ import { TarjetaTipo } from "./TarjetaTipo";
 import { TarjetaFueraInventario } from "./TarjetaFueraInventario";
 import { TablaBobinas } from "./TablaBobinas";
 import { ListaMovilBobinas } from "./ListaMovilBobinas";
+import ModalEditarBobina from "./ModalEditarBobina";
 import Header from "@/components/layout/Header";
 import { Roles } from "@/constants/Values";
 
@@ -53,6 +54,23 @@ export default function InventarioBobinasPapel({ usuario }) {
   const [busquedaCodigoFuera, setBusquedaCodigoFuera] = useState("");
 
   const [descargandoInventario, setDescargandoInventario] = useState(false);
+
+  const esLider = usuario?.IdRol === Roles.Encargado;
+  const [bobinaEditar, setBobinaEditar] = useState(null);
+  const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
+
+  const abrirEditar = (bobina) => {
+    setBobinaEditar(bobina);
+    setModalEditarAbierto(true);
+  };
+
+  const alGuardarEdicion = (actualizada) => {
+    toast.success(`Bobina ${actualizada.CodigoBobina} corregida`);
+    // La selección se guarda por código y el código pudo cambiar.
+    setMarcadas([]);
+    if (sel) cargarDetalle(sel);
+    cargarResumen();
+  };
 
   const descargarInventarioCompleto = async () => {
     setDescargandoInventario(true);
@@ -431,6 +449,7 @@ export default function InventarioBobinasPapel({ usuario }) {
                       tipoSel={tipoSel}
                       marcadas={marcadas}
                       onToggle={toggleBobina}
+                      onEditar={esLider ? abrirEditar : undefined}
                     />
                   </div>
                   <div className="md:hidden">
@@ -439,6 +458,7 @@ export default function InventarioBobinasPapel({ usuario }) {
                       tipoSel={tipoSel}
                       marcadas={marcadas}
                       onToggle={toggleBobina}
+                      onEditar={esLider ? abrirEditar : undefined}
                     />
                   </div>
                 </>
@@ -632,6 +652,16 @@ export default function InventarioBobinasPapel({ usuario }) {
           </div>
         )}
       </main>
+
+      {esLider && (
+        <ModalEditarBobina
+          abierto={modalEditarAbierto}
+          onOpenChange={setModalEditarAbierto}
+          bobina={bobinaEditar}
+          nombreTipo={tipoSel?.NombreTipoBobina}
+          onGuardado={alGuardarEdicion}
+        />
+      )}
     </div>
     </TooltipProvider>
   );

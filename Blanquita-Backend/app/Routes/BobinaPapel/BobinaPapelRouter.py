@@ -11,7 +11,9 @@ from typing import List
 from app.Models.BobinaPapel.BobinaPapel import (
     IngresoModelo,
     IngresoLoteBobinaPapelResponse,
-    TipoBobinaPapelIngreso
+    TipoBobinaPapelIngreso,
+    EditarBobinaPapelRequest,
+    EditarBobinaPapelResponse,
 )
 
 
@@ -46,3 +48,15 @@ def ObtenerTiposBobina(
     service: BobinaPapelService = Depends(bobina_papel_service),
 ):
     return service.ObtenerTiposBobinaPapel()
+
+@BobinaPapelRouter.patch(
+    "/editar",
+    response_model=EditarBobinaPapelResponse,
+    status_code=200,
+)
+def EditarBobinaPapel(
+    data: EditarBobinaPapelRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+    service: BobinaPapelService = Depends(bobina_papel_service),
+):
+    return service.EditarBobinaPapel(data, usuario_actual["IdUsuario"])

@@ -35,12 +35,17 @@ export const ALL = async ({ request, params, cookies }) => {
   }
 
   const backendResponse = await fetch(targetUrl, init);
-  const data = await backendResponse.text();
+  const data = await backendResponse.arrayBuffer();
+
+  const headersRespuesta = {
+    "Content-Type": backendResponse.headers.get("content-type") || "application/json"
+  };
+
+  const disposicion = backendResponse.headers.get("content-disposition");
+  if (disposicion) headersRespuesta["Content-Disposition"] = disposicion;
 
   return new Response(data, {
     status: backendResponse.status,
-    headers: {
-      "Content-Type": backendResponse.headers.get("content-type") || "application/json"
-    }
+    headers: headersRespuesta
   });
 };

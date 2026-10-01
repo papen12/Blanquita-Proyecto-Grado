@@ -1,10 +1,11 @@
-import { Check } from "lucide-react";
+import { Check, SquarePen } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { dateFormatter } from "@/utils/dates";
 import { fmt } from "./constantes";
 import { MiniStat } from "./MiniStat";
 
-export function ListaMovilBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
+export function ListaMovilBobinas({ bobinas, tipoSel, marcadas, onToggle, onEditar }) {
   return (
     <div className="flex flex-col gap-2.5 p-3.5">
       {bobinas.map((b) => {
@@ -46,6 +47,19 @@ export function ListaMovilBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
               <MiniStat label="Neto" value={`${fmt(b.PesoNetoKg)} kg`} />
               <MiniStat label="Gramaje" value={`${fmt(b.Gramaje)} g/m²`} />
             </div>
+            {onEditar && (
+              <Button
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditar(b);
+                }}
+                className="h-10 gap-1.5 self-end font-bold text-c3"
+              >
+                <SquarePen size={15} strokeWidth={2.5} />
+                Editar
+              </Button>
+            )}
           </div>
         );
       })}

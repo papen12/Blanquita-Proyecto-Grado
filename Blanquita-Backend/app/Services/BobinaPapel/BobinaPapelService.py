@@ -9,7 +9,14 @@ from app.Models.BobinaPapel.BobinaPapel import (
     BobinaPapelIngresoItem,
     IngresoModelo,
     IngresoLoteBobinaPapelResponse,
-    TipoBobinaPapelIngreso
+    TipoBobinaPapelIngreso,
+    EditarBobinaPapelRequest,
+    EditarBobinaPapelResponse,
+)
+from app.utils.validators import ValidarTexto
+from app.Constants.Cantidades import (
+    LONGITUD_MINIMA_DESCRIPCION,
+    LONGITUD_MAXIMA_DESCRIPCION,
 )
 
 
@@ -69,3 +76,31 @@ class BobinaPapelService:
             return []
 
         return [TipoBobinaPapelIngreso(**tipo) for tipo in resultado]
+
+    def EditarBobinaPapel(self, data: EditarBobinaPapelRequest, id_usuario: int) -> EditarBobinaPapelResponse:
+        motivo = (data.Observacion or "").strip()
+        if not ValidarTexto(LONGITUD_MINIMA_DESCRIPCION, LONGITUD_MAXIMA_DESCRIPCION, motivo):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"El motivo de la corrección es obligatorio y debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres",
+            )
+
+        params = {
+            "p_IdBobinaPapel": data.IdBobinaPapel,
+            "p_IdUsuario": id_usuario,
+            "p_CodigoBobina": data.CodigoBobina.strip(),
+            "p_PesoBrutoKg": data.PesoBrutoKg,
+            "p_PesoNetoKg": data.PesoNetoKg,
+            "p_Gramaje": data.Gramaje,
+            "p_Observacion": motivo,
+        }
+
+        resultado = self.repository.EditarBobinaPapel(params)
+
+        if not resultado:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo corregir la bobina",
+            )
+
+        return EditarBobinaPapelResponse(**resultado)

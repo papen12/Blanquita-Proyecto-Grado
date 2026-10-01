@@ -1,4 +1,5 @@
-import { Check } from "lucide-react";
+import { Check, SquarePen } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -11,7 +12,7 @@ import {
 import { dateFormatter } from "@/utils/dates";
 import { fmt } from "./constantes";
 
-export function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
+export function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle, onEditar }) {
   return (
     <div className="overflow-x-auto">
       <Table className="min-w-[640px]">
@@ -24,7 +25,8 @@ export function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
             <TableHead>Proveedor</TableHead>
             <TableHead className="text-right">Peso bruto</TableHead>
             <TableHead className="text-right">Peso neto</TableHead>
-            <TableHead className="pr-5 text-right">Gramaje</TableHead>
+            <TableHead className={cn("text-right", !onEditar && "pr-5")}>Gramaje</TableHead>
+            {onEditar && <TableHead className="pr-5 text-right">Acción</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -64,9 +66,25 @@ export function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle }) {
                 <TableCell className="text-right font-bold tabular-nums text-slate-900">
                   {fmt(b.PesoNetoKg)} kg
                 </TableCell>
-                <TableCell className="pr-5 text-right tabular-nums text-slate-600">
+                <TableCell className={cn("text-right tabular-nums text-slate-600", !onEditar && "pr-5")}>
                   {fmt(b.Gramaje)} g/m²
                 </TableCell>
+                {onEditar && (
+                  <TableCell
+                    className="pr-5 text-right"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEditar(b)}
+                      className="gap-1.5 font-bold text-c3"
+                    >
+                      <SquarePen size={14} strokeWidth={2.5} />
+                      Editar
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}

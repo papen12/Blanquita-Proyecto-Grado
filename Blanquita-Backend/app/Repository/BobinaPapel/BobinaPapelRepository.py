@@ -24,3 +24,17 @@ class BobinaPapelRepository:
             ORDER BY "NombreTipoBobina"
         """
         return self.caller.LlamarFuncion(sql, {})
+
+    def EditarBobinaPapel(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "EditarBobinaPapel"(
+                :p_IdBobinaPapel,
+                :p_IdUsuario,
+                :p_CodigoBobina,
+                :p_PesoBrutoKg,
+                :p_PesoNetoKg,
+                :p_Gramaje,
+                :p_Observacion
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)

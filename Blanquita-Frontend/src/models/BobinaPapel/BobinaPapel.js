@@ -35,3 +35,24 @@ export const TipoBobinaPapelIngreso = (data) => ({
   IdTipoBobina: data.IdTipoBobina,
   NombreTipoBobina: data.NombreTipoBobina,
 });
+
+const numeroOpcional = (valor) =>
+  valor === null || valor === undefined || valor === "" ? null : Number(valor);
+
+export const EditarBobinaPapelRequest = (data) => ({
+  IdBobinaPapel: data.IdBobinaPapel,
+  CodigoBobina: (data.CodigoBobina ?? "").trim(),
+  PesoBrutoKg: Number(data.PesoBrutoKg),
+  PesoNetoKg: Number(data.PesoNetoKg),
+  Gramaje: numeroOpcional(data.Gramaje),
+  Observacion: (data.Observacion ?? "").trim() || null,
+});
+
+export const EditarBobinaPapelResponse = (data) => ({
+  IdBobinaPapel: data.IdBobinaPapel,
+  CodigoBobina: data.CodigoBobina,
+  PesoBrutoKg: data.PesoBrutoKg,
+  PesoNetoKg: data.PesoNetoKg,
+  Gramaje: data.Gramaje ?? null,
+  FechaMovimiento: data.FechaMovimiento,
+});

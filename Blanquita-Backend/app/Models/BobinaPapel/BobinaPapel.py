@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import List, Optional
 from pydantic import BaseModel
@@ -41,3 +41,21 @@ class IngresoLoteBobinaPapelResponse(BaseModel):
 class TipoBobinaPapelIngreso(BaseModel):
     IdTipoBobina: int
     NombreTipoBobina: str
+
+
+class EditarBobinaPapelRequest(BaseModel):
+    IdBobinaPapel: int
+    CodigoBobina: str
+    PesoBrutoKg: Decimal
+    PesoNetoKg: Decimal
+    Gramaje: Optional[Decimal] = None
+    Observacion: Optional[str] = None
+
+
+class EditarBobinaPapelResponse(BaseModel):
+    IdBobinaPapel: int
+    CodigoBobina: str
+    PesoBrutoKg: Decimal
+    PesoNetoKg: Decimal
+    Gramaje: Optional[Decimal] = None
+    FechaMovimiento: datetime
