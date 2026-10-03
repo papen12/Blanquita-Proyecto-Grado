@@ -1,20 +1,12 @@
 import { useState, useEffect } from "react";
-import { Pause, Loader2, Clock, Layers, Search, X, Download } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -22,16 +14,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
 import {
   verProduccionBobinaTubo,
   verPausasProduccionBobinaTuboActivas,
@@ -44,24 +26,33 @@ import {
 import { ObtenerTiposPapelBobina } from "../../../services/BobinaPapel/BobinaPapel";
 import { descargarReporteProduccionPorPeriodo } from "../../../services/BobinaPapel/Reportes";
 import { movimientosOperador, ObservacionesInsertarLogs } from "../../../constants/OperadorConfig";
-import { MOTIVO_CANCELACION_MIN, MOTIVO_CANCELACION_MAX, Roles } from "@/constants/Values";
-import { dateFormatter } from "@/utils/dates";
+import { Roles } from "@/constants/Values";
+import { alternarMotivoEnTexto } from "@/utils/handlers";
 import { extraerMensajeError } from "@/utils/validators";
+import { useProduccion } from "@/hooks/useProduccion";
+import {
+  ResumenProduccion,
+  TabsProduccion,
+  ListaProducciones,
+  BotonReporteDia,
+} from "@/components/Produccion/comunes";
+import {
+  DialogoPausar,
+  DialogoCancelar,
+  AlertaFinalizar,
+} from "@/components/Produccion/Dialogos";
 import Header from "../../layout/Header";
-import CardActiva from "./CardActiva";
-import CardPausada from "./CardPausada";
+import { CardActiva, CardPausada } from "./Tarjetas";
 
 const ID_TIPO_INGRESO = 1;
 const ID_TIPO_DESCUENTO = 2;
-const SEPARADOR = ". ";
 
-function hoyISO() {
-  const ahora = new Date();
-  const anio = ahora.getFullYear();
-  const mes = String(ahora.getMonth() + 1).padStart(2, "0");
-  const dia = String(ahora.getDate()).padStart(2, "0");
-  return `${anio}-${mes}-${dia}`;
-}
+const MOTIVOS_PAUSA = [
+  "Falta de pegamento",
+  "Falta de personal para continuar la producción",
+];
+
+const codigosDe = (p) => `${p.CodigoBobina1} + ${p.CodigoBobina2}`;
 
 export default function ProduccionBobinaTubo({ usuario }) {
   const [vista, setVista] = useState("activas");
@@ -70,20 +61,27 @@ export default function ProduccionBobinaTubo({ usuario }) {
   const [filtroTipo, setFiltroTipo] = useState("");
   const [buscarCodigoBobina, setBuscarCodigoBobina] = useState("");
 
-  const motivosPausa = [
-    "Falta de pegamento",
-    "Falta de personal para continuar la producción",
-  ];
+  const idTipoFiltro = filtroTipo === "" ? undefined : Number(filtroTipo);
 
-  const [activas, setActivas] = useState([]);
-  const [loadingActivas, setLoadingActivas] = useState(true);
-  const [errorActivas, setErrorActivas] = useState("");
-
-  const [pausadas, setPausadas] = useState([]);
-  const [loadingPausadas, setLoadingPausadas] = useState(true);
-  const [errorPausadas, setErrorPausadas] = useState("");
-
-  const [procesandoId, setProcesandoId] = useState(null);
+  const {
+    activas,
+    pausadas,
+    recargarTodo,
+    pausa,
+    cancelacion,
+    finalizacion,
+    procesandoId,
+    reanudar,
+  } = useProduccion({
+    verActivas: () => verProduccionBobinaTubo(idTipoFiltro),
+    verPausadas: () => verPausasProduccionBobinaTuboActivas(idTipoFiltro),
+    idDe: (p) => p.IdProduccionBobinaTubo,
+    pausar: pausarProduccion,
+    cancelar: cancelarProduccion,
+    finalizar: finalizarProduccion,
+    reanudar: reanudarProduccion,
+    dependencias: [filtroTipo],
+  });
 
   const [modalInsertar, setModalInsertar] = useState({ open: false, produccion: null });
   const [formTipoMovimiento, setFormTipoMovimiento] = useState("");
@@ -92,74 +90,11 @@ export default function ProduccionBobinaTubo({ usuario }) {
   const [errorInsertar, setErrorInsertar] = useState("");
   const [enviandoInsertar, setEnviandoInsertar] = useState(false);
 
-  const [modalPausar, setModalPausar] = useState({ open: false, produccion: null });
-  const [formMotivoPausa, setFormMotivoPausa] = useState("");
-  const [errorPausar, setErrorPausar] = useState("");
-  const [enviandoPausar, setEnviandoPausar] = useState(false);
-
-  const [modalCancelar, setModalCancelar] = useState({ open: false, produccion: null });
-  const [formMotivoCancelacion, setFormMotivoCancelacion] = useState("");
-  const [errorCancelar, setErrorCancelar] = useState("");
-  const [enviandoCancelar, setEnviandoCancelar] = useState(false);
-
-  const [alertFinalizar, setAlertFinalizar] = useState({ open: false, produccion: null });
-  const [enviandoFinalizar, setEnviandoFinalizar] = useState(false);
-
-  const [descargandoReporteDia, setDescargandoReporteDia] = useState(false);
-
-  const descargarReporteDia = async () => {
-    setDescargandoReporteDia(true);
-    try {
-      const hoy = hoyISO();
-      await descargarReporteProduccionPorPeriodo(hoy, hoy, true);
-      toast.success("Reporte del día descargado");
-    } catch (e) {
-      toast.error(extraerMensajeError(e, e.message));
-    } finally {
-      setDescargandoReporteDia(false);
-    }
-  };
-
   useEffect(() => {
     ObtenerTiposPapelBobina()
       .then(setTiposBobina)
       .catch(() => setTiposBobina([]));
   }, []);
-
-  useEffect(() => {
-    cargarActivas();
-    cargarPausadas();
-  }, [filtroTipo]);
-
-  const idTipoFiltro = filtroTipo === "" ? undefined : Number(filtroTipo);
-
-  const cargarActivas = async () => {
-    setLoadingActivas(true);
-    setErrorActivas("");
-    try {
-      const data = await verProduccionBobinaTubo(idTipoFiltro);
-      setActivas(data);
-    } catch (e) {
-      setErrorActivas(extraerMensajeError(e, e.message));
-      setActivas([]);
-    } finally {
-      setLoadingActivas(false);
-    }
-  };
-
-  const cargarPausadas = async () => {
-    setLoadingPausadas(true);
-    setErrorPausadas("");
-    try {
-      const data = await verPausasProduccionBobinaTuboActivas(idTipoFiltro);
-      setPausadas(data);
-    } catch (e) {
-      setErrorPausadas(extraerMensajeError(e, e.message));
-      setPausadas([]);
-    } finally {
-      setLoadingPausadas(false);
-    }
-  };
 
   const requiereObservacion =
     formTipoMovimiento !== "" && Number(formTipoMovimiento) !== ID_TIPO_INGRESO;
@@ -218,50 +153,12 @@ export default function ProduccionBobinaTubo({ usuario }) {
       );
       toast.success("Movimiento de logs registrado");
       setModalInsertar({ open: false, produccion: null });
-      cargarActivas();
-      cargarPausadas();
+      recargarTodo();
     } catch (e) {
       setErrorInsertar(extraerMensajeError(e, e.message));
     } finally {
       setEnviandoInsertar(false);
     }
-  };
-
-  const abrirPausar = (produccion) => {
-    setFormMotivoPausa("");
-    setErrorPausar("");
-    setModalPausar({ open: true, produccion });
-  };
-
-  const opcionesPausa = modalPausar.produccion
-    ? [
-        ...motivosPausa,
-        ...(modalPausar.produccion.CodigoBobina1
-          ? [`Empalme en la Bobina: ${modalPausar.produccion.CodigoBobina1}`]
-          : []),
-        ...(modalPausar.produccion.CodigoBobina2
-          ? [`Empalme en la Bobina: ${modalPausar.produccion.CodigoBobina2}`]
-          : []),
-      ]
-    : motivosPausa;
-
-  const alternarMotivoEnTexto = (motivo, actual) => {
-    if (actual.includes(motivo)) {
-      return actual
-        .replace(motivo, "")
-        .replace(/\.\s*\.\s*/g, ". ")
-        .replace(/^\s*\.\s*/, "")
-        .trimStart();
-    }
-    const texto = actual.trimEnd();
-    if (!texto) return motivo;
-    return texto.endsWith(".") ? `${texto} ${motivo}` : `${texto}${SEPARADOR}${motivo}`;
-  };
-
-  const motivoEstaEnTexto = (motivo) => formMotivoPausa.includes(motivo);
-
-  const alternarMotivo = (motivo) => {
-    setFormMotivoPausa((actual) => alternarMotivoEnTexto(motivo, actual));
   };
 
   const motivoObservacionEnTexto = (motivo) => formObservacionLog.includes(motivo);
@@ -270,100 +167,17 @@ export default function ProduccionBobinaTubo({ usuario }) {
     setFormObservacionLog((actual) => alternarMotivoEnTexto(motivo, actual));
   };
 
-  const motivoPausaValido =
-    formMotivoPausa.trim().length >= MOTIVO_CANCELACION_MIN &&
-    formMotivoPausa.trim().length <= MOTIVO_CANCELACION_MAX;
-
-  const confirmarPausar = async () => {
-    if (!motivoPausaValido) {
-      setErrorPausar(
-        `El motivo de la pausa debe tener entre ${MOTIVO_CANCELACION_MIN} y ${MOTIVO_CANCELACION_MAX} caracteres`,
-      );
-      return;
-    }
-    setEnviandoPausar(true);
-    setErrorPausar("");
-    try {
-      await pausarProduccion(
-        modalPausar.produccion.IdProduccionBobinaTubo,
-        formMotivoPausa.trim(),
-      );
-      toast.success("Producción pausada");
-      setModalPausar({ open: false, produccion: null });
-      cargarActivas();
-      cargarPausadas();
-    } catch (e) {
-      setErrorPausar(extraerMensajeError(e, e.message));
-    } finally {
-      setEnviandoPausar(false);
-    }
-  };
-
-  const abrirCancelar = (produccion) => {
-    setFormMotivoCancelacion("");
-    setErrorCancelar("");
-    setModalCancelar({ open: true, produccion });
-  };
-
-  const motivoCancelacionValido =
-    formMotivoCancelacion.trim().length >= MOTIVO_CANCELACION_MIN &&
-    formMotivoCancelacion.trim().length <= MOTIVO_CANCELACION_MAX;
-
-  const confirmarCancelar = async () => {
-    if (!motivoCancelacionValido) {
-      setErrorCancelar(
-        `El motivo de cancelación debe tener entre ${MOTIVO_CANCELACION_MIN} y ${MOTIVO_CANCELACION_MAX} caracteres`,
-      );
-      return;
-    }
-    setEnviandoCancelar(true);
-    setErrorCancelar("");
-    try {
-      await cancelarProduccion(
-        modalCancelar.produccion.IdProduccionBobinaTubo,
-        formMotivoCancelacion.trim(),
-      );
-      toast.success("Producción cancelada");
-      setModalCancelar({ open: false, produccion: null });
-      cargarPausadas();
-    } catch (e) {
-      setErrorCancelar(extraerMensajeError(e, e.message));
-    } finally {
-      setEnviandoCancelar(false);
-    }
-  };
-
-  const abrirFinalizar = (produccion) => {
-    setAlertFinalizar({ open: true, produccion });
-  };
-
-  const confirmarFinalizar = async () => {
-    setEnviandoFinalizar(true);
-    try {
-      await finalizarProduccion(alertFinalizar.produccion.IdProduccionBobinaTubo);
-      toast.success("Producción finalizada");
-      setAlertFinalizar({ open: false, produccion: null });
-      cargarActivas();
-    } catch (e) {
-      toast.error(extraerMensajeError(e, e.message));
-    } finally {
-      setEnviandoFinalizar(false);
-    }
-  };
-
-  const handleReanudar = async (produccion) => {
-    setProcesandoId(produccion.IdProduccionBobinaTubo);
-    try {
-      await reanudarProduccion(produccion.IdProduccionBobinaTubo);
-      toast.success("Producción reanudada");
-      cargarActivas();
-      cargarPausadas();
-    } catch (e) {
-      toast.error(extraerMensajeError(e, e.message));
-    } finally {
-      setProcesandoId(null);
-    }
-  };
+  const opcionesPausa = pausa.produccion
+    ? [
+        ...MOTIVOS_PAUSA,
+        ...(pausa.produccion.CodigoBobina1
+          ? [`Empalme en la Bobina: ${pausa.produccion.CodigoBobina1}`]
+          : []),
+        ...(pausa.produccion.CodigoBobina2
+          ? [`Empalme en la Bobina: ${pausa.produccion.CodigoBobina2}`]
+          : []),
+      ]
+    : MOTIVOS_PAUSA;
 
   const coincideCodigoBobina = (p) => {
     const q = buscarCodigoBobina.trim().toLowerCase();
@@ -374,78 +188,28 @@ export default function ProduccionBobinaTubo({ usuario }) {
     );
   };
 
-  const activasFiltradas = activas.filter(coincideCodigoBobina);
-  const pausadasFiltradas = pausadas.filter(coincideCodigoBobina);
+  const activasFiltradas = activas.datos.filter(coincideCodigoBobina);
+  const pausadasFiltradas = pausadas.datos.filter(coincideCodigoBobina);
 
-  const ResumenProduccion = ({ produccion }) => (
-    <div className="flex flex-col gap-1 rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
-      <span className="font-mono font-bold text-slate-900">
-        {produccion.CodigoBobina1} + {produccion.CodigoBobina2}
-      </span>
-      {(produccion.FechaHoraPausa || produccion.FechaInicioProduccion) && (
-        <span className="flex items-center gap-1 text-[12px] text-slate-500">
-          <Clock size={12} strokeWidth={2.75} />
-          {produccion.FechaHoraPausa
-            ? `Pausada: ${dateFormatter(produccion.FechaHoraPausa)}`
-            : `Inicio: ${dateFormatter(produccion.FechaInicioProduccion)}`}
-        </span>
-      )}
-    </div>
-  );
+  const sinCoincidencias = (estado) =>
+    `Ninguna producción ${estado} con el código «${buscarCodigoBobina.trim()}».`;
 
   return (
     <TooltipProvider>
     <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <Header titulo={"Producción"} subtitulo={"Producción de Bobina Tubo"}>
         {usuario?.IdRol === Roles.Encargado && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  onClick={descargarReporteDia}
-                  disabled={descargandoReporteDia}
-                  className="h-11 gap-2 bg-white font-bold text-c3 shadow-md hover:bg-slate-100"
-                >
-                  {descargandoReporteDia ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Download size={16} strokeWidth={2.75} />
-                  )}
-                  Reporte del día
-                </Button>
-              }
-            />
-            <TooltipContent>
-              PDF con todas las producciones de hoy, incluyendo pausas y
-              cancelaciones
-            </TooltipContent>
-          </Tooltip>
+          <BotonReporteDia descargar={descargarReporteProduccionPorPeriodo} />
         )}
       </Header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
-        <Tabs value={vista} onValueChange={setVista} className="mb-5">
-          <TabsList className="grid w-full grid-cols-2 sm:w-80">
-            <TabsTrigger value="activas" className="gap-1.5 font-bold">
-              <Layers size={15} strokeWidth={2.75} />
-              Activas
-              {activasFiltradas.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 justify-center px-1.5">
-                  {activasFiltradas.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="pausadas" className="gap-1.5 font-bold">
-              <Pause size={15} strokeWidth={2.75} />
-              Pausadas
-              {pausadasFiltradas.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 justify-center px-1.5">
-                  {pausadasFiltradas.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <TabsProduccion
+          vista={vista}
+          onCambio={setVista}
+          totalActivas={activasFiltradas.length}
+          totalPausadas={pausadasFiltradas.length}
+        />
 
         {tiposBobina.length > 0 && (
           <div className="mb-5 flex flex-col gap-1.5">
@@ -509,84 +273,42 @@ export default function ProduccionBobinaTubo({ usuario }) {
         </div>
 
         {vista === "activas" && (
-          <>
-            {loadingActivas && (
-              <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {[0, 1, 2].map((i) => (
-                  <Skeleton key={i} className="h-64 rounded-2xl" />
-                ))}
-              </div>
+          <ListaProducciones
+            lista={activas}
+            elementos={activasFiltradas}
+            altoSkeleton="h-64"
+            mensajeVacio="No hay producciones activas."
+            mensajeSinCoincidencias={sinCoincidencias("activa")}
+            renderizar={(p) => (
+              <CardActiva
+                key={p.IdProduccionBobinaTubo}
+                p={p}
+                onInsertar={() => abrirInsertar(p)}
+                onPausar={() => pausa.abrir(p)}
+                onFinalizar={() => finalizacion.abrir(p)}
+              />
             )}
-            {errorActivas && (
-              <div className="rounded-xl bg-red-50 p-5 text-center text-sm font-semibold text-red-600">
-                {errorActivas}
-              </div>
-            )}
-            {!loadingActivas && !errorActivas && activas.length === 0 && (
-              <div className="rounded-2xl bg-white p-10 text-center text-sm text-slate-400 ring-1 ring-slate-200">
-                No hay producciones activas.
-              </div>
-            )}
-            {!loadingActivas && !errorActivas && activas.length > 0 && activasFiltradas.length === 0 && (
-              <div className="rounded-2xl bg-white p-10 text-center text-sm text-slate-400 ring-1 ring-slate-200">
-                Ninguna producción activa con el código «{buscarCodigoBobina.trim()}».
-              </div>
-            )}
-            {!loadingActivas && !errorActivas && activasFiltradas.length > 0 && (
-              <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {activasFiltradas.map((p) => (
-                  <CardActiva
-                    key={p.IdProduccionBobinaTubo}
-                    p={p}
-                    onInsertar={() => abrirInsertar(p)}
-                    onPausar={() => abrirPausar(p)}
-                    onFinalizar={() => abrirFinalizar(p)}
-                  />
-                ))}
-              </div>
-            )}
-          </>
+          />
         )}
 
         {vista === "pausadas" && (
-          <>
-            {loadingPausadas && (
-              <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {[0, 1, 2].map((i) => (
-                  <Skeleton key={i} className="h-64 rounded-2xl" />
-                ))}
-              </div>
+          <ListaProducciones
+            lista={pausadas}
+            elementos={pausadasFiltradas}
+            altoSkeleton="h-64"
+            mensajeVacio="No hay producciones pausadas."
+            mensajeSinCoincidencias={sinCoincidencias("pausada")}
+            renderizar={(p) => (
+              <CardPausada
+                key={p.IdPausaProduccionBobinaTubo}
+                p={p}
+                procesando={procesandoId === p.IdProduccionBobinaTubo}
+                onInsertar={() => abrirInsertar(p)}
+                onReanudar={() => reanudar(p)}
+                onCancelar={() => cancelacion.abrir(p)}
+              />
             )}
-            {errorPausadas && (
-              <div className="rounded-xl bg-red-50 p-5 text-center text-sm font-semibold text-red-600">
-                {errorPausadas}
-              </div>
-            )}
-            {!loadingPausadas && !errorPausadas && pausadas.length === 0 && (
-              <div className="rounded-2xl bg-white p-10 text-center text-sm text-slate-400 ring-1 ring-slate-200">
-                No hay producciones pausadas.
-              </div>
-            )}
-            {!loadingPausadas && !errorPausadas && pausadas.length > 0 && pausadasFiltradas.length === 0 && (
-              <div className="rounded-2xl bg-white p-10 text-center text-sm text-slate-400 ring-1 ring-slate-200">
-                Ninguna producción pausada con el código «{buscarCodigoBobina.trim()}».
-              </div>
-            )}
-            {!loadingPausadas && !errorPausadas && pausadasFiltradas.length > 0 && (
-              <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {pausadasFiltradas.map((p) => (
-                  <CardPausada
-                    key={p.IdPausaProduccionBobinaTubo}
-                    p={p}
-                    procesando={procesandoId === p.IdProduccionBobinaTubo}
-                    onInsertar={() => abrirInsertar(p)}
-                    onReanudar={() => handleReanudar(p)}
-                    onCancelar={() => abrirCancelar(p)}
-                  />
-                ))}
-              </div>
-            )}
-          </>
+          />
         )}
       </main>
 
@@ -601,7 +323,10 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
           <div className="flex flex-col gap-4">
             {modalInsertar.produccion && (
-              <ResumenProduccion produccion={modalInsertar.produccion} />
+              <ResumenProduccion
+                titulo={codigosDe(modalInsertar.produccion)}
+                produccion={modalInsertar.produccion}
+              />
             )}
 
             <div className="flex flex-col gap-1.5">
@@ -715,165 +440,15 @@ export default function ProduccionBobinaTubo({ usuario }) {
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={modalPausar.open}
-        onOpenChange={(open) => setModalPausar({ open, produccion: open ? modalPausar.produccion : null })}
-      >
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Pausar producción</DialogTitle>
-          </DialogHeader>
+      <DialogoPausar dialogo={pausa} tituloDe={codigosDe} opciones={opcionesPausa} />
 
-          <div className="flex flex-col gap-4">
-            {modalPausar.produccion && (
-              <ResumenProduccion produccion={modalPausar.produccion} />
-            )}
+      <DialogoCancelar
+        dialogo={cancelacion}
+        tituloDe={codigosDe}
+        placeholder="Ej. Bobina dañada, error de registro..."
+      />
 
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Motivos frecuentes
-              </Label>
-              <ToggleGroup
-                type="multiple"
-                value={opcionesPausa.filter(motivoEstaEnTexto)}
-                className="flex flex-wrap justify-start gap-2"
-              >
-                {opcionesPausa.map((motivo) => (
-                  <ToggleGroupItem
-                    key={motivo}
-                    value={motivo}
-                    onClick={() => alternarMotivo(motivo)}
-                    className="h-auto whitespace-normal rounded-full border-2 border-slate-200 px-3.5 py-2 text-left text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
-                  >
-                    {motivo}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="motivo-pausa" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Detalle de la pausa
-              </Label>
-              <Textarea
-                id="motivo-pausa"
-                value={formMotivoPausa}
-                onChange={(e) => setFormMotivoPausa(e.target.value)}
-                placeholder="Ej. Falla de máquina, cambio de turno..."
-                className="min-h-20"
-                maxLength={MOTIVO_CANCELACION_MAX}
-              />
-              <span className="text-xs text-slate-500">
-                {formMotivoPausa.trim().length}/{MOTIVO_CANCELACION_MAX} · mínimo {MOTIVO_CANCELACION_MIN} caracteres
-              </span>
-            </div>
-
-            {errorPausar && (
-              <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
-                {errorPausar}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              onClick={confirmarPausar}
-              disabled={enviandoPausar || !motivoPausaValido}
-              className="h-11 w-full gap-2 bg-amber-500 font-extrabold text-white hover:bg-amber-600 sm:w-auto"
-            >
-              {enviandoPausar ? <Loader2 size={16} className="animate-spin" /> : "Pausar producción"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={modalCancelar.open}
-        onOpenChange={(open) => setModalCancelar({ open, produccion: open ? modalCancelar.produccion : null })}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Cancelar producción</DialogTitle>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-4">
-            {modalCancelar.produccion && (
-              <ResumenProduccion produccion={modalCancelar.produccion} />
-            )}
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="motivo-cancelacion" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Motivo de cancelación
-              </Label>
-              <Textarea
-                id="motivo-cancelacion"
-                value={formMotivoCancelacion}
-                onChange={(e) => setFormMotivoCancelacion(e.target.value)}
-                placeholder="Ej. Bobina dañada, error de registro..."
-                className="min-h-20"
-                maxLength={MOTIVO_CANCELACION_MAX}
-              />
-              <span className="text-xs text-slate-500">
-                {formMotivoCancelacion.trim().length}/{MOTIVO_CANCELACION_MAX} · mínimo {MOTIVO_CANCELACION_MIN} caracteres
-              </span>
-            </div>
-
-            {errorCancelar && (
-              <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
-                {errorCancelar}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              onClick={confirmarCancelar}
-              disabled={enviandoCancelar || !motivoCancelacionValido}
-              className="h-11 w-full gap-2 bg-red-600 font-extrabold text-white hover:bg-red-700 sm:w-auto"
-            >
-              {enviandoCancelar ? <Loader2 size={16} className="animate-spin" /> : "Cancelar producción"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog
-        open={alertFinalizar.open}
-        onOpenChange={(open) => setAlertFinalizar({ open, produccion: open ? alertFinalizar.produccion : null })}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Finalizar esta producción?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {alertFinalizar.produccion && (
-                <>
-                  Se marcará como finalizada la producción de{" "}
-                  <span className="font-mono font-bold text-slate-900">
-                    {alertFinalizar.produccion.CodigoBobina1} + {alertFinalizar.produccion.CodigoBobina2}
-                  </span>
-                  {alertFinalizar.produccion.FechaInicioProduccion && (
-                    <>
-                      , iniciada el{" "}
-                      {dateFormatter(alertFinalizar.produccion.FechaInicioProduccion)}
-                    </>
-                  )}
-                  . Esta acción no se puede deshacer.
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={enviandoFinalizar}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmarFinalizar}
-              disabled={enviandoFinalizar}
-              className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-            >
-              {enviandoFinalizar ? <Loader2 size={16} className="animate-spin" /> : "Finalizar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <AlertaFinalizar dialogo={finalizacion} prefijo="de" codigoDe={codigosDe} />
     </div>
     </TooltipProvider>
   );

@@ -3,11 +3,7 @@ export const prerender = false;
 import { verificarAccessToken, guardarSesion, limpiarSesion } from "../../../lib/auth-server";
 import { login } from "../../../services/Usuario/Auth";
 import { SesionUsuario } from "../../../models/Usuario/Auth";
-
-const RUTA_POR_ROL = {
-  1: "/operador/inicio",
-  2: "/encargado/inicio"
-};
+import { RUTA_POR_ROL } from "../../../constants/Values";
 
 function obtenerIpReal(request, clientAddress) {
   const forwardedFor = request.headers.get("x-forwarded-for");

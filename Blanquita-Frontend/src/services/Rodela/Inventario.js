@@ -12,16 +12,10 @@ import {
   EditarRodelaResponse,
   RodelaReingresableResponse
 } from "../../models/Rodela/Inventario";
-import { manejarErrorBackend } from "@/utils/validators";
+import { pedirJson } from "@/utils/api";
 
 export async function verResumenInventarioRodela() {
-  const response = await fetch("/api/rodela/inventario/resumen");
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson("/api/rodela/inventario/resumen");
 
   return data.map(ResumenInventarioRodelaResponse);
 }
@@ -29,13 +23,7 @@ export async function verResumenInventarioRodela() {
 export async function verDetalleInventarioRodela(idTipoRodela) {
   const params = new URLSearchParams({ IdTipoRodela: idTipoRodela });
 
-  const response = await fetch(`/api/rodela/inventario/detalle?${params.toString()}`);
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson(`/api/rodela/inventario/detalle?${params.toString()}`);
 
   return data.map(DetalleInventarioRodelaResponse);
 }
@@ -43,13 +31,7 @@ export async function verDetalleInventarioRodela(idTipoRodela) {
 export async function listarRodelasEnAlmacen(idTipoRodela) {
   const params = new URLSearchParams({ IdTipoRodela: idTipoRodela });
 
-  const response = await fetch(`/api/rodela/inventario/enalmacen?${params.toString()}`);
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson(`/api/rodela/inventario/enalmacen?${params.toString()}`);
 
   return data.map(RodelaEnAlmacenResponse);
 }
@@ -57,17 +39,10 @@ export async function listarRodelasEnAlmacen(idTipoRodela) {
 export async function trasladarRodelaAProduccion(idRodela, observacion) {
   const payload = TrasladarRodelaRequest(idRodela, observacion);
 
-  const response = await fetch("/api/rodela/inventario/trasladar", {
+  const data = await pedirJson("/api/rodela/inventario/trasladar", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: payload
   });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
 
   return TrasladarRodelaResponse(data);
 }
@@ -75,29 +50,16 @@ export async function trasladarRodelaAProduccion(idRodela, observacion) {
 export async function corregirTrasladoRodela(idRodela, observacion) {
   const payload = CorregirTrasladoRodelaRequest(idRodela, observacion);
 
-  const response = await fetch("/api/rodela/inventario/corregir", {
+  const data = await pedirJson("/api/rodela/inventario/corregir", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: payload
   });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
 
   return CorregirTrasladoRodelaResponse(data);
 }
 
 export async function listarRodelasReingresables() {
-  const response = await fetch("/api/rodela/inventario/reingresables");
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson("/api/rodela/inventario/reingresables");
 
   return data.map(RodelaReingresableResponse);
 }
@@ -105,17 +67,10 @@ export async function listarRodelasReingresables() {
 export async function deshacerTrasladoRodela(idRodela, observacion) {
   const payload = DeshacerTrasladoRodelaRequest(idRodela, observacion);
 
-  const response = await fetch("/api/rodela/inventario/deshacer", {
+  const data = await pedirJson("/api/rodela/inventario/deshacer", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: payload
   });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
 
   return DeshacerTrasladoRodelaResponse(data);
 }
@@ -123,17 +78,10 @@ export async function deshacerTrasladoRodela(idRodela, observacion) {
 export async function editarRodela(idRodela, codigoRodela, observacion) {
   const payload = EditarRodelaRequest(idRodela, codigoRodela, observacion);
 
-  const response = await fetch("/api/rodela/inventario/editar", {
+  const data = await pedirJson("/api/rodela/inventario/editar", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: payload
   });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
 
   return EditarRodelaResponse(data);
 }

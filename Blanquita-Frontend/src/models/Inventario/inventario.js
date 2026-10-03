@@ -138,14 +138,6 @@ export const VerInventarioProductoTerminadoRequest = ({ IdProducto = null } = {}
   IdProducto,
 });
 
-export const VerInventarioProductoTerminadoQueryParams = ({ IdProducto = null } = {}) => {
-  const params = new URLSearchParams();
-  if (IdProducto !== null && IdProducto !== undefined) {
-    params.append("IdProducto", IdProducto);
-  }
-  return params;
-};
-
 export const VerInventarioProductoTerminadoResponse = ({
   IdPresentacion,
   CodigoPresentacion,

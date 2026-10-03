@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
 import {
   Download,
   FileText,
@@ -32,11 +31,9 @@ import {
 } from "@/services/Rodela/Reportes";
 import { ObtenerTiposRodela } from "@/services/Rodela/Rodela";
 import { ObtenerProveedoresForm } from "@/services/Proveedor/Proveedor";
-import { dateOnlyFormatter } from "@/utils/dates";
+import { dateOnlyFormatter, aFechaISO } from "@/utils/dates";
 
 const TAMANO_PAGINA = 15;
-
-const aFechaISO = (fecha) => (fecha ? format(fecha, "yyyy-MM-dd") : null);
 
 export default function IngresoReporteRodela() {
   const [tipos, setTipos] = useState([]);
@@ -94,7 +91,6 @@ export default function IngresoReporteRodela() {
 
   useEffect(() => {
     cargarCatalogo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rangoFechas, idProveedor, idsTipoRodela, pagina]);
 
   const alternarTipo = (idTipoRodela) => {
@@ -131,8 +127,6 @@ export default function IngresoReporteRodela() {
     }
   };
 
-  // Marca en el calendario los días que ya tienen lotes recibidos (ayuda
-  // visual); no interrumpe el filtro si falla.
   const cargarDiasDestacados = async ({ inicio, fin }) => {
     try {
       const data = await verLotesRodela({

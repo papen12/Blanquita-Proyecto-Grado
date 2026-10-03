@@ -3,6 +3,11 @@ export const PREFIJO_POR_ROL = {
   2: "encargado",
 };
 
+export const RUTA_POR_ROL = {
+  1: "/operador/inicio",
+  2: "/encargado/inicio",
+};
+
 export const Roles = {
   Operador: 1,
   Encargado: 2,

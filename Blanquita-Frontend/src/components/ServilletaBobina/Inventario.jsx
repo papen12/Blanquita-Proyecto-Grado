@@ -64,7 +64,7 @@ import {
 } from "../../services/BobinaServilleta/Reportes";
 import { dateFormatter } from "@/utils/dates";
 import { aCodigo } from "@/utils/handlers";
-import { extraerMensajeError } from "@/utils/validators";
+import { extraerMensajeError, numeroONulo } from "@/utils/validators";
 import Header from "@/components/layout/Header";
 import {
   Roles,
@@ -75,8 +75,6 @@ import {
 const ESTADO_ALMACEN_ID = 1;
 
 const aTexto = (valor) => (valor === null || valor === undefined ? "" : String(valor));
-
-const numeroONulo = (valor) => (valor === "" ? null : Number(valor));
 
 const valorInvalido = (valor) => valor !== "" && !(Number(valor) > 0);
 
@@ -442,7 +440,6 @@ export default function InventarioBobinaServilleta({ usuario }) {
   const [loadingResumen, setLoadingResumen] = useState(true);
   const [errorResumen, setErrorResumen] = useState("");
 
-  // seleccion: { clase: "bobina" | "sub", id }
   const [sel, setSel] = useState(null);
   const [detalle, setDetalle] = useState([]);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
@@ -451,7 +448,6 @@ export default function InventarioBobinaServilleta({ usuario }) {
 
   const [procesandoId, setProcesandoId] = useState(null);
 
-  // traslado de UNA sub-bobina a produccion
   const [marcadaSub, setMarcadaSub] = useState(null);
   const [enviandoTraslado, setEnviandoTraslado] = useState(false);
 
@@ -463,7 +459,6 @@ export default function InventarioBobinaServilleta({ usuario }) {
 
   const [descargandoInventario, setDescargandoInventario] = useState(false);
 
-  // edición de una bobina servilleta (solo encargado, solo sin abrir)
   const [dialogEditar, setDialogEditar] = useState({ open: false, bobina: null });
   const [unidadesOriginales, setUnidadesOriginales] = useState([]);
   const [formUnidades, setFormUnidades] = useState([]);

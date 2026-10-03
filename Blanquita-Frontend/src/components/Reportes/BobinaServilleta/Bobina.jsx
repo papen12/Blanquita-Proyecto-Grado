@@ -33,7 +33,8 @@ import {
 } from "@/services/BobinaServilleta/Reportes";
 import { ObtenerTiposBobinaServilleta } from "@/services/BobinaServilleta/BobinaServilleta";
 import { ObtenerProveedoresForm } from "@/services/Proveedor/Proveedor";
-import { EstadosMateriaPrima } from "@/constants/estados";
+import { EstadosMateriaPrima } from "@/constants/Estados";
+import { formatearNumero } from "@/utils/numeros";
 
 const TAMANO_PAGINA = 15;
 
@@ -47,14 +48,6 @@ const ESTADO_BADGE = {
   Terminada: "border-slate-300 bg-slate-100 text-slate-600",
 };
 
-const fmt = (n) =>
-  n === null || n === undefined
-    ? "-"
-    : Number(n).toLocaleString("es-BO", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-
 function UnidadCelda({ codigo, formato, peso, gramaje }) {
   if (!codigo) return <span className="text-slate-300">-</span>;
   return (
@@ -62,7 +55,7 @@ function UnidadCelda({ codigo, formato, peso, gramaje }) {
       <span className="font-mono text-[13px] font-bold text-slate-900">{codigo}</span>
       <span className="text-[11.5px] text-slate-500">{formato}</span>
       <span className="text-[11.5px] text-slate-500">
-        {fmt(peso)} kg · {fmt(gramaje)} gr
+        {formatearNumero(peso, { vacio: "-" })} kg · {formatearNumero(gramaje, { vacio: "-" })} gr
       </span>
     </div>
   );
@@ -129,7 +122,6 @@ export default function BobinaReporteServilleta() {
 
   useEffect(() => {
     cargarCatalogo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [codigoBobina, idProveedor, idEstadoMateriaPrima, idTipoBobinaServilleta, pagina]);
 
   const limpiarFiltros = () => {

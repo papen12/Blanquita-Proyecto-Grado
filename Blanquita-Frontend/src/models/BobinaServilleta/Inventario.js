@@ -1,3 +1,5 @@
+import { numeroONulo } from "@/utils/validators";
+
 export const ReingresarSubBobinaInventarioRequest = (idSubBobina, observacion) => ({
   IdSubBobina: idSubBobina,
   Observacion: observacion ?? null
@@ -66,9 +68,6 @@ export const SubBobinaServilletaFueraInventarioResponse = (data) => ({
   UltimaObservacion: data.UltimaObservacion ?? null,
   FechaUltimoMovimiento: data.FechaUltimoMovimiento ?? null
 });
-
-const numeroONulo = (valor) =>
-  valor === null || valor === undefined || valor === "" ? null : Number(valor);
 
 export const EditarUnidadBobinaServilletaItem = (data) => ({
   IdUnidadBobinaServilleta: data.IdUnidadBobinaServilleta,

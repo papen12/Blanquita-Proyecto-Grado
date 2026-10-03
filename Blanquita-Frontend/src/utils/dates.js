@@ -17,3 +17,19 @@ export function dateFormatter(fechaUtc) {
 export function dateOnlyFormatter(fecha) {
     return format(new Date(`${fecha}T00:00:00`), "d 'de' LLL, y", { locale: es });
 }
+
+export const aFechaISO = (fecha) => (fecha ? format(fecha, "yyyy-MM-dd") : null);
+
+export const hoyISO = () => aFechaISO(new Date());
+
+export function formatearDuracion(duracionIso) {
+    if (!duracionIso) return "-";
+    const coincidencia = duracionIso.match(
+        /^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:[\d.]+S)?$/,
+    );
+    if (!coincidencia) return "-";
+    const dias = Number(coincidencia[1] || 0);
+    const horas = Number(coincidencia[2] || 0) + dias * 24;
+    const minutos = Number(coincidencia[3] || 0);
+    return `${horas}h ${String(minutos).padStart(2, "0")}m`;
+}

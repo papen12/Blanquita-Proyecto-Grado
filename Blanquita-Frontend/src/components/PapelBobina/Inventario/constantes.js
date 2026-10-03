@@ -1,3 +1,5 @@
+import { formatearNumero } from "@/utils/numeros";
+
 export const ACENTOS = [
   {
     text: "text-c3",
@@ -30,4 +32,4 @@ export const ACENTOS = [
 ];
 
 export const fmt = (n) =>
-  Number(n || 0).toLocaleString("es-BO", { maximumFractionDigits: 1 });
+  formatearNumero(n, { decimales: 1, decimalesMinimos: 0 });

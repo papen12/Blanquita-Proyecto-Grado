@@ -6,49 +6,15 @@ import {
   VerBobinasPapelRequest,
   VerBobinasPapelResponse
 } from "../../models/BobinaPapel/Reportes";
-import { manejarErrorBackend } from "@/utils/validators";
-import { construirQueryParams } from "@/utils/params";
+import { pedirJson } from "@/utils/api";
+import { construirQueryParams, conQueryParams } from "@/utils/params";
+import { descargarReportePDF } from "@/utils/downloadFile";
 
 const BASE_URL = "/api/papelbobina/reportes";
 
-function obtenerNombreArchivo(response, nombrePorDefecto) {
-  const disposicion = response.headers.get("Content-Disposition");
-  const coincidencia = disposicion?.match(/filename="?([^"]+)"?/);
-
-  return coincidencia?.[1] ?? nombrePorDefecto;
-}
-
-function descargarArchivo(blob, nombreArchivo) {
-  const url = window.URL.createObjectURL(blob);
-  const enlace = document.createElement("a");
-
-  enlace.href = url;
-  enlace.download = nombreArchivo;
-  document.body.appendChild(enlace);
-  enlace.click();
-  enlace.remove();
-  window.URL.revokeObjectURL(url);
-}
-
-async function descargarReportePDF(url, nombrePorDefecto) {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const blob = await response.blob();
-  const nombreArchivo = obtenerNombreArchivo(response, nombrePorDefecto);
-
-  descargarArchivo(blob, nombreArchivo);
-}
-
 export async function descargarReporteInventarioBobinaPapel(idsTipoBobina) {
-  const params = construirQueryParams({ tipos: idsTipoBobina });
-  const query = params.toString();
-
   await descargarReportePDF(
-    `${BASE_URL}/inventario${query ? `?${query}` : ""}`,
+    conQueryParams(`${BASE_URL}/inventario`, { tipos: idsTipoBobina }),
     "reporte-inventario-bobina-papel.pdf"
   );
 }
@@ -57,13 +23,7 @@ export async function verProduccionesBobinaTubo(filtros) {
   const payload = VerProduccionesBobinaTuboRequest(filtros);
   const params = construirQueryParams(payload);
 
-  const response = await fetch(`${BASE_URL}/produccion/catalogo?${params.toString()}`);
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson(`${BASE_URL}/produccion/catalogo?${params.toString()}`);
 
   return VerProduccionesBobinaTuboResponse(data);
 }
@@ -91,13 +51,7 @@ export async function verLotesBobinaPapel(filtros) {
   const payload = VerLotesBobinaPapelRequest(filtros);
   const params = construirQueryParams(payload);
 
-  const response = await fetch(`${BASE_URL}/lote/catalogo?${params.toString()}`);
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson(`${BASE_URL}/lote/catalogo?${params.toString()}`);
 
   return VerLotesBobinaPapelResponse(data);
 }
@@ -138,13 +92,7 @@ export async function verBobinasPapelReporte(filtros) {
   const payload = VerBobinasPapelRequest(filtros);
   const params = construirQueryParams(payload);
 
-  const response = await fetch(`${BASE_URL}/movimientos/catalogo?${params.toString()}`);
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson(`${BASE_URL}/movimientos/catalogo?${params.toString()}`);
 
   return VerBobinasPapelResponse(data);
 }

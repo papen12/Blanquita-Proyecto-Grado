@@ -11,7 +11,7 @@ export function unirRutas(...segmentos) {
 
 export const BottomBarOpciones = [
   {
-    id: 1, // bobina-papel / bobina-servilleta: inventario + produccion
+    id: 1,
     opciones: [
       {
         titulo: "Inventario",
@@ -26,7 +26,7 @@ export const BottomBarOpciones = [
     ],
   },
   {
-    id: 2, // rodela: inventario + ingreso (no tiene produccion)
+    id: 2,
     opciones: [
       {
         titulo: "Inventario",
@@ -41,7 +41,7 @@ export const BottomBarOpciones = [
     ],
   },
   {
-    id: 3, // empaque bobina: inventario + ingreso 
+    id: 3,
     opciones: [
       {
         titulo: "Inventario",
@@ -55,7 +55,6 @@ export const BottomBarOpciones = [
       },
     ],
   },
-  // inicio
   {
     id:4,
     opciones: [

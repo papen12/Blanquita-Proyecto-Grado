@@ -1,14 +1,8 @@
 import { ProveedorForm } from "../../models/Proveedor/Proveedor";
-import { manejarErrorBackend } from "@/utils/validators";
+import { pedirJson } from "@/utils/api";
 
 export async function ObtenerProveedoresForm() {
-  const response = await fetch("/api/proveedor/formulario");
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson("/api/proveedor/formulario");
 
   return data.map(ProveedorForm);
 }

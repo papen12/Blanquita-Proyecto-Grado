@@ -1,13 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import {
-  Plus,
-  Trash2,
-  Loader2,
-  CheckCircle2,
-  PackageCheck,
-  AlertCircle,
-  Layers,
-} from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Trash2, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +16,18 @@ import {
 import { ObtenerProveedoresForm } from "../../services/Proveedor/Proveedor";
 import { dateFormatter } from "@/utils/dates";
 import { aCodigo } from "@/utils/handlers";
+import { useCatalogo } from "@/hooks/useCatalogo";
+import { useEnvioLote, codigosRepetidos, erroresPorFila } from "@/hooks/useIngresoLote";
+import {
+  ResultadoLote,
+  DatosLote,
+  SelectorProveedor,
+  BotonQuitarFila,
+  CabeceraFila,
+  ErrorFila,
+  ErrorEnvio,
+  BarraGuardarLote,
+} from "@/components/IngresoLote/comunes";
 
 const ACENTOS = [
   { text: "text-c3", soft: "bg-c4/8", border: "border-c4/30" },
@@ -32,15 +36,12 @@ const ACENTOS = [
   { text: "text-eco2", soft: "bg-eco1/8", border: "border-eco1/30" },
 ];
 
+const ERROR_INPUT = "border-red-300 focus-visible:ring-red-300";
+
+const totalEmpaques = (resultado) =>
+  resultado.Resumen.reduce((s, r) => s + r.CantidadEmpaques, 0);
+
 export default function EmpaqueBobinaIngreso({ usuario }) {
-  const [tipos, setTipos] = useState([]);
-  const [loadingTipos, setLoadingTipos] = useState(true);
-  const [errorTipos, setErrorTipos] = useState("");
-
-  const [proveedores, setProveedores] = useState([]);
-  const [loadingProveedores, setLoadingProveedores] = useState(true);
-  const [errorProveedores, setErrorProveedores] = useState("");
-
   const [idProveedor, setIdProveedor] = useState("");
   const [cantidadToneladasPedida, setCantidadToneladasPedida] = useState("");
 
@@ -59,56 +60,26 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
     { id: 0, IdTipoEmpaque: "", filas: [{ id: 0, CodigoEmpaque: "", PesoKg: "" }] },
   ]);
 
-  const [enviando, setEnviando] = useState(false);
-  const [errorEnvio, setErrorEnvio] = useState("");
-  const [tocado, setTocado] = useState(false);
-  const [resultado, setResultado] = useState(null);
-
-  useEffect(() => {
-    cargarTipos();
-    cargarProveedores();
-  }, []);
-
-  const cargarTipos = async () => {
-    setLoadingTipos(true);
-    setErrorTipos("");
-    try {
-      const data = await obtenerTiposEmpaque();
-      setTipos(data);
-      if (data.length) {
-        setBloques((prev) =>
-          prev.map((b) =>
-            b.IdTipoEmpaque === "" ? { ...b, IdTipoEmpaque: data[0].IdTipoEmpaque } : b,
-          ),
-        );
-      }
-    } catch (e) {
-      setErrorTipos(e.message);
-      setTipos([]);
-    } finally {
-      setLoadingTipos(false);
+  const proveedores = useCatalogo(ObtenerProveedoresForm);
+  const tipos = useCatalogo(obtenerTiposEmpaque, (data) => {
+    if (data.length) {
+      setBloques((prev) =>
+        prev.map((b) =>
+          b.IdTipoEmpaque === "" ? { ...b, IdTipoEmpaque: data[0].IdTipoEmpaque } : b,
+        ),
+      );
     }
-  };
+  });
 
-  const cargarProveedores = async () => {
-    setLoadingProveedores(true);
-    setErrorProveedores("");
-    try {
-      const data = await ObtenerProveedoresForm();
-      setProveedores(data);
-    } catch (e) {
-      setErrorProveedores(e.message);
-      setProveedores([]);
-    } finally {
-      setLoadingProveedores(false);
-    }
-  };
+  const envio = useEnvioLote();
+  const { tocado } = envio;
+  const limpiarResultado = () => envio.setResultado(null);
 
   const actualizarTipoBloque = (bloqueId, idTipoEmpaque) => {
     setBloques((prev) =>
       prev.map((b) => (b.id === bloqueId ? { ...b, IdTipoEmpaque: idTipoEmpaque } : b)),
     );
-    setResultado(null);
+    limpiarResultado();
   };
 
   const actualizarFila = (bloqueId, filaId, campo, valor) => {
@@ -118,24 +89,22 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
           ? b
           : {
               ...b,
-              filas: b.filas.map((f) =>
-                f.id === filaId ? { ...f, [campo]: valor } : f,
-              ),
+              filas: b.filas.map((f) => (f.id === filaId ? { ...f, [campo]: valor } : f)),
             },
       ),
     );
-    setResultado(null);
+    limpiarResultado();
   };
 
   const agregarBloque = () => {
     const usados = new Set(bloques.map((b) => b.IdTipoEmpaque));
-    const tipoLibre = tipos.find((t) => !usados.has(t.IdTipoEmpaque));
-    const bloque = nuevoBloque(tipoLibre?.IdTipoEmpaque ?? tipos[0]?.IdTipoEmpaque ?? "");
-    setBloques((prev) => [...prev, bloque]);
-    setResultado(null);
-    requestAnimationFrame(() =>
-      refsCodigo.current[bloque.filas[0].id]?.focus(),
+    const tipoLibre = tipos.datos.find((t) => !usados.has(t.IdTipoEmpaque));
+    const bloque = nuevoBloque(
+      tipoLibre?.IdTipoEmpaque ?? tipos.datos[0]?.IdTipoEmpaque ?? "",
     );
+    setBloques((prev) => [...prev, bloque]);
+    limpiarResultado();
+    requestAnimationFrame(() => refsCodigo.current[bloque.filas[0].id]?.focus());
   };
 
   const quitarBloque = (bloqueId) => {
@@ -147,7 +116,7 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
     setBloques((prev) =>
       prev.map((b) => (b.id === bloqueId ? { ...b, filas: [...b.filas, fila] } : b)),
     );
-    setResultado(null);
+    limpiarResultado();
     requestAnimationFrame(() => refsCodigo.current[fila.id]?.focus());
   };
 
@@ -166,108 +135,65 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
     b.filas.map((f) => ({ ...f, bloqueId: b.id, IdTipoEmpaque: b.IdTipoEmpaque })),
   );
 
-  const codigosRepetidos = (() => {
-    const cuenta = {};
-    filasPlanas.forEach((f) => {
-      const c = f.CodigoEmpaque.trim().toLowerCase();
-      if (c) cuenta[c] = (cuenta[c] || 0) + 1;
-    });
-    return new Set(Object.keys(cuenta).filter((c) => cuenta[c] > 1));
-  })();
+  const repetidos = codigosRepetidos(filasPlanas.map((f) => f.CodigoEmpaque));
 
-  const filaConError = (f) => {
+  const erroresFilas = erroresPorFila(filasPlanas, (f) => {
     const codigo = f.CodigoEmpaque.trim();
     if (!codigo) return "Falta el código";
-    if (codigosRepetidos.has(codigo.toLowerCase())) return "Código repetido";
+    if (repetidos.has(codigo.toLowerCase())) return "Código repetido";
     if (!f.PesoKg || Number(f.PesoKg) <= 0) return "Peso inválido";
     return null;
-  };
+  });
 
-  const erroresFilas = filasPlanas.reduce((acc, f) => {
-    const e = filaConError(f);
-    if (e) acc[f.id] = e;
-    return acc;
-  }, {});
+  const erroresBloques = erroresPorFila(bloques, (b) =>
+    b.IdTipoEmpaque ? null : "Selecciona el tipo de empaque",
+  );
 
-  const bloqueConError = (b) => {
-    if (!b.IdTipoEmpaque) return "Selecciona el tipo de empaque";
-    return null;
-  };
-
-  const erroresBloques = bloques.reduce((acc, b) => {
-    const e = bloqueConError(b);
-    if (e) acc[b.id] = e;
-    return acc;
-  }, {});
+  const toneladasValidas =
+    !!cantidadToneladasPedida && Number(cantidadToneladasPedida) > 0;
+  const hayErroresFilas = Object.keys(erroresFilas).length > 0;
+  const hayErroresBloques = Object.keys(erroresBloques).length > 0;
 
   const listo =
     !!idProveedor &&
-    !!cantidadToneladasPedida &&
-    Number(cantidadToneladasPedida) > 0 &&
+    toneladasValidas &&
     filasPlanas.length > 0 &&
-    Object.keys(erroresFilas).length === 0 &&
-    Object.keys(erroresBloques).length === 0;
+    !hayErroresFilas &&
+    !hayErroresBloques;
 
-  const guardarLote = async () => {
-    setTocado(true);
-    setErrorEnvio("");
-
-    if (!idProveedor) {
-      setErrorEnvio("Selecciona el proveedor del lote.");
-      return;
-    }
-    if (!cantidadToneladasPedida || Number(cantidadToneladasPedida) <= 0) {
-      setErrorEnvio("Indica la cantidad de toneladas pedidas.");
-      return;
-    }
-    if (Object.keys(erroresBloques).length > 0) {
-      setErrorEnvio("Selecciona el tipo de empaque en cada bloque.");
-      return;
-    }
-    if (Object.keys(erroresFilas).length > 0) {
-      setErrorEnvio("Revisa los empaques marcados en rojo antes de guardar.");
-      return;
-    }
-
-    const empaques = filasPlanas.map((f) => ({
-      CodigoEmpaque: f.CodigoEmpaque.trim(),
-      IdTipoEmpaque: Number(f.IdTipoEmpaque),
-      PesoKg: Number(f.PesoKg),
-    }));
-
-    setEnviando(true);
-    try {
-      const data = await cargarLoteEmpaque(
-        Number(idProveedor),
-        Number(cantidadToneladasPedida),
-        empaques,
-      );
-      setResultado(data);
-      setBloques([nuevoBloque(tipos[0]?.IdTipoEmpaque ?? "")]);
-      setCantidadToneladasPedida("");
-      setTocado(false);
-      const total = data.Resumen.reduce((s, r) => s + r.CantidadEmpaques, 0);
-      toast.success(`${total} empaques ingresados al almacén`);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (e) {
-      setErrorEnvio(e.message);
-      toast.error(e.message);
-    } finally {
-      setEnviando(false);
-    }
-  };
+  const guardarLote = () =>
+    envio.guardar({
+      validar: () => {
+        if (!idProveedor) return "Selecciona el proveedor del lote.";
+        if (!toneladasValidas) return "Indica la cantidad de toneladas pedidas.";
+        if (hayErroresBloques) return "Selecciona el tipo de empaque en cada bloque.";
+        if (hayErroresFilas) return "Revisa los empaques marcados en rojo antes de guardar.";
+        return null;
+      },
+      enviar: () =>
+        cargarLoteEmpaque(
+          Number(idProveedor),
+          Number(cantidadToneladasPedida),
+          filasPlanas.map((f) => ({
+            CodigoEmpaque: f.CodigoEmpaque.trim(),
+            IdTipoEmpaque: Number(f.IdTipoEmpaque),
+            PesoKg: Number(f.PesoKg),
+          })),
+        ),
+      alGuardar: (data) => {
+        setBloques([nuevoBloque(tipos.datos[0]?.IdTipoEmpaque ?? "")]);
+        setCantidadToneladasPedida("");
+        toast.success(`${totalEmpaques(data)} empaques ingresados al almacén`);
+      },
+    });
 
   const totalPesoKg = filasPlanas.reduce(
     (s, f) => s + (Number(f.PesoKg) > 0 ? Number(f.PesoKg) : 0),
     0,
   );
 
-  const totalResultado = resultado
-    ? resultado.Resumen.reduce((s, r) => s + r.CantidadEmpaques, 0)
-    : 0;
-
   const nombreTipo = (idTipoEmpaque) =>
-    tipos.find((t) => t.IdTipoEmpaque === idTipoEmpaque)?.NombreTipoEmpaque ?? "";
+    tipos.datos.find((t) => t.IdTipoEmpaque === idTipoEmpaque)?.NombreTipoEmpaque ?? "";
 
   return (
     <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
@@ -283,148 +209,76 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
       />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
-        {resultado && (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-emerald-200">
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-                <CheckCircle2
-                  size={22}
-                  strokeWidth={2.5}
-                  className="text-emerald-600"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="text-base font-extrabold text-slate-900">
-                  Lote registrado
-                </div>
-                <div className="text-sm text-slate-600">
-                  {totalResultado} empaques · Recepción{" "}
-                  {dateFormatter(resultado.Resumen[0]?.FechaRecepcion)}
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {resultado.Resumen.map((r) => (
-                    <Badge
-                      key={r.IdTipoEmpaque}
-                      variant="outline"
-                      className="border-emerald-300 font-bold text-emerald-700"
-                    >
-                      {r.NombreTipoEmpaque}: {r.CantidadEmpaques}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+        {envio.resultado && (
+          <ResultadoLote
+            descripcion={
+              <>
+                {totalEmpaques(envio.resultado)} empaques · Recepción{" "}
+                {dateFormatter(envio.resultado.Resumen[0]?.FechaRecepcion)}
+              </>
+            }
+            onCerrar={limpiarResultado}
+          >
+            <div className="flex flex-wrap gap-1.5">
+              {envio.resultado.Resumen.map((r) => (
+                <Badge
+                  key={r.IdTipoEmpaque}
+                  variant="outline"
+                  className="border-emerald-300 font-bold text-emerald-700"
+                >
+                  {r.NombreTipoEmpaque}: {r.CantidadEmpaques}
+                </Badge>
+              ))}
             </div>
-            <Button
-              variant="ghost"
-              onClick={() => setResultado(null)}
-              className="h-10 font-bold text-slate-500 hover:text-slate-900"
-            >
-              Registrar otro lote
-            </Button>
-          </div>
+          </ResultadoLote>
         )}
 
-        <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-          <div className="border-b border-slate-100 px-5 py-4">
-            <div className="text-base font-extrabold text-slate-900">
-              Datos del lote
-            </div>
-            <div className="text-sm text-slate-500">
-              Se aplican al pedido completo, no a cada empaque
-            </div>
+        <DatosLote
+          descripcion="Se aplican al pedido completo, no a cada empaque"
+          className="flex flex-col gap-5 p-5 sm:flex-row sm:gap-6"
+        >
+          <SelectorProveedor
+            catalogo={proveedores}
+            valor={idProveedor}
+            onCambio={setIdProveedor}
+            invalido={tocado && !idProveedor}
+            className="flex flex-1 flex-col gap-1.5"
+          />
+
+          <div className="flex flex-1 flex-col gap-1.5">
+            <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+              Toneladas pedidas
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={cantidadToneladasPedida}
+              onChange={(e) => setCantidadToneladasPedida(e.target.value)}
+              placeholder="Ej. 12.5"
+              className={cn("h-11", tocado && !toneladasValidas && ERROR_INPUT)}
+            />
           </div>
-
-          <div className="flex flex-col gap-5 p-5 sm:flex-row sm:gap-6">
-            <div className="flex flex-1 flex-col gap-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Proveedor
-              </Label>
-
-              {loadingProveedores && (
-                <Skeleton className="h-11 w-full rounded-lg" />
-              )}
-
-              {!loadingProveedores && errorProveedores && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600">
-                  {errorProveedores}
-                  <Button
-                    variant="outline"
-                    onClick={cargarProveedores}
-                    className="h-9 border-red-300 font-bold text-red-600 hover:bg-red-100"
-                  >
-                    Reintentar
-                  </Button>
-                </div>
-              )}
-
-              {!loadingProveedores &&
-                !errorProveedores &&
-                proveedores.length === 0 && (
-                  <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-400">
-                    No hay proveedores registrados.
-                  </div>
-                )}
-
-              {!loadingProveedores &&
-                !errorProveedores &&
-                proveedores.length > 0 && (
-                  <SelectEntidad
-                    opciones={proveedores}
-                    valor={idProveedor}
-                    onCambio={setIdProveedor}
-                    campoValor="IdProveedor"
-                    campoEtiqueta="NombreProveedor"
-                    placeholder="Selecciona el proveedor"
-                    invalido={tocado && !idProveedor}
-                  />
-                )}
-            </div>
-
-            <div className="flex flex-1 flex-col gap-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Toneladas pedidas
-              </Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={cantidadToneladasPedida}
-                onChange={(e) => setCantidadToneladasPedida(e.target.value)}
-                placeholder="Ej. 12.5"
-                className={cn(
-                  "h-11",
-                  tocado &&
-                    (!cantidadToneladasPedida ||
-                      Number(cantidadToneladasPedida) <= 0) &&
-                    "border-red-300 focus-visible:ring-red-300",
-                )}
-              />
-            </div>
-          </div>
-        </section>
+        </DatosLote>
 
         <section className="mt-6 flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="text-base font-extrabold text-slate-900">
-                Empaques del lote
-              </div>
-              <div className="text-sm text-slate-500">
-                Agrupados por tipo de empaque
-              </div>
-              {errorTipos && (
+              <div className="text-base font-extrabold text-slate-900">Empaques del lote</div>
+              <div className="text-sm text-slate-500">Agrupados por tipo de empaque</div>
+              {tipos.error && (
                 <div className="flex flex-wrap items-center gap-2 rounded-xl bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-600">
-                  {errorTipos}
+                  {tipos.error}
                   <Button
                     variant="outline"
-                    onClick={cargarTipos}
+                    onClick={tipos.recargar}
                     className="h-7 border-red-300 px-2 text-xs font-bold text-red-600 hover:bg-red-100"
                   >
                     Reintentar
                   </Button>
                 </div>
               )}
-              {!loadingTipos && !errorTipos && tipos.length === 0 && (
+              {!tipos.cargando && !tipos.error && tipos.datos.length === 0 && (
                 <div className="rounded-xl bg-amber-50 px-3 py-1.5 text-sm font-semibold text-amber-700">
                   No hay tipos de empaque registrados.
                 </div>
@@ -432,7 +286,7 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
             </div>
             <Button
               onClick={agregarBloque}
-              disabled={loadingTipos || tipos.length === 0}
+              disabled={tipos.cargando || tipos.datos.length === 0}
               className="h-11 gap-2 bg-gradient-to-r from-c3 to-c4 font-bold text-white hover:opacity-90"
             >
               <Layers size={16} strokeWidth={2.75} />
@@ -440,9 +294,9 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
             </Button>
           </div>
 
-          {loadingTipos && <Skeleton className="h-64 w-full rounded-2xl" />}
+          {tipos.cargando && <Skeleton className="h-64 w-full rounded-2xl" />}
 
-          {!loadingTipos &&
+          {!tipos.cargando &&
             bloques.map((b, bi) => {
               const acento = ACENTOS[bi % ACENTOS.length];
               const errTipo = tocado ? erroresBloques[b.id] : null;
@@ -466,7 +320,7 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
                       </span>
                       <div className="min-w-[220px] flex-1 sm:max-w-xs">
                         <SelectEntidad
-                          opciones={tipos}
+                          opciones={tipos.datos}
                           valor={b.IdTipoEmpaque}
                           onCambio={(v) => actualizarTipoBloque(b.id, v)}
                           campoValor="IdTipoEmpaque"
@@ -520,7 +374,9 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
                               </td>
                               <td className="px-3 py-2">
                                 <Input
-                                  ref={(el) => (refsCodigo.current[f.id] = el)}
+                                  ref={(el) => {
+                                    refsCodigo.current[f.id] = el;
+                                  }}
                                   value={f.CodigoEmpaque}
                                   onChange={(e) =>
                                     actualizarFila(b.id, f.id, "CodigoEmpaque", aCodigo(e.target.value))
@@ -530,10 +386,7 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
                                       agregarFila(b.id);
                                   }}
                                   placeholder="Ej. EMP-2026-0148"
-                                  className={cn(
-                                    "h-10 font-mono",
-                                    err && "border-red-300 focus-visible:ring-red-300",
-                                  )}
+                                  className={cn("h-10 font-mono", err && ERROR_INPUT)}
                                 />
                               </td>
                               <td className="px-3 py-2">
@@ -546,21 +399,14 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
                                     actualizarFila(b.id, f.id, "PesoKg", e.target.value)
                                   }
                                   placeholder="0.00"
-                                  className={cn(
-                                    "h-10",
-                                    err && "border-red-300 focus-visible:ring-red-300",
-                                  )}
+                                  className={cn("h-10", err && ERROR_INPUT)}
                                 />
                               </td>
                               <td className="px-3 py-2">
-                                <Button
-                                  variant="ghost"
+                                <BotonQuitarFila
                                   onClick={() => quitarFila(b.id, f.id)}
                                   disabled={b.filas.length === 1}
-                                  className="h-10 w-10 p-0 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                                >
-                                  <Trash2 size={16} strokeWidth={2.5} />
-                                </Button>
+                                />
                               </td>
                             </tr>
                           );
@@ -577,24 +423,14 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
                           key={f.id}
                           className={cn(
                             "flex flex-col gap-3 rounded-xl border p-3.5",
-                            err
-                              ? "border-red-300 bg-red-50/60"
-                              : "border-slate-200 bg-slate-50",
+                            err ? "border-red-300 bg-red-50/60" : "border-slate-200 bg-slate-50",
                           )}
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                              Bobina {i + 1}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              onClick={() => quitarFila(b.id, f.id)}
-                              disabled={b.filas.length === 1}
-                              className="h-9 w-9 p-0 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                            >
-                              <Trash2 size={16} strokeWidth={2.5} />
-                            </Button>
-                          </div>
+                          <CabeceraFila
+                            titulo={`Bobina ${i + 1}`}
+                            onQuitar={() => quitarFila(b.id, f.id)}
+                            deshabilitado={b.filas.length === 1}
+                          />
 
                           <div className="flex flex-col gap-1.5">
                             <Label className="text-[11px] font-bold uppercase tracking-wide text-slate-600">
@@ -627,12 +463,7 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
                             />
                           </div>
 
-                          {err && (
-                            <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-red-600">
-                              <AlertCircle size={14} strokeWidth={2.5} />
-                              {err}
-                            </div>
-                          )}
+                          {err && <ErrorFila mensaje={err} />}
                         </div>
                       );
                     })}
@@ -653,51 +484,20 @@ export default function EmpaqueBobinaIngreso({ usuario }) {
             })}
         </section>
 
-        {errorEnvio && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-            <AlertCircle size={16} strokeWidth={2.5} />
-            {errorEnvio}
-          </div>
-        )}
+        {envio.errorEnvio && <ErrorEnvio mensaje={envio.errorEnvio} />}
 
-        <div className="mt-6 rounded-2xl bg-slate-900 px-5 py-4 shadow-sm sm:px-7">
-          <div className="flex w-full flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
-              <span className="font-extrabold text-white">
-                {filasPlanas.length} {filasPlanas.length === 1 ? "empaque" : "empaques"}
-              </span>
-              <span className="text-slate-400">
-                en {bloques.length} {bloques.length === 1 ? "tipo" : "tipos"}
-              </span>
-              <span className="text-slate-400">
-                Peso total{" "}
-                <strong className="text-slate-200">
-                  {totalPesoKg.toFixed(2)} kg
-                </strong>
-              </span>
-            </div>
-            <Button
-              onClick={guardarLote}
-              disabled={enviando}
-              className={cn(
-                "h-11 gap-2 bg-white/15 font-extrabold text-white hover:bg-white/15",
-                listo && "bg-gradient-to-r from-c3 to-c4 hover:opacity-90",
-              )}
-            >
-              {enviando ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <PackageCheck size={16} strokeWidth={2.75} />
-                  Guardar lote
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
+        <BarraGuardarLote listo={listo} enviando={envio.enviando} onGuardar={guardarLote}>
+          <span className="font-extrabold text-white">
+            {filasPlanas.length} {filasPlanas.length === 1 ? "empaque" : "empaques"}
+          </span>
+          <span className="text-slate-400">
+            en {bloques.length} {bloques.length === 1 ? "tipo" : "tipos"}
+          </span>
+          <span className="text-slate-400">
+            Peso total{" "}
+            <strong className="text-slate-200">{totalPesoKg.toFixed(2)} kg</strong>
+          </span>
+        </BarraGuardarLote>
       </main>
     </div>
   );

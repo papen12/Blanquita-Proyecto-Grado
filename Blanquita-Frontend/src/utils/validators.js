@@ -46,3 +46,6 @@ export const aEntero = (valor) => {
   const n = Number(valor);
   return Number.isInteger(n) && n > 0 ? n : 0;
 };
+
+export const numeroONulo = (valor) =>
+  valor === null || valor === undefined || valor === "" ? null : Number(valor);

@@ -34,7 +34,8 @@ import {
 } from "@/services/BobinaPapel/Reportes";
 import { ObtenerTiposPapelBobina } from "@/services/BobinaPapel/BobinaPapel";
 import { ObtenerProveedoresForm } from "@/services/Proveedor/Proveedor";
-import { EstadosMateriaPrima } from "@/constants/estados";
+import { EstadosMateriaPrima } from "@/constants/Estados";
+import { formatearNumero } from "@/utils/numeros";
 
 const TAMANO_PAGINA = 15;
 
@@ -47,14 +48,6 @@ const ESTADO_BADGE = {
   Abierta: "border-sky-300 bg-sky-50 text-sky-700",
   Terminada: "border-slate-300 bg-slate-100 text-slate-600",
 };
-
-const fmt = (n) =>
-  n === null || n === undefined
-    ? "-"
-    : Number(n).toLocaleString("es-BO", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
 
 export default function InventarioReporteBobinaPapel() {
   const [tipos, setTipos] = useState([]);
@@ -74,7 +67,6 @@ export default function InventarioReporteBobinaPapel() {
   const [descargandoInforme, setDescargandoInforme] = useState(false);
   const [descargandoId, setDescargandoId] = useState(null);
 
-  // Debounce del código de bobina para no disparar una consulta por cada tecla.
   useEffect(() => {
     const id = setTimeout(() => setCodigoBobina(codigoInput.trim()), 400);
     return () => clearTimeout(id);
@@ -118,7 +110,6 @@ export default function InventarioReporteBobinaPapel() {
 
   useEffect(() => {
     cargarCatalogo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [codigoBobina, idProveedor, idEstadoMateriaPrima, idsTipoBobina, pagina]);
 
   const alternarTipo = (idTipoBobina) => {
@@ -357,10 +348,10 @@ export default function InventarioReporteBobinaPapel() {
                       </TableCell>
                       <TableCell>{b.NombreProveedor}</TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {fmt(b.PesoBrutoKg)}
+                        {formatearNumero(b.PesoBrutoKg, { vacio: "-" })}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {fmt(b.Gramaje)}
+                        {formatearNumero(b.Gramaje, { vacio: "-" })}
                       </TableCell>
                       <TableCell>
                         <Tooltip>
@@ -424,13 +415,13 @@ export default function InventarioReporteBobinaPapel() {
                       <span>
                         Bruto{" "}
                         <strong className="text-slate-900">
-                          {fmt(b.PesoBrutoKg)} kg
+                          {formatearNumero(b.PesoBrutoKg, { vacio: "-" })} kg
                         </strong>
                       </span>
                       <span>
                         Gramaje{" "}
                         <strong className="text-slate-900">
-                          {fmt(b.Gramaje)}
+                          {formatearNumero(b.Gramaje, { vacio: "-" })}
                         </strong>
                       </span>
                     </div>

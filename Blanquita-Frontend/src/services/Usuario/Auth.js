@@ -5,64 +5,47 @@ import {
   RefreshResponse,
   LogoutResponse
 } from "../../models/Usuario/Auth";
-import { manejarErrorBackend } from "@/utils/validators";
+import { pedirJson } from "@/utils/api";
 
 const BACKEND_URL = import.meta.env.BACKEND_URL;
 
 export async function login(ci, clave, ip, userAgent) {
-  const headers = { "Content-Type": "application/json" };
+  const headers = {};
   if (ip) headers["X-Forwarded-For"] = ip;
   if (userAgent) headers["X-Client-User-Agent"] = userAgent;
 
-  const response = await fetch(`${BACKEND_URL}/auth/login`, {
+  const data = await pedirJson(`${BACKEND_URL}/auth/login`, {
     method: "POST",
     headers,
-    body: JSON.stringify(LoginRequest(ci, clave))
+    body: LoginRequest(ci, clave)
   });
 
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  return LoginResponse(await response.json());
+  return LoginResponse(data);
 }
 
 export async function refresh(refreshTokenCrudo) {
-  const response = await fetch(`${BACKEND_URL}/auth/refresh`, {
+  const data = await pedirJson(`${BACKEND_URL}/auth/refresh`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(RefreshRequest(refreshTokenCrudo))
+    body: RefreshRequest(refreshTokenCrudo)
   });
 
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  return RefreshResponse(await response.json());
+  return RefreshResponse(data);
 }
 
 export async function logout(accessToken) {
-  const response = await fetch(`${BACKEND_URL}/auth/logout`, {
+  const data = await pedirJson(`${BACKEND_URL}/auth/logout`, {
     method: "POST",
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
   });
 
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  return LogoutResponse(await response.json());
+  return LogoutResponse(data);
 }
 
 export async function logoutTodos(accessToken) {
-  const response = await fetch(`${BACKEND_URL}/auth/logout-todos`, {
+  const data = await pedirJson(`${BACKEND_URL}/auth/logout-todos`, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}` }
   });
 
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  return LogoutResponse(await response.json());
+  return LogoutResponse(data);
 }

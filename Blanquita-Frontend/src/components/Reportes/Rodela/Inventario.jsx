@@ -40,7 +40,6 @@ import { ArrayFilter } from "@/utils/handlers";
 
 const TAMANO_PAGINA = 15;
 
-// Rodela solo transita entre "En almacén" (1) y "Abierta" (6).
 const ESTADOS_RODELA = ArrayFilter([1, 6], EstadosMateriaPrima);
 
 const ESTADO_BADGE = {
@@ -71,7 +70,6 @@ export default function InventarioReporteRodela() {
   const [descargandoInforme, setDescargandoInforme] = useState(false);
   const [descargandoId, setDescargandoId] = useState(null);
 
-  // Debounce del código de rodela para no disparar una consulta por cada tecla.
   useEffect(() => {
     const id = setTimeout(() => setCodigoRodela(codigoInput.trim()), 400);
     return () => clearTimeout(id);
@@ -115,7 +113,6 @@ export default function InventarioReporteRodela() {
 
   useEffect(() => {
     cargarCatalogo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [codigoRodela, idProveedor, idEstadoMateriaPrima, idsTipoRodela, pagina]);
 
   const alternarTipo = (idTipoRodela) => {

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
 import {
   Search,
   Download,
@@ -42,9 +41,9 @@ import {
   descargarReporteProduccionServilletaPorPeriodo,
 } from "@/services/BobinaServilleta/Reportes";
 import { ObtenerTiposBobinaServilleta } from "@/services/BobinaServilleta/BobinaServilleta";
-import { EstadosProduccion } from "@/constants/estados";
+import { EstadosProduccion } from "@/constants/Estados";
 import { turnos, PREFIJO_POR_ROL } from "@/constants/Values";
-import { dateFormatter } from "@/utils/dates";
+import { dateFormatter, aFechaISO, formatearDuracion } from "@/utils/dates";
 
 const TAMANO_PAGINA = 15;
 
@@ -54,20 +53,6 @@ const ESTADO_BADGE = {
   Finalizado: "border-emerald-300 bg-emerald-50 text-emerald-700",
   Cancelada: "border-red-300 bg-red-50 text-red-600",
 };
-
-const aFechaISO = (fecha) => (fecha ? format(fecha, "yyyy-MM-dd") : null);
-
-function formatearDuracion(duracionIso) {
-  if (!duracionIso) return "-";
-  const coincidencia = duracionIso.match(
-    /^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:[\d.]+S)?$/,
-  );
-  if (!coincidencia) return "-";
-  const dias = Number(coincidencia[1] || 0);
-  const horas = Number(coincidencia[2] || 0) + dias * 24;
-  const minutos = Number(coincidencia[3] || 0);
-  return `${horas}h ${String(minutos).padStart(2, "0")}m`;
-}
 
 export default function ProduccionReporteServilleta({ usuario }) {
   const prefijo = PREFIJO_POR_ROL[usuario?.IdRol] ?? "encargado";
@@ -141,7 +126,6 @@ export default function ProduccionReporteServilleta({ usuario }) {
 
   useEffect(() => {
     cargarCatalogo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     rangoFechas,
     idTurno,
@@ -199,8 +183,6 @@ export default function ProduccionReporteServilleta({ usuario }) {
     }
   };
 
-  // Una producción cancelada ya trae el detalle completo (datos + pausas)
-  // dentro del reporte de cancelación, así que no hace falta pedir los dos.
   const verDetalle = async (produccion) => {
     setDescargandoId(produccion.IdProduccionServilleta);
     try {

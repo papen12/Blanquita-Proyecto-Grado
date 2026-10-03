@@ -3,34 +3,21 @@ import {
   IngresoBobinaServilletaResponse,
   TipoBobinaServilletaIngreso
 } from "../../models/BobinaServilleta/BobinaServilleta";
-import { manejarErrorBackend } from "@/utils/validators";
+import { pedirJson } from "@/utils/api";
 
 export async function cargarLoteBobinaServilleta(idProveedor, idTipoBobinaServilleta, bobinas) {
   const payload = IngresoBobinaServilletaRequest(idProveedor, idTipoBobinaServilleta, bobinas);
 
-  const response = await fetch("/api/bobinaservilleta/cargarlote", {
+  const data = await pedirJson("/api/bobinaservilleta/cargarlote", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: payload
   });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
 
   return IngresoBobinaServilletaResponse(data);
 }
 
 export async function ObtenerTiposBobinaServilleta() {
-  const response = await fetch("/api/bobinaservilleta/obtenertipos");
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson("/api/bobinaservilleta/obtenertipos");
 
   return data.map(TipoBobinaServilletaIngreso);
 }

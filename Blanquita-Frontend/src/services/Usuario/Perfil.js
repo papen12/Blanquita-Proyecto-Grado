@@ -1,26 +1,13 @@
 import { PerfilResponse, PerfilUpdateRequest } from "../../models/Usuario/Perfil";
-import { manejarErrorBackend } from "@/utils/validators";
+import { pedirJson } from "@/utils/api";
 
 export async function obtenerPerfil() {
-  const response = await fetch("/api/Usuario/ver");
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  return PerfilResponse(await response.json());
+  return PerfilResponse(await pedirJson("/api/Usuario/ver"));
 }
 
 export async function editarPerfil(datos) {
-  const response = await fetch("/api/Usuario/editar", {
+  return PerfilResponse(await pedirJson("/api/Usuario/editar", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(PerfilUpdateRequest(datos))
-  });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  return PerfilResponse(await response.json());
+    body: PerfilUpdateRequest(datos)
+  }));
 }

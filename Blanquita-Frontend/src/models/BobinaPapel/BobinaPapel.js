@@ -1,3 +1,5 @@
+import { numeroONulo } from "@/utils/validators";
+
 export const BobinaPapel = (data) => ({
   IdBobinaPapel: data.IdBobinaPapel ?? null,
   CodigoBobina: data.CodigoBobina,
@@ -36,15 +38,12 @@ export const TipoBobinaPapelIngreso = (data) => ({
   NombreTipoBobina: data.NombreTipoBobina,
 });
 
-const numeroOpcional = (valor) =>
-  valor === null || valor === undefined || valor === "" ? null : Number(valor);
-
 export const EditarBobinaPapelRequest = (data) => ({
   IdBobinaPapel: data.IdBobinaPapel,
   CodigoBobina: (data.CodigoBobina ?? "").trim(),
   PesoBrutoKg: Number(data.PesoBrutoKg),
   PesoNetoKg: Number(data.PesoNetoKg),
-  Gramaje: numeroOpcional(data.Gramaje),
+  Gramaje: numeroONulo(data.Gramaje),
   Observacion: (data.Observacion ?? "").trim() || null,
 });
 

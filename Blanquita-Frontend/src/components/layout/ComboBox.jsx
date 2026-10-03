@@ -7,12 +7,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-/*
- * Alternativa a SelectEntidad basada en el Popover de shadcn.
- * El Popover no bloquea el scroll del documento ni superpone la lista sobre el
- * trigger, así que en móvil la pantalla no se desplaza al abrir o elegir.
- * Mismas props que SelectEntidad para poder reemplazarlo directamente.
- */
 export function ComboBox({
   opciones = [],
   valor,

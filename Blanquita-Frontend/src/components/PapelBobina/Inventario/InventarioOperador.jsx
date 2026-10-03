@@ -66,7 +66,6 @@ export default function InventarioBobinasPapel({ usuario }) {
 
   const alGuardarEdicion = (actualizada) => {
     toast.success(`Bobina ${actualizada.CodigoBobina} corregida`);
-    // La selección se guarda por código y el código pudo cambiar.
     setMarcadas([]);
     if (sel) cargarDetalle(sel);
     cargarResumen();

@@ -11,22 +11,15 @@ import {
   EditarBobinaServilletaRequest,
   EditarBobinaServilletaResponse
 } from "../../models/BobinaServilleta/Inventario";
-import { manejarErrorBackend } from "@/utils/validators";
+import { pedirJson } from "@/utils/api";
 
 export async function reingresarSubBobinaInventario(idSubBobina, observacion) {
   const payload = ReingresarSubBobinaInventarioRequest(idSubBobina, observacion);
 
-  const response = await fetch("/api/bobinaservilleta/inventario/reingresar", {
+  const data = await pedirJson("/api/bobinaservilleta/inventario/reingresar", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: payload
   });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
 
   return ReingresarSubBobinaInventarioResponse(data);
 }
@@ -34,29 +27,16 @@ export async function reingresarSubBobinaInventario(idSubBobina, observacion) {
 export async function darDeBajaSubBobina(idSubBobina, observacion) {
   const payload = DarDeBajaSubBobinaRequest(idSubBobina, observacion);
 
-  const response = await fetch("/api/bobinaservilleta/inventario/dardebaja", {
+  const data = await pedirJson("/api/bobinaservilleta/inventario/dardebaja", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: payload
   });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
 
   return DarDeBajaSubBobinaResponse(data);
 }
 
 export async function verResumenInventarioBobinaServilleta() {
-  const response = await fetch("/api/bobinaservilleta/inventario/resumen");
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson("/api/bobinaservilleta/inventario/resumen");
 
   return data.map(ResumenInventarioBobinaServilletaResponse);
 }
@@ -64,25 +44,13 @@ export async function verResumenInventarioBobinaServilleta() {
 export async function verDetalleInventarioBobinaServilleta(idTipoBobinaServilleta) {
   const params = new URLSearchParams({ IdTipoBobinaServilleta: idTipoBobinaServilleta });
 
-  const response = await fetch(`/api/bobinaservilleta/inventario/detalle?${params.toString()}`);
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson(`/api/bobinaservilleta/inventario/detalle?${params.toString()}`);
 
   return data.map(DetalleInventarioBobinaServilletaResponse);
 }
 
 export async function verResumenInventarioSubBobinaServilleta() {
-  const response = await fetch("/api/bobinaservilleta/inventario/sub/resumen");
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson("/api/bobinaservilleta/inventario/sub/resumen");
 
   return data.map(ResumenInventarioSubBobinaServilletaResponse);
 }
@@ -90,25 +58,13 @@ export async function verResumenInventarioSubBobinaServilleta() {
 export async function verDetalleInventarioSubBobinaServilleta(idTipoMedidaSubBobina) {
   const params = new URLSearchParams({ IdTipoMedidaSubBobina: idTipoMedidaSubBobina });
 
-  const response = await fetch(`/api/bobinaservilleta/inventario/sub/detalle?${params.toString()}`);
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson(`/api/bobinaservilleta/inventario/sub/detalle?${params.toString()}`);
 
   return data.map(DetalleInventarioSubBobinaServilletaResponse);
 }
 
 export async function verSubBobinasServilletaFueraInventario() {
-  const response = await fetch("/api/bobinaservilleta/inventario/sub/fuera");
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson("/api/bobinaservilleta/inventario/sub/fuera");
 
   return data.map(SubBobinaServilletaFueraInventarioResponse);
 }
@@ -117,17 +73,10 @@ export async function verSubBobinasServilletaFueraInventario() {
 export async function editarBobinaServilleta(idBobinaServilleta, unidades, observacion) {
   const payload = EditarBobinaServilletaRequest(idBobinaServilleta, unidades, observacion);
 
-  const response = await fetch("/api/bobinaservilleta/inventario/editar", {
+  const data = await pedirJson("/api/bobinaservilleta/inventario/editar", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: payload
   });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
 
   return data.map(EditarBobinaServilletaResponse);
 }

@@ -45,7 +45,6 @@ function fechaLarga(fecha) {
   return `${DIAS[fecha.getDay()]} ${fecha.getDate()} de ${MESES[fecha.getMonth()]}`;
 }
 
-/** Icono del área: soporta los iconos de @lucide/lab (esIconoLab). */
 function IconoArea({ area, size = 15, className }) {
   if (area.esIconoLab) {
     return <Icon iconNode={area.icono} size={size} className={className} />;
@@ -113,11 +112,9 @@ function TileAcceso({ subruta, href, destacado }) {
 }
 
 export default function InicioOperador({ usuario }) {
-  // Arranque SSR-safe: mismo valor en servidor y en la primera hidratación.
   const [areaId, setAreaId] = useState(idAreaPorDefecto);
   const [ahora, setAhora] = useState(null);
 
-  // Ya en el cliente: leemos la preferencia guardada y la fecha real.
   useEffect(() => {
     setAreaId(areaInicial().id);
     setAhora(new Date());
@@ -142,7 +139,6 @@ export default function InicioOperador({ usuario }) {
               : " "}
           </div>
           <div className="mt-0.5 text-xl font-extrabold">
-            {/* TODO: nombre real cuando exista el GET del perfil de usuario */}
             Hola, operador
           </div>
         </div>

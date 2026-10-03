@@ -26,26 +26,12 @@ import {
   MAX_MOTIVOS_OBSERVACION_RODELA,
 } from "@/constants/Values";
 import { dateFormatter } from "@/utils/dates";
+import { alternarMotivoEnTexto } from "@/utils/handlers";
 import { extraerMensajeError } from "@/utils/validators";
 import Header from "@/components/layout/Header";
 
 const INTERVALO_REFRESCO_MS = 30_000;
 const INTERVALO_TICK_MS = 15_000;
-const SEPARADOR = ". ";
-
-function alternarMotivoEnTexto(motivo, actual) {
-  if (actual.includes(motivo)) {
-    return actual
-      .replace(motivo, "")
-      .replace(/\.\s*\.\s*/g, ". ")
-      .replace(/^\s*\.\s*/, "")
-      .trimStart();
-  }
-  const texto = actual.trimEnd();
-  if (!texto) return motivo;
-  return texto.endsWith(".") ? `${texto} ${motivo}` : `${texto}${SEPARADOR}${motivo}`;
-}
-
 function colorRestante(min) {
   if (min <= 3) return { text: "text-red-600", bg: "bg-red-50" };
   if (min <= 10) return { text: "text-amber-600", bg: "bg-amber-50" };

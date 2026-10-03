@@ -19,7 +19,6 @@ import { aCodigo, codigoKeyDown } from "@/utils/handlers";
 import { dateFormatter } from "@/utils/dates";
 import { fmt } from "./constantes";
 
-// Los Decimal del backend llegan como texto ("1250.000"): se normalizan a número.
 const aTexto = (valor) =>
   valor === null || valor === undefined || valor === "" ? "" : String(Number(valor));
 
@@ -50,7 +49,6 @@ function validar(form) {
   return errores;
 }
 
-// Mismos criterios que la función SQL: solo se listan los campos que cambian.
 function calcularCambios(form, bobina) {
   if (!bobina) return [];
   const cambios = [];

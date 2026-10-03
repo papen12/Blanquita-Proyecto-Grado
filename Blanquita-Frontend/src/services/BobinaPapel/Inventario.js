@@ -7,29 +7,17 @@ import {
   DarDeBajaBobinaResponse,
   VerBobinasPapelFueraInventarioResponse
 } from "../../models/BobinaPapel/Inventario";
-import { manejarErrorBackend } from "@/utils/validators";
+import { pedirJson } from "@/utils/api";
 
 
 export async function verResumenInventarioBobinaPapel() {
-  const response = await fetch("/api/papelbobina/inventario/resumen");
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson("/api/papelbobina/inventario/resumen");
 
   return data.map(VerResumenInventarioBobinaPapelResponse);
 }
 
 export async function verDetalleInventarioBobinaPapel(idTipoBobina) {
-  const response = await fetch(`/api/papelbobina/inventario/detalle/${idTipoBobina}`);
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson(`/api/papelbobina/inventario/detalle/${idTipoBobina}`);
 
   return data.map(VerDetalleInventarioBobinaPapelResponse);
 }
@@ -37,17 +25,10 @@ export async function verDetalleInventarioBobinaPapel(idTipoBobina) {
 export async function reingresarBobinaInventario(idBobinaPapel, observacion) {
   const payload = ReingresarBobinaAInventarioRequest(idBobinaPapel, observacion);
 
-  const response = await fetch("/api/papelbobina/inventario/reingresar", {
+  const data = await pedirJson("/api/papelbobina/inventario/reingresar", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: payload
   });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
 
   return ReingresarBobinaAInventarioResponse(data);
 }
@@ -55,29 +36,16 @@ export async function reingresarBobinaInventario(idBobinaPapel, observacion) {
 export async function darDeBajaBobina(idBobinaPapel, observacion) {
   const payload = DarDeBajaBobinaRequest(idBobinaPapel, observacion);
 
-  const response = await fetch("/api/papelbobina/inventario/dardebaja", {
+  const data = await pedirJson("/api/papelbobina/inventario/dardebaja", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: payload
   });
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
 
   return DarDeBajaBobinaResponse(data);
 }
 
 export async function verBobinasPapelFueraInventario() {
-  const response = await fetch("/api/papelbobina/inventario/fuera");
-
-  if (!response.ok) {
-    await manejarErrorBackend(response);
-  }
-
-  const data = await response.json();
+  const data = await pedirJson("/api/papelbobina/inventario/fuera");
 
   return data.map(VerBobinasPapelFueraInventarioResponse);
 }

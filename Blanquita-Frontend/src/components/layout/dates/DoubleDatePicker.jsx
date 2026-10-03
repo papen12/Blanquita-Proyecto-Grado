@@ -25,8 +25,6 @@ export default function DoubleDatePicker({
   onRangoVisibleChange,
   className,
 }) {
-  // Controlado cuando el padre pasa onChange (aunque value sea undefined,
-  // p. ej. al limpiar filtros); si no, se maneja con estado interno.
   const controlado = onChange !== undefined;
   const [rangoInterno, setRangoInterno] = React.useState(undefined);
   const rango = controlado ? value : rangoInterno;
@@ -36,8 +34,6 @@ export default function DoubleDatePicker({
     onChange?.(nuevoRango);
   };
 
-  // Mes base de los `numberOfMonths` calendarios visibles, para poder avisar
-  // al padre qué rango de fechas debe consultar (p. ej. lotes de ese mes).
   const [mesBase, setMesBase] = React.useState(() => rango?.from ?? new Date());
 
   React.useEffect(() => {
@@ -46,7 +42,6 @@ export default function DoubleDatePicker({
       inicio: startOfMonth(mesBase),
       fin: endOfMonth(addMonths(mesBase, numberOfMonths - 1)),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mesBase, numberOfMonths]);
 
   const esDestacado = React.useCallback(

@@ -20,3 +20,20 @@ export const ArrayFilter = (ids, arr) => {
   const clave = Object.keys(arr[0] ?? {}).find((k) => k.startsWith("Id"));
   return arr.filter((obj) => ids.includes(obj[clave]));
 };
+
+const SEPARADOR_MOTIVOS = ". ";
+
+export const alternarMotivoEnTexto = (motivo, actual) => {
+  if (actual.includes(motivo)) {
+    return actual
+      .replace(motivo, "")
+      .replace(/\.\s*\.\s*/g, ". ")
+      .replace(/^\s*\.\s*/, "")
+      .trimStart();
+  }
+  const texto = actual.trimEnd();
+  if (!texto) return motivo;
+  return texto.endsWith(".")
+    ? `${texto} ${motivo}`
+    : `${texto}${SEPARADOR_MOTIVOS}${motivo}`;
+};

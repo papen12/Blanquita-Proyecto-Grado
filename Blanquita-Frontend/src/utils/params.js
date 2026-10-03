@@ -14,3 +14,8 @@ export function construirQueryParams(filtros = {}) {
 
   return params;
 }
+
+export function conQueryParams(url, filtros = {}) {
+  const query = construirQueryParams(filtros).toString();
+  return query ? `${url}?${query}` : url;
+}

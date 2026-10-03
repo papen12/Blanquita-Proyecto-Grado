@@ -52,8 +52,9 @@ import {
   insertarSalidaProductoTerminado,
   ajustePositivoInventarioProductoTerminado,
   ajusteNegativoInventarioProductoTerminado,
-} from "../../services/Inventario/inventario";
+} from "../../services/Inventario/Inventario";
 import Header from "@/components/layout/Header";
+import { estadoStock, ESTILO_ESTADO, descripcionContenido } from "./comunes";
 
 const FILTROS = [
   { id: "todos", texto: "Todos" },
@@ -61,31 +62,6 @@ const FILTROS = [
   { id: "bajo", texto: "Stock bajo" },
   { id: "agotado", texto: "Sin stock" },
 ];
-
-const UMBRAL_BAJO = 10;
-
-const estadoStock = (cantidad) => {
-  const valor = Number(cantidad || 0);
-  if (valor === 0) return "agotado";
-  if (valor < UMBRAL_BAJO) return "bajo";
-  return "disponible";
-};
-
-const ESTILO_ESTADO = {
-  disponible: { texto: "Disponible", clase: "bg-emerald-50 text-emerald-700" },
-  bajo: { texto: "Stock bajo", clase: "bg-amber-50 text-amber-700" },
-  agotado: { texto: "Sin stock", clase: "bg-slate-100 text-slate-500" },
-};
-
-const descripcionContenido = (p) => {
-  const partes = [];
-  if (p.CantidadRollosUnidades) partes.push(`${p.CantidadRollosUnidades} u/paq`);
-  if (p.CantidadPorUnidadTerminada)
-    partes.push(
-      `${p.CantidadPorUnidadTerminada} por ${(p.TipoContenedor || "unidad").toLowerCase()}`,
-    );
-  return partes.length > 0 ? partes.join(" · ") : "—";
-};
 
 function TarjetaResumen({ icono: Icono, valor, etiqueta, tono }) {
   return (

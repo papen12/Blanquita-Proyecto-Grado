@@ -1,15 +1,6 @@
 import { defineMiddleware } from "astro/middleware";
 import { resolverSesion, limpiarSesion } from "./lib/auth-server";
-
-const PREFIJO_POR_ROL = {
-  1: "/operador",
-  2: "/encargado"
-};
-
-const RUTA_POR_ROL = {
-  1: "/operador/inicio",
-  2: "/encargado/inicio"
-};
+import { PREFIJO_POR_ROL, RUTA_POR_ROL } from "./constants/Values";
 
 const RUTAS_PROTEGIDAS = ["/operador", "/encargado", "/scan", "/admin"];
 const RUTAS_SIN_PREFIJO_ROL = ["/scan", "/admin"];
@@ -57,8 +48,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   );
 
   if (!omitePrefijoRol) {
-    const prefijoPermitido = PREFIJO_POR_ROL[sesion.IdRol];
-    if (!prefijoPermitido || !pathname.startsWith(prefijoPermitido)) {
+    const prefijo = PREFIJO_POR_ROL[sesion.IdRol];
+    if (!prefijo || !pathname.startsWith(`/${prefijo}`)) {
       return context.redirect(RUTA_POR_ROL[sesion.IdRol] || "/");
     }
   }

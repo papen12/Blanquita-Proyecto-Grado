@@ -31,7 +31,8 @@ import {
 } from "@/services/BobinaServilleta/Reportes";
 import { ObtenerTiposBobinaServilleta } from "@/services/BobinaServilleta/BobinaServilleta";
 import { ObtenerProveedoresForm } from "@/services/Proveedor/Proveedor";
-import { EstadosMateriaPrima } from "@/constants/estados";
+import { EstadosMateriaPrima } from "@/constants/Estados";
+import { formatearNumero } from "@/utils/numeros";
 
 const TAMANO_PAGINA = 15;
 
@@ -44,14 +45,6 @@ const ESTADO_BADGE = {
   Abierta: "border-sky-300 bg-sky-50 text-sky-700",
   Terminada: "border-slate-300 bg-slate-100 text-slate-600",
 };
-
-const fmt = (n) =>
-  n === null || n === undefined
-    ? "-"
-    : Number(n).toLocaleString("es-BO", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
 
 function aplanarUnidades(bobinas) {
   const unidades = [];
@@ -152,7 +145,6 @@ export default function UnidadBobinaReporteServilleta() {
 
   useEffect(() => {
     cargarCatalogo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [codigoBobina, idProveedor, idEstadoMateriaPrima, idTipoBobinaServilleta, pagina]);
 
   const unidades = useMemo(
@@ -349,10 +341,10 @@ export default function UnidadBobinaReporteServilleta() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {fmt(u.PesoBrutoKg)}
+                        {formatearNumero(u.PesoBrutoKg, { vacio: "-" })}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {fmt(u.GramajeGr)}
+                        {formatearNumero(u.GramajeGr, { vacio: "-" })}
                       </TableCell>
                       <TableCell>
                         <Tooltip>
@@ -416,13 +408,13 @@ export default function UnidadBobinaReporteServilleta() {
                       <span>
                         Bruto{" "}
                         <strong className="text-slate-900">
-                          {fmt(u.PesoBrutoKg)} kg
+                          {formatearNumero(u.PesoBrutoKg, { vacio: "-" })} kg
                         </strong>
                       </span>
                       <span>
                         Gramaje{" "}
                         <strong className="text-slate-900">
-                          {fmt(u.GramajeGr)}
+                          {formatearNumero(u.GramajeGr, { vacio: "-" })}
                         </strong>
                       </span>
                     </div>

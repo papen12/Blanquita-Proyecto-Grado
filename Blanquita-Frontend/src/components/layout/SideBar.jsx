@@ -18,11 +18,6 @@ import {
   SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 
-/**
- * Version escritorio de la navegacion: reutiliza el mismo JSON que el NavBar
- * (RutasNavBar) y mantiene la paleta del NavBar mapeandola a los tokens
- * --sidebar-* que consume el componente ui/sidebar.
- */
 const PALETA_NAVBAR = {
   "--sidebar": "#62C1E5",
   "--sidebar-foreground": "#ffffff",
@@ -37,7 +32,6 @@ const PALETA_NAVBAR = {
 const ANCHO_SIDEBAR = "17rem";
 const CLAVE_ESTADO = "sidebar-abierto";
 
-// Escritorio compacto: items 14px (text-sm), subitems 12px (text-xs).
 const CLASE_ITEM =
   "h-10 gap-2.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:bg-sidebar-accent [&_svg]:size-5";
 const CLASE_SUBITEM =
@@ -122,8 +116,6 @@ export default function SideBar({ idRol, seccion }) {
     ? RutasReportes
     : RutasNavBar.filter((item) => !item.isLider || idRol === Roles.Encargado);
 
-  // Arranca abierto para coincidir con el HTML del servidor (evita desajuste de
-  // hidratacion); el estado guardado se aplica ya en el cliente.
   const [abierto, setAbierto] = useState(true);
 
   useEffect(() => {
@@ -132,7 +124,6 @@ export default function SideBar({ idRol, seccion }) {
         setAbierto(false);
       }
     } catch {
-      /* almacenamiento no disponible */
     }
   }, []);
 
@@ -142,16 +133,11 @@ export default function SideBar({ idRol, seccion }) {
       try {
         window.localStorage.setItem(CLAVE_ESTADO, String(siguiente));
       } catch {
-        /* almacenamiento no disponible */
       }
       return siguiente;
     });
   };
 
-  // Ajusta el hueco reservado para el contenido mediante una variable CSS en
-  // <html>. El contenedor de contenido (otra isla de Astro) la consume solo
-  // dentro de @media (min-width: 768px) en globals.css, asi que en movil nunca
-  // se aplica padding aunque esta variable quede fijada.
   useEffect(() => {
     const raiz = document.documentElement;
     raiz.style.setProperty("--hueco-sidebar", abierto ? ANCHO_SIDEBAR : "0px");
@@ -217,7 +203,6 @@ export default function SideBar({ idRol, seccion }) {
         </SidebarFooter>
       </Sidebar>
 
-      {/* Lengueta para plegar / desplegar, centrada verticalmente */}
       <button
         type="button"
         onClick={alternar}

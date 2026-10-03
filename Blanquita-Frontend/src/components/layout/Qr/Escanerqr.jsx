@@ -179,7 +179,6 @@ export default function EscanerQR({ abierto, onCerrar, onDetectar }) {
       aria-modal="true"
       aria-label="Escanear código QR"
     >
-      {/* Cámara */}
       <div
         className="absolute inset-0 overflow-hidden"
         onTouchStart={alTocarInicio}
@@ -195,7 +194,6 @@ export default function EscanerQR({ abierto, onCerrar, onDetectar }) {
         />
       </div>
 
-      {/* Marco de encuadre */}
       {estado === "activo" ? (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="relative aspect-square w-[min(72vw,52vh,340px)]">
@@ -207,7 +205,6 @@ export default function EscanerQR({ abierto, onCerrar, onDetectar }) {
         </div>
       ) : null}
 
-      {/* Cabecera */}
       <div className="relative z-10 flex items-center justify-between gap-3 bg-linear-to-b from-black/70 to-transparent px-4 pb-8 pt-[max(env(safe-area-inset-top),0.75rem)]">
         <span className="font-sans text-sm font-semibold text-white">
           Escanear código QR
@@ -224,7 +221,6 @@ export default function EscanerQR({ abierto, onCerrar, onDetectar }) {
 
       <div className="flex-1" />
 
-      {/* Controles y mensajes */}
       <div className="relative z-10 flex flex-col gap-4 bg-linear-to-t from-black/80 to-transparent px-5 pt-10 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
         {estado === "error" ? (
           <div className="mx-auto w-full max-w-sm rounded-2xl bg-white/10 p-4 text-center backdrop-blur">

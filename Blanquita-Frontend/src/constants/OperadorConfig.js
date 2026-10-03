@@ -32,7 +32,7 @@ export const movimientosOperador = [
 
 export const ObservacionesInsertarLogs = [
   {
-    id: 2, // Descuento: corrección que resta logs registrados por error
+    id: 2,
     motivos: [
       "Error de registro de logs",
       "Doble registro del mismo movimiento",
@@ -41,7 +41,7 @@ export const ObservacionesInsertarLogs = [
     ],
   },
   {
-    id: 3, // Aumento: corrección que suma logs no contabilizados previamente
+    id: 3,
     motivos: [
       "Logs no registrados en el turno",
       "Cantidad ingresada menor a la real",
