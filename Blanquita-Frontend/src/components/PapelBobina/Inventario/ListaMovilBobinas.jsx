@@ -1,7 +1,8 @@
-import { Check, SquarePen } from "lucide-react";
+import { SquarePen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { dateFormatter } from "@/utils/dates";
+import { CasillaSeleccion } from "@/components/Inventario/comunes";
 import { fmt } from "./constantes";
 import { MiniStat } from "./MiniStat";
 
@@ -24,16 +25,7 @@ export function ListaMovilBobinas({ bobinas, tipoSel, marcadas, onToggle, onEdit
               <div className={cn("font-mono text-[15px] font-extrabold", tipoSel.text)}>
                 {b.CodigoBobina}
               </div>
-              <div
-                className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2",
-                  on
-                    ? cn(tipoSel.bg, "border-transparent text-white")
-                    : "border-slate-300",
-                )}
-              >
-                {on && <Check size={14} strokeWidth={3.5} />}
-              </div>
+              <CasillaSeleccion marcada={on} acento={tipoSel} grande />
             </div>
             <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
               <span>

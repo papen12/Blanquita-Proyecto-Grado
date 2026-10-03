@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Plus,
   Pause,
@@ -8,17 +7,14 @@ import {
   Clock,
   Layers,
   Loader2,
-  Download,
 } from "lucide-react";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { BotonDescarga } from "@/components/layout/BotonDescarga";
 import { dateFormatter, hoyISO } from "@/utils/dates";
-import { extraerMensajeError } from "@/utils/validators";
 
 const GRID = "grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3";
 const VACIO = "rounded-2xl bg-white p-10 text-center text-sm text-slate-400 ring-1 ring-slate-200";
@@ -211,42 +207,15 @@ export function ListaProducciones({
 }
 
 export function BotonReporteDia({ descargar }) {
-  const [descargando, setDescargando] = useState(false);
-
-  const descargarHoy = async () => {
-    setDescargando(true);
-    try {
-      const hoy = hoyISO();
-      await descargar(hoy, hoy, true);
-      toast.success("Reporte del día descargado");
-    } catch (e) {
-      toast.error(extraerMensajeError(e, e.message));
-    } finally {
-      setDescargando(false);
-    }
-  };
-
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            onClick={descargarHoy}
-            disabled={descargando}
-            className="h-11 gap-2 bg-white font-bold text-c3 shadow-md hover:bg-slate-100"
-          >
-            {descargando ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Download size={16} strokeWidth={2.75} />
-            )}
-            Reporte del día
-          </Button>
-        }
-      />
-      <TooltipContent>
-        PDF con todas las producciones de hoy, incluyendo pausas y cancelaciones
-      </TooltipContent>
-    </Tooltip>
+    <BotonDescarga
+      texto="Reporte del día"
+      ayuda="PDF con todas las producciones de hoy, incluyendo pausas y cancelaciones"
+      exito="Reporte del día descargado"
+      descargar={() => {
+        const hoy = hoyISO();
+        return descargar(hoy, hoy, true);
+      }}
+    />
   );
 }

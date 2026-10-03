@@ -24,5 +24,5 @@ export function useCatalogo(cargar, alCargar) {
     recargar();
   }, []);
 
-  return { datos, cargando, error, recargar };
+  return { datos, setDatos, cargando, error, recargar };
 }

@@ -16,6 +16,7 @@ import {
 import { ObtenerProveedoresForm } from "../../services/Proveedor/Proveedor";
 import { dateFormatter } from "@/utils/dates";
 import { aCodigo } from "@/utils/handlers";
+import { ACENTOS } from "@/constants/Acentos";
 import { useCatalogo } from "@/hooks/useCatalogo";
 import { useEnvioLote, codigosRepetidos, erroresPorFila } from "@/hooks/useIngresoLote";
 import {
@@ -28,13 +29,6 @@ import {
   ErrorEnvio,
   BarraGuardarLote,
 } from "@/components/IngresoLote/comunes";
-
-const ACENTOS = [
-  { text: "text-c3", soft: "bg-c4/8", border: "border-c4/30" },
-  { text: "text-serv3", soft: "bg-serv3/8", border: "border-serv3/30" },
-  { text: "text-lux2", soft: "bg-lux1/8", border: "border-lux1/30" },
-  { text: "text-eco2", soft: "bg-eco1/8", border: "border-eco1/30" },
-];
 
 const ERROR_INPUT = "border-red-300 focus-visible:ring-red-300";
 

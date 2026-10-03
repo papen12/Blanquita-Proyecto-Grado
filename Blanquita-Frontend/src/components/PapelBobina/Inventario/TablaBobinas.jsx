@@ -1,4 +1,4 @@
-import { Check, SquarePen } from "lucide-react";
+import { SquarePen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -10,6 +10,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { dateFormatter } from "@/utils/dates";
+import { CasillaSeleccion } from "@/components/Inventario/comunes";
 import { fmt } from "./constantes";
 
 export function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle, onEditar }) {
@@ -39,16 +40,7 @@ export function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle, onEditar })
                 className={cn("cursor-pointer", on && tipoSel.soft)}
               >
                 <TableCell className="pl-5">
-                  <div
-                    className={cn(
-                      "flex h-5 w-5 items-center justify-center rounded-md border-2",
-                      on
-                        ? cn(tipoSel.bg, "border-transparent text-white")
-                        : "border-slate-300",
-                    )}
-                  >
-                    {on && <Check size={13} strokeWidth={3.5} />}
-                  </div>
+                  <CasillaSeleccion marcada={on} acento={tipoSel} />
                 </TableCell>
                 <TableCell className={cn("font-mono font-bold", tipoSel.text)}>
                   {b.CodigoBobina}

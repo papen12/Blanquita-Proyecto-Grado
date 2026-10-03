@@ -1,17 +1,7 @@
-import { useState, useEffect } from "react";
-import { Plus, X, ArrowRight, Loader2, Search, Cylinder, Download } from "lucide-react";
+import { useState } from "react";
+import { Plus, Cylinder } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   verResumenInventarioBobinaPapel,
   verDetalleInventarioBobinaPapel,
@@ -22,10 +12,27 @@ import {
 import { iniciarProduccion } from "../../../services/BobinaPapel/Produccion";
 import { descargarReporteInventarioBobinaPapel } from "../../../services/BobinaPapel/Reportes";
 import { dateFormatter } from "@/utils/dates";
-
-import { ACENTOS, fmt } from "./constantes";
-import { TarjetaTipo } from "./TarjetaTipo";
-import { TarjetaFueraInventario } from "./TarjetaFueraInventario";
+import { useCatalogo } from "@/hooks/useCatalogo";
+import { useDetalleInventario } from "@/hooks/useDetalleInventario";
+import { useEjecutar } from "@/hooks/useEjecutar";
+import { BotonDescarga } from "@/components/layout/BotonDescarga";
+import {
+  GRID_TARJETAS,
+  conAcentos,
+  coincide,
+  TarjetaTipo,
+  DatoTarjeta,
+  TarjetaFueraInventario,
+  EncabezadoCatalogo,
+  EstadoCatalogo,
+  PanelDetalle,
+  PanelFuera,
+  BuscadorCodigo,
+  ContenidoLista,
+  BarraSeleccion,
+  ItemFueraInventario,
+} from "@/components/Inventario/comunes";
+import { fmt } from "./constantes";
 import { TablaBobinas } from "./TablaBobinas";
 import { ListaMovilBobinas } from "./ListaMovilBobinas";
 import ModalEditarBobina from "./ModalEditarBobina";
@@ -33,31 +40,36 @@ import Header from "@/components/layout/Header";
 import { Roles } from "@/constants/Values";
 
 export default function InventarioBobinasPapel({ usuario }) {
-  const [tipos, setTipos] = useState([]);
-  const [loadingTipos, setLoadingTipos] = useState(true);
-  const [errorTipos, setErrorTipos] = useState("");
+  const esLider = usuario?.IdRol === Roles.Encargado;
 
-  const [sel, setSel] = useState(null);
-  const [bobinasSel, setBobinasSel] = useState([]);
-  const [loadingDetalle, setLoadingDetalle] = useState(false);
-  const [errorDetalle, setErrorDetalle] = useState("");
-  const [busquedaCodigo, setBusquedaCodigo] = useState("");
-
-  const [marcadas, setMarcadas] = useState([]);
-  const [enviando, setEnviando] = useState(false);
+  const resumen = useCatalogo(verResumenInventarioBobinaPapel);
+  const fuera = useCatalogo(verBobinasPapelFueraInventario);
+  const detalle = useDetalleInventario(verDetalleInventarioBobinaPapel);
+  const envio = useEjecutar();
+  const accionesFuera = useEjecutar();
 
   const [mostrarFuera, setMostrarFuera] = useState(false);
-  const [fueraInventario, setFueraInventario] = useState([]);
-  const [loadingFuera, setLoadingFuera] = useState(false);
-  const [errorFuera, setErrorFuera] = useState("");
-  const [procesandoId, setProcesandoId] = useState(null);
-  const [busquedaCodigoFuera, setBusquedaCodigoFuera] = useState("");
+  const [busquedaFuera, setBusquedaFuera] = useState("");
 
-  const [descargandoInventario, setDescargandoInventario] = useState(false);
-
-  const esLider = usuario?.IdRol === Roles.Encargado;
   const [bobinaEditar, setBobinaEditar] = useState(null);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
+
+  const tipos = conAcentos(resumen.datos, { cantidadDe: (t) => t.CantidadBobinas });
+  const tipoSel = detalle.sel ? tipos.find((t) => t.IdTipoBobina === detalle.sel) : null;
+  const esServilleta = tipoSel
+    ? tipoSel.NombreTipoBobina.toLowerCase().includes("servilleta")
+    : false;
+  const requeridas = esServilleta ? 1 : 2;
+  const { marcadas, setMarcadas } = detalle;
+  const listas = marcadas.length === requeridas;
+
+  const totalBobinas = tipos.reduce((s, t) => s + t.CantidadBobinas, 0);
+  const totalPesoFmt = fmt(tipos.reduce((s, t) => s + Number(t.PesoNetoTotalKg || 0), 0));
+
+  const bobinasFiltradas = detalle.datos.filter((b) =>
+    coincide(detalle.busqueda, b.CodigoBobina),
+  );
+  const fueraFiltradas = fuera.datos.filter((b) => coincide(busquedaFuera, b.CodigoBobina));
 
   const abrirEditar = (bobina) => {
     setBobinaEditar(bobina);
@@ -67,103 +79,8 @@ export default function InventarioBobinasPapel({ usuario }) {
   const alGuardarEdicion = (actualizada) => {
     toast.success(`Bobina ${actualizada.CodigoBobina} corregida`);
     setMarcadas([]);
-    if (sel) cargarDetalle(sel);
-    cargarResumen();
-  };
-
-  const descargarInventarioCompleto = async () => {
-    setDescargandoInventario(true);
-    try {
-      await descargarReporteInventarioBobinaPapel(null);
-      toast.success("Informe de inventario descargado");
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setDescargandoInventario(false);
-    }
-  };
-
-  useEffect(() => {
-    cargarResumen();
-    cargarFueraInventario();
-  }, []);
-
-  const cargarResumen = async () => {
-    setLoadingTipos(true);
-    setErrorTipos("");
-    try {
-      const data = await verResumenInventarioBobinaPapel();
-      const conMeta = data.map((t, i) => ({
-        ...t,
-        ...ACENTOS[i % ACENTOS.length],
-        badge:
-          t.CantidadBobinas === 0
-            ? "Sin stock"
-            : t.CantidadBobinas < 6
-              ? "Stock bajo"
-              : "Disponible",
-      }));
-      setTipos(conMeta);
-    } catch (e) {
-      setErrorTipos(e.message);
-    } finally {
-      setLoadingTipos(false);
-    }
-  };
-
-  const cargarDetalle = async (idTipoBobina) => {
-    setLoadingDetalle(true);
-    setErrorDetalle("");
-    try {
-      const data = await verDetalleInventarioBobinaPapel(idTipoBobina);
-      setBobinasSel(data);
-    } catch (e) {
-      setErrorDetalle(e.message);
-      setBobinasSel([]);
-    } finally {
-      setLoadingDetalle(false);
-    }
-  };
-
-  const tipoSel = sel ? tipos.find((t) => t.IdTipoBobina === sel) : null;
-  const esServilleta = tipoSel
-    ? tipoSel.NombreTipoBobina.toLowerCase().includes("servilleta")
-    : false;
-  const requeridas = esServilleta ? 1 : 2;
-
-  const totalBobinas = tipos.reduce((s, t) => s + t.CantidadBobinas, 0);
-  const totalPesoFmt = fmt(
-    tipos.reduce((s, t) => s + Number(t.PesoNetoTotalKg || 0), 0),
-  );
-  const listas = marcadas.length === requeridas;
-
-  const bobinasFiltradas = busquedaCodigo.trim()
-    ? bobinasSel.filter((b) =>
-        b.CodigoBobina.toLowerCase().includes(
-          busquedaCodigo.trim().toLowerCase(),
-        ),
-      )
-    : bobinasSel;
-
-  const seleccionarTipo = (id) => {
-    if (sel === id) {
-      setSel(null);
-      setBobinasSel([]);
-      setMarcadas([]);
-      setBusquedaCodigo("");
-      return;
-    }
-    setSel(id);
-    setMarcadas([]);
-    setBusquedaCodigo("");
-    cargarDetalle(id);
-  };
-
-  const cerrarDetalle = () => {
-    setSel(null);
-    setBobinasSel([]);
-    setMarcadas([]);
-    setBusquedaCodigo("");
+    detalle.recargar();
+    resumen.recargar();
   };
 
   const toggleBobina = (codigo) => {
@@ -175,94 +92,55 @@ export default function InventarioBobinasPapel({ usuario }) {
     });
   };
 
-  const quitarChip = (codigo) =>
-    setMarcadas((prev) => prev.filter((c) => c !== codigo));
+  const quitarChip = (codigo) => setMarcadas((prev) => prev.filter((c) => c !== codigo));
 
-  const enviarProduccion = async () => {
+  const enviarProduccion = () => {
     if (!listas || esServilleta) return;
 
-    const bobina1 = bobinasSel.find((b) => b.CodigoBobina === marcadas[0]);
-    const bobina2 = bobinasSel.find((b) => b.CodigoBobina === marcadas[1]);
+    const bobina1 = detalle.datos.find((b) => b.CodigoBobina === marcadas[0]);
+    const bobina2 = detalle.datos.find((b) => b.CodigoBobina === marcadas[1]);
     if (!bobina1 || !bobina2) return;
 
-    setEnviando(true);
-    try {
-      await iniciarProduccion(bobina1.IdBobinaPapel, bobina2.IdBobinaPapel);
-
-      setBobinasSel((prev) =>
-        prev.filter((b) => !marcadas.includes(b.CodigoBobina)),
-      );
-      toast.success(`${marcadas.join(" + ")} → En producción`);
-      setMarcadas([]);
-      cargarResumen();
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setEnviando(false);
-    }
+    envio.ejecutar(
+      "envio",
+      () => iniciarProduccion(bobina1.IdBobinaPapel, bobina2.IdBobinaPapel),
+      `${marcadas.join(" + ")} → En producción`,
+      () => {
+        detalle.setDatos((prev) => prev.filter((b) => !marcadas.includes(b.CodigoBobina)));
+        setMarcadas([]);
+        resumen.recargar();
+      },
+    );
   };
 
-  const cargarFueraInventario = async () => {
-    setLoadingFuera(true);
-    setErrorFuera("");
-    try {
-      const data = await verBobinasPapelFueraInventario();
-      setFueraInventario(data);
-    } catch (e) {
-      setErrorFuera(e.message);
-      setFueraInventario([]);
-    } finally {
-      setLoadingFuera(false);
-    }
+  const alternarFuera = () => {
+    const mostrar = !mostrarFuera;
+    setMostrarFuera(mostrar);
+    setBusquedaFuera("");
+    if (mostrar) fuera.recargar();
   };
 
-  const toggleFueraInventario = () => {
-    const nuevoEstado = !mostrarFuera;
-    setMostrarFuera(nuevoEstado);
-    setBusquedaCodigoFuera("");
-    if (nuevoEstado) {
-      cargarFueraInventario();
-    }
-  };
+  const quitarDeFuera = (idBobinaPapel) =>
+    fuera.setDatos((prev) => prev.filter((b) => b.IdBobinaPapel !== idBobinaPapel));
 
-  const fueraInventarioFiltradas = busquedaCodigoFuera.trim()
-    ? fueraInventario.filter((b) =>
-        b.CodigoBobina.toLowerCase().includes(
-          busquedaCodigoFuera.trim().toLowerCase(),
-        ),
-      )
-    : fueraInventario;
+  const reingresar = (b) =>
+    accionesFuera.ejecutar(
+      b.IdBobinaPapel,
+      () => reingresarBobinaInventario(b.IdBobinaPapel),
+      `Bobina ${b.CodigoBobina} reingresada al inventario`,
+      () => {
+        quitarDeFuera(b.IdBobinaPapel);
+        resumen.recargar();
+      },
+    );
 
-  const handleReingresar = async (idBobinaPapel, codigoBobina) => {
-    setProcesandoId(idBobinaPapel);
-    try {
-      await reingresarBobinaInventario(idBobinaPapel);
-      toast.success(`Bobina ${codigoBobina} reingresada al inventario`);
-      setFueraInventario((prev) =>
-        prev.filter((b) => b.IdBobinaPapel !== idBobinaPapel),
-      );
-      cargarResumen();
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setProcesandoId(null);
-    }
-  };
-
-  const handleDarDeBaja = async (idBobinaPapel, codigoBobina) => {
-    setProcesandoId(idBobinaPapel);
-    try {
-      await darDeBajaBobina(idBobinaPapel);
-      toast.success(`Bobina ${codigoBobina} retirada definitivamente`);
-      setFueraInventario((prev) =>
-        prev.filter((b) => b.IdBobinaPapel !== idBobinaPapel),
-      );
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setProcesandoId(null);
-    }
-  };
+  const darDeBaja = (b) =>
+    accionesFuera.ejecutar(
+      b.IdBobinaPapel,
+      () => darDeBajaBobina(b.IdBobinaPapel),
+      `Bobina ${b.CodigoBobina} retirada definitivamente`,
+      () => quitarDeFuera(b.IdBobinaPapel),
+    );
 
   return (
     <TooltipProvider>
@@ -271,7 +149,7 @@ export default function InventarioBobinasPapel({ usuario }) {
         titulo="Almacén · Materia Prima"
         subtitulo="Inventario de Bobinas de Papel"
         accion={
-          usuario?.IdRol === Roles.Encargado
+          esLider
             ? {
                 texto: "Registrar ingreso",
                 icono: Plus,
@@ -280,375 +158,152 @@ export default function InventarioBobinasPapel({ usuario }) {
             : null
         }
       >
-        {usuario?.IdRol === Roles.Encargado && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  onClick={descargarInventarioCompleto}
-                  disabled={descargandoInventario}
-                  className="h-11 gap-2 bg-white font-bold text-c3 shadow-md hover:bg-slate-100"
-                >
-                  {descargandoInventario ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Download size={16} strokeWidth={2.75} />
-                  )}
-                  Descargar inventario
-                </Button>
-              }
-            />
-            <TooltipContent>
-              PDF con el inventario completo de todos los tipos de bobina
-            </TooltipContent>
-          </Tooltip>
+        {esLider && (
+          <BotonDescarga
+            texto="Descargar inventario"
+            ayuda="PDF con el inventario completo de todos los tipos de bobina"
+            exito="Informe de inventario descargado"
+            descargar={() => descargarReporteInventarioBobinaPapel(null)}
+          />
         )}
       </Header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
-        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-          <div className="text-sm font-bold text-slate-700">
-            Catálogo por tipo de bobina
-          </div>
-          <div className="text-sm text-slate-500">
-            Solo bobinas <strong className="text-slate-700">en almacén</strong>{" "}
-            · {totalBobinas} bobinas · {totalPesoFmt} kg netos
-          </div>
-        </div>
+        <EncabezadoCatalogo titulo="Catálogo por tipo de bobina">
+          Solo bobinas <strong className="text-slate-700">en almacén</strong>{" "}
+          · {totalBobinas} bobinas · {totalPesoFmt} kg netos
+        </EncabezadoCatalogo>
 
-        {loadingTipos && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2].map((i) => (
-              <Skeleton key={i} className="h-52 rounded-2xl" />
-            ))}
-          </div>
-        )}
-        {errorTipos && (
-          <div className="rounded-xl bg-red-50 p-5 text-center text-sm font-semibold text-red-600">
-            {errorTipos}
-          </div>
-        )}
-
-        {!loadingTipos && !errorTipos && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <EstadoCatalogo cargando={resumen.cargando} error={resumen.error} altoSkeleton="h-52">
+          <div className={GRID_TARJETAS}>
             {tipos.map((t) => (
               <TarjetaTipo
                 key={t.IdTipoBobina}
-                tipo={t}
-                activo={sel === t.IdTipoBobina}
-                onClick={() => seleccionarTipo(t.IdTipoBobina)}
-              />
+                acento={t}
+                activo={detalle.sel === t.IdTipoBobina}
+                onClick={() => detalle.seleccionar(t.IdTipoBobina)}
+                icono={Cylinder}
+                nombre={t.NombreTipoBobina}
+                etiqueta={t.badge}
+                cantidad={t.CantidadBobinas}
+                unidad="bobinas en almacén"
+                textoVer="Ver bobinas"
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <DatoTarjeta etiqueta="Peso neto" tabular>
+                    {fmt(t.PesoNetoTotalKg)} kg
+                  </DatoTarjeta>
+                  <DatoTarjeta etiqueta="Gramaje prom." tabular>
+                    {fmt(t.GramajePromedio)} g/m²
+                  </DatoTarjeta>
+                </div>
+              </TarjetaTipo>
             ))}
             <TarjetaFueraInventario
-              cantidad={fueraInventario.length}
+              cantidad={fuera.datos.length}
               activo={mostrarFuera}
-              onClick={toggleFueraInventario}
+              onClick={alternarFuera}
+              unidad="bobinas dadas de baja o retiradas"
+              textoVer="Ver bobinas"
             />
           </div>
-        )}
+        </EstadoCatalogo>
 
         {tipoSel && (
-          <div className="mt-7 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-            <div
-              className={cn(
-                "flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4",
-                tipoSel.soft,
-              )}
+          <PanelDetalle
+            acento={tipoSel}
+            icono={Cylinder}
+            titulo={`Bobinas · ${tipoSel.NombreTipoBobina}`}
+            subtitulo={`${tipoSel.CantidadBobinas} en almacén`}
+            etiqueta={esServilleta ? "Se envía 1 bobina" : "Se envían de a 2 bobinas"}
+            onCerrar={detalle.cerrar}
+          >
+            <ContenidoLista
+              cargando={detalle.cargando}
+              error={detalle.error}
+              total={detalle.datos.length}
+              cantidadFiltrada={bobinasFiltradas.length}
+              buscador={<BuscadorCodigo valor={detalle.busqueda} onCambio={detalle.setBusqueda} />}
+              mensajeVacio="No hay bobinas en almacén para este tipo."
+              mensajeSinCoincidencias={`Ninguna bobina coincide con "${detalle.busqueda}".`}
             >
-              <div className="flex flex-wrap items-center gap-3">
-                <Cylinder className={cn("h-7 w-7 shrink-0", tipoSel.text)} strokeWidth={2} />
-                <div className={cn("text-base font-extrabold", tipoSel.text)}>
-                  Bobinas · {tipoSel.NombreTipoBobina}
-                </div>
-                <div className="text-sm font-semibold text-slate-500">
-                  {tipoSel.CantidadBobinas} en almacén
-                </div>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "border font-bold",
-                    tipoSel.text,
-                    tipoSel.border,
-                  )}
-                >
-                  {esServilleta
-                    ? "Se envía 1 bobina"
-                    : "Se envían de a 2 bobinas"}
-                </Badge>
+              <div className="hidden md:block">
+                <TablaBobinas
+                  bobinas={bobinasFiltradas}
+                  tipoSel={tipoSel}
+                  marcadas={marcadas}
+                  onToggle={toggleBobina}
+                  onEditar={esLider ? abrirEditar : undefined}
+                />
               </div>
-              <Button
-                variant="ghost"
-                onClick={cerrarDetalle}
-                className="h-11 gap-1.5 font-bold text-slate-500 hover:text-slate-900"
-              >
-                <X size={15} strokeWidth={2.75} />
-                Cerrar
-              </Button>
-            </div>
-
-            {!loadingDetalle && !errorDetalle && bobinasSel.length > 0 && (
-              <div className="border-b border-slate-100 px-5 py-3.5">
-                <div className="relative max-w-xs">
-                  <Search
-                    size={16}
-                    strokeWidth={2.5}
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <Input
-                    value={busquedaCodigo}
-                    onChange={(e) => setBusquedaCodigo(e.target.value)}
-                    placeholder="Buscar por código..."
-                    className="h-10 pl-9"
-                  />
-                  {busquedaCodigo && (
-                    <button
-                      onClick={() => setBusquedaCodigo("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-                    >
-                      <X size={15} strokeWidth={2.75} />
-                    </button>
-                  )}
-                </div>
+              <div className="md:hidden">
+                <ListaMovilBobinas
+                  bobinas={bobinasFiltradas}
+                  tipoSel={tipoSel}
+                  marcadas={marcadas}
+                  onToggle={toggleBobina}
+                  onEditar={esLider ? abrirEditar : undefined}
+                />
               </div>
-            )}
-
-            {loadingDetalle && (
-              <div className="space-y-2 p-5">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            )}
-            {errorDetalle && (
-              <div className="p-5 text-center text-sm font-semibold text-red-600">
-                {errorDetalle}
-              </div>
-            )}
-            {!loadingDetalle && !errorDetalle && bobinasSel.length === 0 && (
-              <div className="p-8 text-center text-sm text-slate-400">
-                No hay bobinas en almacén para este tipo.
-              </div>
-            )}
-            {!loadingDetalle &&
-              !errorDetalle &&
-              bobinasSel.length > 0 &&
-              bobinasFiltradas.length === 0 && (
-                <div className="p-8 text-center text-sm text-slate-400">
-                  Ninguna bobina coincide con "{busquedaCodigo}".
-                </div>
-              )}
-
-            {!loadingDetalle &&
-              !errorDetalle &&
-              bobinasFiltradas.length > 0 && (
-                <>
-                  <div className="hidden md:block">
-                    <TablaBobinas
-                      bobinas={bobinasFiltradas}
-                      tipoSel={tipoSel}
-                      marcadas={marcadas}
-                      onToggle={toggleBobina}
-                      onEditar={esLider ? abrirEditar : undefined}
-                    />
-                  </div>
-                  <div className="md:hidden">
-                    <ListaMovilBobinas
-                      bobinas={bobinasFiltradas}
-                      tipoSel={tipoSel}
-                      marcadas={marcadas}
-                      onToggle={toggleBobina}
-                      onEditar={esLider ? abrirEditar : undefined}
-                    />
-                  </div>
-                </>
-              )}
+            </ContenidoLista>
 
             {marcadas.length > 0 && (
-              <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 bg-slate-900 px-5 py-3.5">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  {marcadas.map((codigo) => (
-                    <div
-                      key={codigo}
-                      className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 font-mono text-sm font-bold text-white"
-                    >
-                      {codigo}
-                      <button
-                        onClick={() => quitarChip(codigo)}
-                        className="opacity-70 hover:opacity-100"
-                      >
-                        <X size={13} strokeWidth={3} />
-                      </button>
-                    </div>
-                  ))}
-                  <div className="text-sm font-semibold text-slate-400">
-                    {listas
-                      ? "Listo para enviar"
-                      : `Selecciona ${requeridas - marcadas.length} más`}
-                  </div>
-                </div>
-                <Button
-                  onClick={enviarProduccion}
-                  disabled={!listas || enviando}
-                  className={cn(
-                    "h-11 gap-2 bg-white/15 font-extrabold text-white hover:bg-white/15",
-                    listas && "bg-gradient-to-r from-c3 to-c4 hover:opacity-90",
-                  )}
-                >
-                  {enviando ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      Enviar a producción
-                      <ArrowRight size={16} strokeWidth={2.75} />
-                    </>
-                  )}
-                </Button>
-              </div>
+              <BarraSeleccion
+                chips={marcadas.map((codigo) => ({
+                  clave: codigo,
+                  texto: codigo,
+                  onQuitar: () => quitarChip(codigo),
+                }))}
+                estado={
+                  listas ? "Listo para enviar" : `Selecciona ${requeridas - marcadas.length} más`
+                }
+                listo={listas}
+                enviando={envio.enProceso === "envio"}
+                onEnviar={enviarProduccion}
+                textoAccion="Enviar a producción"
+                textoEnviando="Enviando..."
+              />
             )}
-          </div>
+          </PanelDetalle>
         )}
 
         {mostrarFuera && (
-          <div className="mt-7 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-amber-50 px-5 py-4">
-              <div className="text-base font-extrabold text-amber-700">
-                Bobinas fuera de inventario
-              </div>
-              <Button
-                variant="ghost"
-                onClick={() => setMostrarFuera(false)}
-                className="h-11 gap-1.5 font-bold text-slate-500 hover:text-slate-900"
-              >
-                <X size={15} strokeWidth={2.75} />
-                Cerrar
-              </Button>
-            </div>
-
-            {!loadingFuera && !errorFuera && fueraInventario.length > 0 && (
-              <div className="border-b border-slate-100 px-5 py-3.5">
-                <div className="relative max-w-xs">
-                  <Search
-                    size={16}
-                    strokeWidth={2.5}
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <Input
-                    value={busquedaCodigoFuera}
-                    onChange={(e) => setBusquedaCodigoFuera(e.target.value)}
-                    placeholder="Buscar por código..."
-                    className="h-10 pl-9"
-                  />
-                  {busquedaCodigoFuera && (
-                    <button
-                      onClick={() => setBusquedaCodigoFuera("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-                    >
-                      <X size={15} strokeWidth={2.75} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {loadingFuera && (
-              <div className="space-y-2 p-5">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-              </div>
-            )}
-            {errorFuera && (
-              <div className="p-5 text-center text-sm font-semibold text-red-600">
-                {errorFuera}
-              </div>
-            )}
-            {!loadingFuera && !errorFuera && fueraInventario.length === 0 && (
-              <div className="p-8 text-center text-sm text-slate-400">
-                No hay bobinas fuera de inventario.
-              </div>
-            )}
-            {!loadingFuera &&
-              !errorFuera &&
-              fueraInventario.length > 0 &&
-              fueraInventarioFiltradas.length === 0 && (
-                <div className="p-8 text-center text-sm text-slate-400">
-                  Ninguna bobina coincide con "{busquedaCodigoFuera}".
-                </div>
-              )}
-
-            {!loadingFuera && !errorFuera && fueraInventarioFiltradas.length > 0 && (
+          <PanelFuera titulo="Bobinas fuera de inventario" onCerrar={() => setMostrarFuera(false)}>
+            <ContenidoLista
+              cargando={fuera.cargando}
+              error={fuera.error}
+              total={fuera.datos.length}
+              cantidadFiltrada={fueraFiltradas.length}
+              buscador={<BuscadorCodigo valor={busquedaFuera} onCambio={setBusquedaFuera} />}
+              mensajeVacio="No hay bobinas fuera de inventario."
+              mensajeSinCoincidencias={`Ninguna bobina coincide con "${busquedaFuera}".`}
+              filasSkeleton={2}
+              altoSkeleton="h-16"
+            >
               <div className="flex flex-col gap-3 p-5">
-                {fueraInventarioFiltradas.map((b) => (
-                  <div
+                {fueraFiltradas.map((b) => (
+                  <ItemFueraInventario
                     key={b.IdBobinaPapel}
-                    className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-[15px] font-extrabold text-slate-900">
-                          {b.CodigoBobina}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className="border-slate-300 font-bold text-slate-600"
-                        >
-                          {b.NombreTipoBobina}
-                        </Badge>
-                      </div>
+                    codigo={b.CodigoBobina}
+                    etiqueta={b.NombreTipoBobina}
+                    detalle={
                       <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
                         <span>{b.NombreProveedor}</span>
                         <span>Recepción: {dateFormatter(b.FechaRecepcion)}</span>
                         <span>Bruto: {fmt(b.PesoBrutoKg)} kg</span>
                         <span>Gramaje: {fmt(b.Gramaje)} g/m²</span>
                       </div>
-                      {b.UltimaObservacion && (
-                        <div className="text-[12.5px] italic text-slate-500">
-                          "{b.UltimaObservacion}"
-                        </div>
-                      )}
-                      {b.FechaUltimoMovimiento && (
-                        <div className="text-[11px] text-slate-400">
-                          Último movimiento:{" "}
-                          {dateFormatter(b.FechaUltimoMovimiento)}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() =>
-                          handleReingresar(b.IdBobinaPapel, b.CodigoBobina)
-                        }
-                        disabled={procesandoId === b.IdBobinaPapel}
-                        className="h-10 gap-2 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
-                      >
-                        {procesandoId === b.IdBobinaPapel ? (
-                          <Loader2 size={15} className="animate-spin" />
-                        ) : (
-                          "Reingresar"
-                        )}
-                      </Button>
-                      <Button
-                        onClick={() =>
-                          handleDarDeBaja(b.IdBobinaPapel, b.CodigoBobina)
-                        }
-                        disabled={procesandoId === b.IdBobinaPapel}
-                        variant="outline"
-                        className="h-10 gap-2 border-red-300 font-bold text-red-600 hover:bg-red-50"
-                      >
-                        {procesandoId === b.IdBobinaPapel ? (
-                          <Loader2 size={15} className="animate-spin" />
-                        ) : (
-                          "Retirar"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
+                    }
+                    observacion={b.UltimaObservacion}
+                    fechaMovimiento={b.FechaUltimoMovimiento}
+                    procesando={accionesFuera.enProceso === b.IdBobinaPapel}
+                    onReingresar={() => reingresar(b)}
+                    onRetirar={() => darDeBaja(b)}
+                  />
                 ))}
               </div>
-            )}
-          </div>
+            </ContenidoLista>
+          </PanelFuera>
         )}
       </main>
 
