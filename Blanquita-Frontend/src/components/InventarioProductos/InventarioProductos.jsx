@@ -5,7 +5,6 @@ import {
   X,
   Search,
   Loader2,
-  MoreVertical,
   ShoppingCart,
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -31,15 +30,6 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
@@ -91,7 +81,9 @@ const descripcionContenido = (p) => {
   const partes = [];
   if (p.CantidadRollosUnidades) partes.push(`${p.CantidadRollosUnidades} u/paq`);
   if (p.CantidadPorUnidadTerminada)
-    partes.push(`${p.CantidadPorUnidadTerminada} por unidad`);
+    partes.push(
+      `${p.CantidadPorUnidadTerminada} por ${(p.TipoContenedor || "unidad").toLowerCase()}`,
+    );
   return partes.length > 0 ? partes.join(" · ") : "—";
 };
 
@@ -110,55 +102,6 @@ function TarjetaResumen({ icono: Icono, valor, etiqueta, tono }) {
         </div>
       </div>
     </div>
-  );
-}
-
-function AccionesFila({ presentacion, onAgregar, onAjustar }) {
-  const sinStock = Number(presentacion.CantidadActual || 0) === 0;
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            className="h-9 w-9 p-0 text-slate-500 hover:text-slate-900"
-          >
-            <MoreVertical size={17} strokeWidth={2.5} />
-          </Button>
-        }
-      />
-      <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel className="font-mono text-[12.5px]">
-            {presentacion.CodigoPresentacion}
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => onAgregar(presentacion, "ingreso")}
-            className="gap-2.5 font-semibold"
-          >
-            <ArrowDownToLine size={15} strokeWidth={2.5} className="text-emerald-600" />
-            Agregar ingreso
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={sinStock}
-            onClick={() => onAgregar(presentacion, "salida")}
-            className="gap-2.5 font-semibold"
-          >
-            <ArrowUpFromLine size={15} strokeWidth={2.5} className="text-c3" />
-            Agregar salida
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => onAjustar(presentacion)}
-            className="gap-2.5 font-semibold"
-          >
-            <SlidersHorizontal size={15} strokeWidth={2.5} className="text-slate-500" />
-            Ajustar inventario
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 
@@ -460,7 +403,6 @@ export default function InventarioProductoTerminado({ usuario }) {
       <Header
         titulo="Almacén · Producto Terminado"
         subtitulo="Inventario de Producto Terminado"
-        contador={carrito.length}
       />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
@@ -509,19 +451,6 @@ export default function InventarioProductoTerminado({ usuario }) {
                   </button>
                 )}
               </div>
-              <Button
-                onClick={() => setCarritoAbierto(true)}
-                disabled={carrito.length === 0}
-                className="h-11 gap-2 bg-slate-900 font-extrabold text-white hover:bg-slate-800"
-              >
-                <ShoppingCart size={16} strokeWidth={2.75} />
-                Movimientos
-                {carrito.length > 0 && (
-                  <span className="ml-0.5 rounded-full bg-white/20 px-2 py-0.5 text-[12px] tabular-nums">
-                    {carrito.length}
-                  </span>
-                )}
-              </Button>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -606,7 +535,6 @@ export default function InventarioProductoTerminado({ usuario }) {
                       <TableHead>Contenido</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead className="text-right">Stock</TableHead>
-                      <TableHead className="w-14 pr-5" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -648,15 +576,6 @@ export default function InventarioProductoTerminado({ usuario }) {
                           </TableCell>
                           <TableCell className="text-right text-[15px] font-extrabold tabular-nums text-slate-900">
                             {p.CantidadActual}
-                          </TableCell>
-                          <TableCell className="pr-5">
-                            <div className="flex justify-end">
-                              <AccionesFila
-                                presentacion={p}
-                                onAgregar={agregarLinea}
-                                onAjustar={abrirAjuste}
-                              />
-                            </div>
                           </TableCell>
                         </TableRow>
                       );
@@ -709,31 +628,6 @@ export default function InventarioProductoTerminado({ usuario }) {
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => agregarLinea(p, "ingreso")}
-                          className="h-10 flex-1 gap-1.5 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
-                        >
-                          <ArrowDownToLine size={15} strokeWidth={2.75} />
-                          Ingreso
-                        </Button>
-                        <Button
-                          onClick={() => agregarLinea(p, "salida")}
-                          disabled={Number(p.CantidadActual || 0) === 0}
-                          variant="outline"
-                          className="h-10 flex-1 gap-1.5 border-2 border-slate-300 font-bold text-slate-700"
-                        >
-                          <ArrowUpFromLine size={15} strokeWidth={2.75} />
-                          Salida
-                        </Button>
-                        <Button
-                          onClick={() => abrirAjuste(p)}
-                          variant="ghost"
-                          className="h-10 w-10 p-0 text-slate-500"
-                        >
-                          <SlidersHorizontal size={16} strokeWidth={2.5} />
-                        </Button>
-                      </div>
                     </div>
                   );
                 })}
@@ -742,16 +636,6 @@ export default function InventarioProductoTerminado({ usuario }) {
           )}
         </div>
       </main>
-
-      {carrito.length > 0 && !carritoAbierto && (
-        <button
-          onClick={() => setCarritoAbierto(true)}
-          className="fixed bottom-24 right-5 z-30 flex items-center gap-2.5 rounded-full bg-slate-900 px-5 py-3.5 font-extrabold text-white shadow-lg md:bottom-8"
-        >
-          <ShoppingCart size={18} strokeWidth={2.75} />
-          {carrito.length} pendientes
-        </button>
-      )}
 
       <Sheet open={carritoAbierto} onOpenChange={setCarritoAbierto}>
         <SheetContent className="flex w-full flex-col gap-0 sm:max-w-md">

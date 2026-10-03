@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 from app.Repository.InventarioFinal.ProductoFinal import ProductoFinalRepository
+from app.Constants.Cantidades import CANTIDAD_INGRESO_PRODUCTO_TERMINADO
+from app.utils.validators import EsCantidadValida
 from app.Models.InventarioFinal.ProductoFinal import(
       IngresoProductoTerminadoRequest,
       IngresoProductoTerminadoResponse,
@@ -29,6 +31,18 @@ class ProductoFinalService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Debe incluir al menos una presentación."
             )
+
+        for item in data.Presentaciones:
+            if item.Cantidad <= 0:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail="La cantidad de ingreso debe ser mayor a 0",
+                )
+            if not EsCantidadValida(item.Cantidad, CANTIDAD_INGRESO_PRODUCTO_TERMINADO):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail=f"La cantidad máxima de ingreso por presentación es de {CANTIDAD_INGRESO_PRODUCTO_TERMINADO}",
+                )
 
         params = {
             "p_IdUsuario": id_usuario,

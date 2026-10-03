@@ -1,4 +1,5 @@
-import { Boxes, Factory, PackagePlus,Home,CircleUserRound } from "lucide-react";
+import { Boxes, Factory, 
+          PackagePlus,Home,CircleUserRound ,Combine} from "lucide-react";
 
 export function unirRutas(...segmentos) {
   const limpios = segmentos
@@ -63,10 +64,26 @@ export const BottomBarOpciones = [
         icono: Home,
         ruta: "inicio",
       },
+      
       {
         titulo: "Perfil",
         icono: CircleUserRound,
         ruta: "perfil",
+      },
+    ],
+  },
+  {
+    id:5,
+    opciones: [
+      {
+        titulo: "Inventario",
+        icono: Boxes,
+        ruta: "inventario",
+      },
+      {
+        titulo: "Movimientos",
+        icono: Combine,
+        ruta: "movimientos",
       },
     ],
   }

@@ -4,11 +4,7 @@ import {
   AREA_POR_DEFECTO,
 } from "@/constants/OperadorConfig";
 import { PREFIJO_POR_ROL } from "@/constants/Values";
-
-/** Devuelve el área por su id, o null si no existe en el catálogo actual. */
 export const getArea = (id) => AREAS_TRABAJO.find((a) => a.id === id) ?? null;
-
-/** id del área usada en SSR y en la primera hidratación (siempre válido). */
 export const idAreaPorDefecto = () =>
   getArea(AREA_POR_DEFECTO)?.id ?? AREAS_TRABAJO[0].id;
 

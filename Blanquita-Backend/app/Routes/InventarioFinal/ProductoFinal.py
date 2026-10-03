@@ -48,7 +48,7 @@ def InsertarIngresoProductoTerminado(
 )
 def InsertarSalidaInventario(
     data: SalidaProductoTerminadoRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProductoFinalService = Depends(producto_terminado_service)
 ):
     return service.InsertarSalidaProductoTerminado(data, usuario_actual["IdUsuario"])

@@ -8,6 +8,7 @@ import {
   Container,
   CircleUserRound,
   ClipboardList,
+  Combine,
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 export const RutasNavBar = [
@@ -62,7 +63,10 @@ export const RutasNavBar = [
     titulo: "Productos",
     icono: ShelvingUnit,
     ruta: "producto",
-    subrutas: [{ titulo: "Inventario", icono: Boxes, ruta: "inventario" }],
+    subrutas: [
+      { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
+      { titulo: "Movimientos", icono: Combine, ruta: "movimientos" },
+    ],
   },
   {
     titulo: "Reportes",

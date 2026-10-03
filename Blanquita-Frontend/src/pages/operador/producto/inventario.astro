@@ -15,5 +15,5 @@ import InventarioProductoTerminado from '@/components/InventarioProductos/Invent
 		<SideBar client:media="(min-width: 768px)" idRol={usuario.IdRol} />
 	</div>
 	<InventarioProductoTerminado client:load usuario={usuario}/>
-	<!--DEFINIR LUEGO PARA USAR LAS RUTAS <BottomBar idRol={usuario.IdRol} subRuta={"producto"} client:load/> -->
+	<BottomBar idRol={usuario.IdRol} subRuta={"producto"} idOpcionSelect={5} client:load/>
 </Layout>

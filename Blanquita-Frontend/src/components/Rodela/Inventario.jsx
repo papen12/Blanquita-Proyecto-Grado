@@ -9,6 +9,7 @@ import {
   Disc,
   Download,
   Pencil,
+  SquarePen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -122,16 +123,16 @@ function TarjetaTipo({ tipo: t, activo, onClick }) {
 
 function BotonEditar({ rodela, onEditar, className }) {
   return (
-    <button
+    <Button
+      variant="outline"
+      size="sm"
       onClick={() => onEditar(rodela)}
       aria-label={`Editar ${rodela.CodigoRodela}`}
-      className={cn(
-        "flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900",
-        className,
-      )}
+      className={cn("gap-1.5 font-bold text-c3", className)}
     >
-      <Pencil size={15} strokeWidth={2.5} />
-    </button>
+      <SquarePen size={14} strokeWidth={2.5} />
+      Editar
+    </Button>
   );
 }
 
@@ -146,7 +147,7 @@ function TablaRodelas({ rodelas, tipoSel, marcadas, onToggle, onEditar }) {
             <TableHead>Lote</TableHead>
             <TableHead>Recepción</TableHead>
             <TableHead className={cn(!onEditar && "pr-5")}>Proveedor</TableHead>
-            {onEditar && <TableHead className="w-14 pr-5" />}
+            {onEditar && <TableHead className="pr-5 text-right">Acción</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -178,7 +179,7 @@ function TablaRodelas({ rodelas, tipoSel, marcadas, onToggle, onEditar }) {
                   {r.NombreProveedor}
                 </TableCell>
                 {onEditar && (
-                  <TableCell className="pr-5">
+                  <TableCell className="pr-5 text-right">
                     <BotonEditar rodela={r} onEditar={onEditar} />
                   </TableCell>
                 )}

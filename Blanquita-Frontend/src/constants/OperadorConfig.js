@@ -6,6 +6,7 @@ import {
   SquareStack,
   Container,
   ShelvingUnit,
+  Combine,
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 export const movimientosOperador = [
@@ -157,6 +158,12 @@ export const AREAS_TRABAJO = [
         descripcion: "Existencias por presentación",
         icono: Boxes,
         ruta: "inventario",
+      },
+      {
+        titulo: "Movimientos",
+        descripcion: "Ingreso de varias presentaciones a la vez",
+        icono: Combine,
+        ruta: "movimientos",
       },
     ],
   },
