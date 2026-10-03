@@ -8,6 +8,7 @@ import {
   Check,
   Disc,
   Download,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import InputForModal from "@/components/layout/InputForModal";
 import {
   Table,
   TableHeader,
@@ -33,11 +44,18 @@ import {
   verResumenInventarioRodela,
   verDetalleInventarioRodela,
   trasladarRodelaAProduccion,
+  editarRodela,
 } from "../../services/Rodela/Inventario";
 import { descargarReporteInventarioRodela } from "@/services/Rodela/Reportes";
 import { dateFormatter } from "@/utils/dates";
+import { aCodigo } from "@/utils/handlers";
+import { extraerMensajeError } from "@/utils/validators";
 import Header from "@/components/layout/Header";
-import { Roles } from "@/constants/Values";
+import {
+  Roles,
+  OBSERVACION_RODELA_MIN,
+  OBSERVACION_RODELA_MAX,
+} from "@/constants/Values";
 
 const ACENTOS = [
   { text: "text-c3", bg: "bg-c4", soft: "bg-c4/8", border: "border-c4/30", ring: "ring-c4/40" },
@@ -102,7 +120,22 @@ function TarjetaTipo({ tipo: t, activo, onClick }) {
   );
 }
 
-function TablaRodelas({ rodelas, tipoSel, marcadas, onToggle }) {
+function BotonEditar({ rodela, onEditar, className }) {
+  return (
+    <button
+      onClick={() => onEditar(rodela)}
+      aria-label={`Editar ${rodela.CodigoRodela}`}
+      className={cn(
+        "flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900",
+        className,
+      )}
+    >
+      <Pencil size={15} strokeWidth={2.5} />
+    </button>
+  );
+}
+
+function TablaRodelas({ rodelas, tipoSel, marcadas, onToggle, onEditar }) {
   return (
     <div className="overflow-x-auto">
       <Table className="min-w-[560px]">
@@ -112,7 +145,8 @@ function TablaRodelas({ rodelas, tipoSel, marcadas, onToggle }) {
             <TableHead>Código</TableHead>
             <TableHead>Lote</TableHead>
             <TableHead>Recepción</TableHead>
-            <TableHead className="pr-5">Proveedor</TableHead>
+            <TableHead className={cn(!onEditar && "pr-5")}>Proveedor</TableHead>
+            {onEditar && <TableHead className="w-14 pr-5" />}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -140,7 +174,14 @@ function TablaRodelas({ rodelas, tipoSel, marcadas, onToggle }) {
                 <TableCell className="text-slate-600">
                   {dateFormatter(r.FechaRecepcion)}
                 </TableCell>
-                <TableCell className="pr-5 text-slate-600">{r.NombreProveedor}</TableCell>
+                <TableCell className={cn("text-slate-600", !onEditar && "pr-5")}>
+                  {r.NombreProveedor}
+                </TableCell>
+                {onEditar && (
+                  <TableCell className="pr-5">
+                    <BotonEditar rodela={r} onEditar={onEditar} />
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}
@@ -150,7 +191,7 @@ function TablaRodelas({ rodelas, tipoSel, marcadas, onToggle }) {
   );
 }
 
-function ListaMovilRodelas({ rodelas, tipoSel, marcadas, onToggle }) {
+function ListaMovilRodelas({ rodelas, tipoSel, marcadas, onToggle, onEditar }) {
   return (
     <div className="flex flex-col gap-2.5 p-3.5">
       {rodelas.map((r) => {
@@ -167,17 +208,20 @@ function ListaMovilRodelas({ rodelas, tipoSel, marcadas, onToggle }) {
               <div className={cn("font-mono text-[15px] font-extrabold", tipoSel.text)}>
                 {r.CodigoRodela}
               </div>
-              <button
-                onClick={() => onToggle(r.CodigoRodela)}
-                className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2",
-                  on
-                    ? cn(tipoSel.bg, "border-transparent text-white")
-                    : "border-slate-300",
-                )}
-              >
-                {on && <Check size={14} strokeWidth={3.5} />}
-              </button>
+              <div className="flex shrink-0 items-center gap-1.5">
+                {onEditar && <BotonEditar rodela={r} onEditar={onEditar} />}
+                <button
+                  onClick={() => onToggle(r.CodigoRodela)}
+                  className={cn(
+                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2",
+                    on
+                      ? cn(tipoSel.bg, "border-transparent text-white")
+                      : "border-slate-300",
+                  )}
+                >
+                  {on && <Check size={14} strokeWidth={3.5} />}
+                </button>
+              </div>
             </div>
             <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-slate-600">
               <span>
@@ -208,6 +252,14 @@ export default function InventarioRodelas({ usuario }) {
   const [enviando, setEnviando] = useState(false);
 
   const [descargandoInventario, setDescargandoInventario] = useState(false);
+
+  const [dialogEditar, setDialogEditar] = useState({ open: false, rodela: null });
+  const [formCodigo, setFormCodigo] = useState("");
+  const [formMotivo, setFormMotivo] = useState("");
+  const [errorEditar, setErrorEditar] = useState("");
+  const [guardandoEditar, setGuardandoEditar] = useState(false);
+
+  const esEncargado = usuario?.IdRol === Roles.Encargado;
 
   const requeridas = 1;
 
@@ -321,6 +373,40 @@ export default function InventarioRodelas({ usuario }) {
       toast.error(e.message);
     } finally {
       setEnviando(false);
+    }
+  };
+
+  const codigoLimpio = formCodigo.trim();
+  const motivoLimpio = formMotivo.trim();
+  const codigoCambio =
+    !!dialogEditar.rodela && codigoLimpio !== "" && codigoLimpio !== dialogEditar.rodela.CodigoRodela;
+  const motivoValido =
+    motivoLimpio.length >= OBSERVACION_RODELA_MIN &&
+    motivoLimpio.length <= OBSERVACION_RODELA_MAX;
+
+  const abrirEditar = (rodela) => {
+    setFormCodigo(rodela.CodigoRodela);
+    setFormMotivo("");
+    setErrorEditar("");
+    setDialogEditar({ open: true, rodela });
+  };
+
+  const confirmarEditar = async () => {
+    const rodela = dialogEditar.rodela;
+    if (!rodela || !codigoCambio || !motivoValido) return;
+
+    setGuardandoEditar(true);
+    setErrorEditar("");
+    try {
+      const res = await editarRodela(rodela.IdRodela, codigoLimpio, motivoLimpio);
+      toast.success(`${res.CodigoAnterior} → ${res.CodigoRodela} actualizada`);
+      setDialogEditar({ open: false, rodela: null });
+      setMarcadas((prev) => prev.filter((c) => c !== res.CodigoAnterior));
+      refrescar();
+    } catch (e) {
+      setErrorEditar(extraerMensajeError(e, e.message));
+    } finally {
+      setGuardandoEditar(false);
     }
   };
 
@@ -500,6 +586,7 @@ export default function InventarioRodelas({ usuario }) {
                     tipoSel={tipoSel}
                     marcadas={marcadas}
                     onToggle={toggleRodela}
+                    onEditar={esEncargado ? abrirEditar : null}
                   />
                 </div>
                 <div className="md:hidden">
@@ -508,6 +595,7 @@ export default function InventarioRodelas({ usuario }) {
                     tipoSel={tipoSel}
                     marcadas={marcadas}
                     onToggle={toggleRodela}
+                    onEditar={esEncargado ? abrirEditar : null}
                   />
                 </div>
               </>
@@ -559,6 +647,88 @@ export default function InventarioRodelas({ usuario }) {
           </div>
         )}
       </main>
+
+      <Dialog
+        open={dialogEditar.open}
+        onOpenChange={(open) =>
+          setDialogEditar({ open, rodela: open ? dialogEditar.rodela : null })
+        }
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar rodela</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4">
+            {dialogEditar.rodela && (
+              <div className="flex flex-col gap-1 rounded-lg bg-slate-50 px-3 py-2.5 text-sm">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  Código actual
+                </span>
+                <span className="font-mono font-bold text-slate-900">
+                  {dialogEditar.rodela.CodigoRodela}
+                </span>
+                <span className="text-[12px] text-slate-500">
+                  {dialogEditar.rodela.CodigoLote} · {dialogEditar.rodela.NombreProveedor}
+                </span>
+              </div>
+            )}
+
+            <InputForModal
+              id="codigo-rodela-editar"
+              etiqueta="Nuevo código"
+              valor={formCodigo}
+              onCambio={(valor) => setFormCodigo(aCodigo(valor))}
+              classNameInput="font-mono font-bold"
+              autoComplete="off"
+            />
+
+            <div className="flex flex-col gap-1.5">
+              <Label
+                htmlFor="motivo-editar-rodela"
+                className="text-xs font-bold uppercase tracking-wide text-slate-600"
+              >
+                Motivo de la corrección
+              </Label>
+              <Textarea
+                id="motivo-editar-rodela"
+                value={formMotivo}
+                onChange={(e) => setFormMotivo(e.target.value)}
+                placeholder="Ej. Error de digitación al registrar el ingreso..."
+                className="min-h-20"
+                maxLength={OBSERVACION_RODELA_MAX}
+              />
+              <span className="text-xs text-slate-500">
+                {motivoLimpio.length}/{OBSERVACION_RODELA_MAX} · mínimo{" "}
+                {OBSERVACION_RODELA_MIN} caracteres
+              </span>
+            </div>
+
+            {errorEditar && (
+              <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
+                {errorEditar}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={confirmarEditar}
+              disabled={guardandoEditar || !codigoCambio || !motivoValido}
+              className="h-11 w-full gap-2 bg-gradient-to-r from-c3 to-c4 font-extrabold text-white hover:opacity-90 sm:w-auto"
+            >
+              {guardandoEditar ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <>
+                  <Pencil size={16} strokeWidth={2.75} />
+                  Guardar cambios
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </TooltipProvider>
   );

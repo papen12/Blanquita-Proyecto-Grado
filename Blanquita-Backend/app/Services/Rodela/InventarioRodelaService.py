@@ -16,6 +16,8 @@ from app.Models.Rodela.InventarioRodela import (
     CorregirTrasladoRodelaResponse,
     DeshacerTrasladoRodelaRequest,
     DeshacerTrasladoRodelaResponse,
+    EditarRodelaRequest,
+    EditarRodelaResponse,
     RodelaReingresableResponse,
 )
 
@@ -199,6 +201,43 @@ class InventarioRodelaService:
             )
 
         return DeshacerTrasladoRodelaResponse(**resultado)
+
+    def EditarRodela(
+        self, data: EditarRodelaRequest, id_usuario: int
+    ) -> EditarRodelaResponse:
+        codigo = data.CodigoRodela.strip()
+        if not codigo:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="El código de la rodela es obligatorio",
+            )
+
+        observacion = data.Observacion.strip()
+        if not ValidarTexto(OBSERVACION_RODELA_MIN, OBSERVACION_RODELA_MAX, observacion):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=(
+                    "El motivo de la corrección es obligatorio y debe tener entre "
+                    f"{OBSERVACION_RODELA_MIN} y {OBSERVACION_RODELA_MAX} caracteres"
+                ),
+            )
+
+        params = {
+            "p_IdRodela": data.IdRodela,
+            "p_IdUsuario": id_usuario,
+            "p_CodigoRodela": codigo,
+            "p_Observacion": observacion,
+        }
+
+        resultado = self.repository.EditarRodela(params)
+
+        if not resultado:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo editar la rodela",
+            )
+
+        return EditarRodelaResponse(**resultado)
 
     def ListarRodelasReingresables(self) -> list[RodelaReingresableResponse]:
         try:

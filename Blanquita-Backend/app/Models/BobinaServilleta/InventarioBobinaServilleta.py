@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime,date
 
 
@@ -83,3 +83,26 @@ class SubBobinaServilletaFueraInventarioResponse(BaseModel):
     NombreTipoMedida: str
     UltimaObservacion: str | None
     FechaUltimoMovimiento: datetime | None
+
+class EditarUnidadBobinaServilletaItem(BaseModel):
+    IdUnidadBobinaServilleta: int
+    CodigoBobina: str
+    PesoBrutoKg: float | None = Field(default=None, gt=0)
+    GramajeGr: float | None = Field(default=None, gt=0)
+
+
+class EditarBobinaServilletaRequest(BaseModel):
+    IdBobinaServilleta: int
+    Unidades: list[EditarUnidadBobinaServilletaItem] = Field(min_length=2, max_length=2)
+    Observacion: str
+
+
+class EditarBobinaServilletaResponse(BaseModel):
+    IdBobinaServilleta: int
+    IdUnidadBobinaServilleta: int
+    CodigoBobina: str
+    IdFormatoSubBobina: int
+    DescripcionFormato: str
+    PesoBrutoKg: float | None
+    GramajeGr: float | None
+    FechaMovimiento: datetime

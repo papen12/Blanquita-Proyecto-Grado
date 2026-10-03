@@ -8,6 +8,8 @@ import {
   CorregirTrasladoRodelaResponse,
   DeshacerTrasladoRodelaRequest,
   DeshacerTrasladoRodelaResponse,
+  EditarRodelaRequest,
+  EditarRodelaResponse,
   RodelaReingresableResponse
 } from "../../models/Rodela/Inventario";
 import { manejarErrorBackend } from "@/utils/validators";
@@ -116,4 +118,22 @@ export async function deshacerTrasladoRodela(idRodela, observacion) {
   const data = await response.json();
 
   return DeshacerTrasladoRodelaResponse(data);
+}
+
+export async function editarRodela(idRodela, codigoRodela, observacion) {
+  const payload = EditarRodelaRequest(idRodela, codigoRodela, observacion);
+
+  const response = await fetch("/api/rodela/inventario/editar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    await manejarErrorBackend(response);
+  }
+
+  const data = await response.json();
+
+  return EditarRodelaResponse(data);
 }

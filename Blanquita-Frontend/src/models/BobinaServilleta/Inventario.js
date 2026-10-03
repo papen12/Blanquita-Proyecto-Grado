@@ -66,3 +66,30 @@ export const SubBobinaServilletaFueraInventarioResponse = (data) => ({
   UltimaObservacion: data.UltimaObservacion ?? null,
   FechaUltimoMovimiento: data.FechaUltimoMovimiento ?? null
 });
+
+const numeroONulo = (valor) =>
+  valor === null || valor === undefined || valor === "" ? null : Number(valor);
+
+export const EditarUnidadBobinaServilletaItem = (data) => ({
+  IdUnidadBobinaServilleta: data.IdUnidadBobinaServilleta,
+  CodigoBobina: (data.CodigoBobina ?? "").trim(),
+  PesoBrutoKg: numeroONulo(data.PesoBrutoKg),
+  GramajeGr: numeroONulo(data.GramajeGr)
+});
+
+export const EditarBobinaServilletaRequest = (idBobinaServilleta, unidades, observacion) => ({
+  IdBobinaServilleta: idBobinaServilleta,
+  Unidades: (unidades ?? []).map(EditarUnidadBobinaServilletaItem),
+  Observacion: (observacion ?? "").trim()
+});
+
+export const EditarBobinaServilletaResponse = (data) => ({
+  IdBobinaServilleta: data.IdBobinaServilleta,
+  IdUnidadBobinaServilleta: data.IdUnidadBobinaServilleta,
+  CodigoBobina: data.CodigoBobina,
+  IdFormatoSubBobina: data.IdFormatoSubBobina,
+  DescripcionFormato: data.DescripcionFormato,
+  PesoBrutoKg: data.PesoBrutoKg ?? null,
+  GramajeGr: data.GramajeGr ?? null,
+  FechaMovimiento: data.FechaMovimiento
+});

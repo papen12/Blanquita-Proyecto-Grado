@@ -21,6 +21,8 @@ from app.Models.Rodela.InventarioRodela import (
     CorregirTrasladoRodelaResponse,
     DeshacerTrasladoRodelaRequest,
     DeshacerTrasladoRodelaResponse,
+    EditarRodelaRequest,
+    EditarRodelaResponse,
     RodelaReingresableResponse,
 )
 
@@ -121,3 +123,16 @@ def DeshacerTrasladoRodela(
     service: InventarioRodelaService = Depends(inventario_rodela_service)
 ):
     return service.DeshacerTrasladoRodela(data, usuario_actual["IdUsuario"])
+
+
+@InventarioRodelaRouter.post(
+    "/editar",
+    response_model=EditarRodelaResponse,
+    status_code=200
+)
+def EditarRodela(
+    data: EditarRodelaRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+    service: InventarioRodelaService = Depends(inventario_rodela_service)
+):
+    return service.EditarRodela(data, usuario_actual["IdUsuario"])

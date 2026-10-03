@@ -59,3 +59,14 @@ class InventarioBobinaServilletaRepository:
             SELECT * FROM "VerSubBobinasServilletaFueraInventario"()
         """
         return self.caller.LlamarFuncion(sql)
+
+    def EditarBobinaServilleta(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "EditarBobinaServilleta"(
+                :p_IdBobinaServilleta,
+                :p_IdUsuario,
+                :p_Unidades,
+                :p_Observacion
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)

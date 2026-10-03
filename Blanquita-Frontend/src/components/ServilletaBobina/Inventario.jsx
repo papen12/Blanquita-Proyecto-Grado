@@ -12,6 +12,7 @@ import {
   PackageX,
   Check,
   Download,
+  SquarePen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import InputForModal from "@/components/layout/InputForModal";
 import {
   Table,
   TableHeader,
@@ -41,15 +52,33 @@ import {
   verSubBobinasServilletaFueraInventario,
   reingresarSubBobinaInventario,
   darDeBajaSubBobina,
+  editarBobinaServilleta,
 } from "../../services/BobinaServilleta/Inventario";
 import {
   abrirBobinaServilleta,
   iniciarProduccionServilleta,
 } from "../../services/BobinaServilleta/Produccion";
-import { descargarReporteInventarioCompletoServilleta } from "../../services/BobinaServilleta/Reportes";
+import {
+  descargarReporteInventarioCompletoServilleta,
+  verBobinasServilletaReporte,
+} from "../../services/BobinaServilleta/Reportes";
 import { dateFormatter } from "@/utils/dates";
+import { aCodigo } from "@/utils/handlers";
+import { extraerMensajeError } from "@/utils/validators";
 import Header from "@/components/layout/Header";
-import { Roles } from "@/constants/Values";
+import {
+  Roles,
+  MOTIVO_CORRECCION_MIN,
+  MOTIVO_CORRECCION_MAX,
+} from "@/constants/Values";
+
+const ESTADO_ALMACEN_ID = 1;
+
+const aTexto = (valor) => (valor === null || valor === undefined ? "" : String(valor));
+
+const numeroONulo = (valor) => (valor === "" ? null : Number(valor));
+
+const valorInvalido = (valor) => valor !== "" && !(Number(valor) > 0);
 
 const ACENTOS = [
   { text: "text-c3", bg: "bg-c4", soft: "bg-c4/8", border: "border-c4/30", ring: "ring-c4/40" },
@@ -190,7 +219,7 @@ function TarjetaFuera({ cantidad, activo, onClick }) {
   );
 }
 
-function TablaBobinas({ bobinas, tipoSel, procesandoId, onAbrir }) {
+function TablaBobinas({ bobinas, tipoSel, procesandoId, onAbrir, onEditar }) {
   return (
     <div className="overflow-x-auto">
       <Table className="min-w-[760px]">
@@ -201,7 +230,7 @@ function TablaBobinas({ bobinas, tipoSel, procesandoId, onAbrir }) {
             <TableHead>Proveedor</TableHead>
             <TableHead>Unidad 1</TableHead>
             <TableHead>Unidad 2</TableHead>
-            <TableHead className="pr-5 text-right">Acción</TableHead>
+            <TableHead className="pr-5 text-center">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -230,19 +259,32 @@ function TablaBobinas({ bobinas, tipoSel, procesandoId, onAbrir }) {
                   {b.DescripcionFormato2}
                 </span>
               </TableCell>
-              <TableCell className="pr-5 text-right">
-                <Button
-                  size="sm"
-                  disabled={procesandoId === b.IdBobinaServilleta}
-                  onClick={() => onAbrir(b)}
-                  className="gap-1.5 bg-gradient-to-r from-c3 to-c4 font-bold text-white hover:opacity-90"
-                >
-                  {procesandoId === b.IdBobinaServilleta ? (
-                    <Loader2 size={13} className="animate-spin" />
-                  ) : (
-                    "Abrir"
+              <TableCell className="pr-5">
+                <div className="flex items-center justify-center gap-2">
+                  {onEditar && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEditar(b)}
+                      className="gap-1.5 font-bold text-c3"
+                    >
+                      <SquarePen size={14} strokeWidth={2.5} />
+                      Editar
+                    </Button>
                   )}
-                </Button>
+                  <Button
+                    size="sm"
+                    disabled={procesandoId === b.IdBobinaServilleta}
+                    onClick={() => onAbrir(b)}
+                    className="gap-1.5 bg-gradient-to-r from-c3 to-c4 font-bold text-white hover:opacity-90"
+                  >
+                    {procesandoId === b.IdBobinaServilleta ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      "Abrir"
+                    )}
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
@@ -252,7 +294,7 @@ function TablaBobinas({ bobinas, tipoSel, procesandoId, onAbrir }) {
   );
 }
 
-function ListaMovilBobinas({ bobinas, tipoSel, procesandoId, onAbrir }) {
+function ListaMovilBobinas({ bobinas, tipoSel, procesandoId, onAbrir, onEditar }) {
   return (
     <div className="flex flex-col gap-2.5 p-3.5">
       {bobinas.map((b) => (
@@ -279,18 +321,29 @@ function ListaMovilBobinas({ bobinas, tipoSel, procesandoId, onAbrir }) {
               {b.DescripcionFormato2}
             </span>
           </div>
-          <Button
-            size="sm"
-            disabled={procesandoId === b.IdBobinaServilleta}
-            onClick={() => onAbrir(b)}
-            className="gap-1.5 bg-gradient-to-r from-c3 to-c4 font-bold text-white hover:opacity-90"
-          >
-            {procesandoId === b.IdBobinaServilleta ? (
-              <Loader2 size={13} className="animate-spin" />
-            ) : (
-              "Abrir bobina"
+          <div className="flex gap-2">
+            {onEditar && (
+              <Button
+                variant="outline"
+                onClick={() => onEditar(b)}
+                className="h-10 flex-1 gap-1.5 font-bold text-c3"
+              >
+                <SquarePen size={15} strokeWidth={2.5} />
+                Editar
+              </Button>
             )}
-          </Button>
+            <Button
+              disabled={procesandoId === b.IdBobinaServilleta}
+              onClick={() => onAbrir(b)}
+              className="h-10 flex-1 gap-1.5 bg-gradient-to-r from-c3 to-c4 font-bold text-white hover:opacity-90"
+            >
+              {procesandoId === b.IdBobinaServilleta ? (
+                <Loader2 size={13} className="animate-spin" />
+              ) : (
+                "Abrir bobina"
+              )}
+            </Button>
+          </div>
         </div>
       ))}
     </div>
@@ -409,6 +462,17 @@ export default function InventarioBobinaServilleta({ usuario }) {
   const [procesandoFueraId, setProcesandoFueraId] = useState(null);
 
   const [descargandoInventario, setDescargandoInventario] = useState(false);
+
+  // edición de una bobina servilleta (solo encargado, solo sin abrir)
+  const [dialogEditar, setDialogEditar] = useState({ open: false, bobina: null });
+  const [unidadesOriginales, setUnidadesOriginales] = useState([]);
+  const [formUnidades, setFormUnidades] = useState([]);
+  const [formMotivo, setFormMotivo] = useState("");
+  const [cargandoEditar, setCargandoEditar] = useState(false);
+  const [errorEditar, setErrorEditar] = useState("");
+  const [guardandoEditar, setGuardandoEditar] = useState(false);
+
+  const esEncargado = usuario?.IdRol === Roles.Encargado;
 
   const descargarInventarioCompleto = async () => {
     setDescargandoInventario(true);
@@ -616,6 +680,94 @@ export default function InventarioBobinaServilleta({ usuario }) {
       toast.error(e.message);
     } finally {
       setProcesandoFueraId(null);
+    }
+  };
+
+  const abrirEditar = async (bobina) => {
+    setDialogEditar({ open: true, bobina });
+    setUnidadesOriginales([]);
+    setFormUnidades([]);
+    setFormMotivo("");
+    setErrorEditar("");
+    setCargandoEditar(true);
+    try {
+      const { Bobinas } = await verBobinasServilletaReporte({
+        CodigoBobina: bobina.CodigoUnidad1,
+        IdEstadoMateriaPrima: ESTADO_ALMACEN_ID,
+      });
+      const fila = Bobinas.find((b) => b.IdBobinaServilleta === bobina.IdBobinaServilleta);
+      if (!fila) throw new Error("No se encontraron los datos de la bobina. Actualiza el inventario.");
+
+      const unidades = [1, 2].map((n) => ({
+        IdUnidadBobinaServilleta: fila[`IdUnidad${n}`],
+        CodigoBobina: aTexto(fila[`CodigoUnidad${n}`]),
+        DescripcionFormato: fila[`DescripcionFormato${n}`],
+        PesoBrutoKg: aTexto(fila[`PesoBrutoKg${n}`]),
+        GramajeGr: aTexto(fila[`GramajeGr${n}`]),
+      }));
+      setUnidadesOriginales(unidades);
+      setFormUnidades(unidades);
+    } catch (e) {
+      setErrorEditar(extraerMensajeError(e, e.message));
+    } finally {
+      setCargandoEditar(false);
+    }
+  };
+
+  const actualizarUnidad = (indice, campo, valor) => {
+    setFormUnidades((prev) =>
+      prev.map((u, i) => (i === indice ? { ...u, [campo]: valor } : u)),
+    );
+  };
+
+  const errorUnidad = (u, otra) => {
+    const codigo = u.CodigoBobina.trim();
+    if (!codigo) return "Falta el código";
+    if (otra && codigo.toLowerCase() === otra.CodigoBobina.trim().toLowerCase())
+      return "Código repetido";
+    if (valorInvalido(u.PesoBrutoKg)) return "Peso bruto inválido";
+    if (valorInvalido(u.GramajeGr)) return "Gramaje inválido";
+    return null;
+  };
+
+  const erroresUnidades = formUnidades.map((u, i) => errorUnidad(u, formUnidades[1 - i]));
+
+  const huboCambios = formUnidades.some((u, i) => {
+    const o = unidadesOriginales[i];
+    if (!o) return false;
+    return (
+      u.CodigoBobina.trim() !== o.CodigoBobina ||
+      numeroONulo(u.PesoBrutoKg) !== numeroONulo(o.PesoBrutoKg) ||
+      numeroONulo(u.GramajeGr) !== numeroONulo(o.GramajeGr)
+    );
+  });
+
+  const motivoLimpio = formMotivo.trim();
+  const motivoValido =
+    motivoLimpio.length >= MOTIVO_CORRECCION_MIN &&
+    motivoLimpio.length <= MOTIVO_CORRECCION_MAX;
+
+  const puedeGuardar =
+    formUnidades.length === 2 &&
+    erroresUnidades.every((e) => !e) &&
+    huboCambios &&
+    motivoValido;
+
+  const confirmarEditar = async () => {
+    const bobina = dialogEditar.bobina;
+    if (!bobina || !puedeGuardar) return;
+
+    setGuardandoEditar(true);
+    setErrorEditar("");
+    try {
+      await editarBobinaServilleta(bobina.IdBobinaServilleta, formUnidades, motivoLimpio);
+      toast.success(`Bobina #${bobina.IdBobinaServilleta} actualizada`);
+      setDialogEditar({ open: false, bobina: null });
+      refrescar();
+    } catch (e) {
+      setErrorEditar(extraerMensajeError(e, e.message));
+    } finally {
+      setGuardandoEditar(false);
     }
   };
 
@@ -835,6 +987,7 @@ export default function InventarioBobinaServilleta({ usuario }) {
                       tipoSel={tipoSel}
                       procesandoId={procesandoId}
                       onAbrir={handleAbrir}
+                      onEditar={esEncargado ? abrirEditar : null}
                     />
                   </div>
                   <div className="md:hidden">
@@ -843,6 +996,7 @@ export default function InventarioBobinaServilleta({ usuario }) {
                       tipoSel={tipoSel}
                       procesandoId={procesandoId}
                       onAbrir={handleAbrir}
+                      onEditar={esEncargado ? abrirEditar : null}
                     />
                   </div>
                 </>
@@ -1010,6 +1164,148 @@ export default function InventarioBobinaServilleta({ usuario }) {
           </div>
         )}
       </main>
+
+      <Dialog
+        open={dialogEditar.open}
+        onOpenChange={(open) =>
+          setDialogEditar({ open, bobina: open ? dialogEditar.bobina : null })
+        }
+      >
+        <DialogContent className="sm:max-w-xl md:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              Editar bobina servilleta
+              {dialogEditar.bobina && ` #${dialogEditar.bobina.IdBobinaServilleta}`}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4">
+            {dialogEditar.bobina && (
+              <div className="rounded-lg bg-slate-50 px-3 py-2.5 text-[12.5px] text-slate-500">
+                {dialogEditar.bobina.NombreProveedor} · recibida{" "}
+                {dateFormatter(dialogEditar.bobina.FechaRecepcion)}
+              </div>
+            )}
+
+            {cargandoEditar && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Skeleton className="h-56 rounded-xl" />
+                <Skeleton className="h-56 rounded-xl" />
+              </div>
+            )}
+
+            {!cargandoEditar && formUnidades.length === 2 && (
+              <>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {formUnidades.map((u, i) => (
+                    <div
+                      key={u.IdUnidadBobinaServilleta}
+                      className={cn(
+                        "flex flex-col gap-3 rounded-xl border-2 p-3.5",
+                        erroresUnidades[i] ? "border-red-200" : "border-slate-200",
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm font-extrabold text-slate-900">
+                          Unidad {i + 1}
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className="border-slate-300 font-bold text-slate-500"
+                        >
+                          {u.DescripcionFormato}
+                        </Badge>
+                      </div>
+
+                      <InputForModal
+                        id={`codigo-unidad-${i}`}
+                        etiqueta="Código"
+                        valor={u.CodigoBobina}
+                        onCambio={(valor) => actualizarUnidad(i, "CodigoBobina", aCodigo(valor))}
+                        classNameInput="font-mono font-bold"
+                        autoComplete="off"
+                      />
+                      <InputForModal
+                        id={`peso-unidad-${i}`}
+                        etiqueta="Peso bruto (kg)"
+                        opcional
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputMode="decimal"
+                        valor={u.PesoBrutoKg}
+                        onCambio={(valor) => actualizarUnidad(i, "PesoBrutoKg", valor)}
+                      />
+                      <InputForModal
+                        id={`gramaje-unidad-${i}`}
+                        etiqueta="Gramaje (g/m²)"
+                        opcional
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputMode="decimal"
+                        valor={u.GramajeGr}
+                        onCambio={(valor) => actualizarUnidad(i, "GramajeGr", valor)}
+                      />
+
+                      {erroresUnidades[i] && (
+                        <p className="text-xs font-semibold text-red-600">
+                          {erroresUnidades[i]}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor="motivo-editar-bobina-servilleta"
+                    className="text-xs font-bold uppercase tracking-wide text-slate-600"
+                  >
+                    Motivo de la corrección
+                  </Label>
+                  <Textarea
+                    id="motivo-editar-bobina-servilleta"
+                    value={formMotivo}
+                    onChange={(e) => setFormMotivo(e.target.value)}
+                    placeholder="Ej. Error de digitación al registrar el ingreso..."
+                    className="min-h-20"
+                    maxLength={MOTIVO_CORRECCION_MAX}
+                  />
+                  <span className="text-xs text-slate-500">
+                    {motivoLimpio.length}/{MOTIVO_CORRECCION_MAX} · mínimo{" "}
+                    {MOTIVO_CORRECCION_MIN} caracteres
+                    {!huboCambios && " · aún no hay cambios"}
+                  </span>
+                </div>
+              </>
+            )}
+
+            {errorEditar && (
+              <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
+                {errorEditar}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={confirmarEditar}
+              disabled={guardandoEditar || cargandoEditar || !puedeGuardar}
+              className="h-11 w-full gap-2 bg-gradient-to-r from-c3 to-c4 font-extrabold text-white hover:opacity-90 sm:w-auto"
+            >
+              {guardandoEditar ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <>
+                  <Check size={16} strokeWidth={2.75} />
+                  Guardar cambios
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </TooltipProvider>
   );

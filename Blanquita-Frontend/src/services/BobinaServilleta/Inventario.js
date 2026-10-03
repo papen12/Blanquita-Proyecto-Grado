@@ -7,7 +7,9 @@ import {
   DetalleInventarioBobinaServilletaResponse,
   ResumenInventarioSubBobinaServilletaResponse,
   DetalleInventarioSubBobinaServilletaResponse,
-  SubBobinaServilletaFueraInventarioResponse
+  SubBobinaServilletaFueraInventarioResponse,
+  EditarBobinaServilletaRequest,
+  EditarBobinaServilletaResponse
 } from "../../models/BobinaServilleta/Inventario";
 import { manejarErrorBackend } from "@/utils/validators";
 
@@ -109,4 +111,23 @@ export async function verSubBobinasServilletaFueraInventario() {
   const data = await response.json();
 
   return data.map(SubBobinaServilletaFueraInventarioResponse);
+}
+
+
+export async function editarBobinaServilleta(idBobinaServilleta, unidades, observacion) {
+  const payload = EditarBobinaServilletaRequest(idBobinaServilleta, unidades, observacion);
+
+  const response = await fetch("/api/bobinaservilleta/inventario/editar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    await manejarErrorBackend(response);
+  }
+
+  const data = await response.json();
+
+  return data.map(EditarBobinaServilletaResponse);
 }

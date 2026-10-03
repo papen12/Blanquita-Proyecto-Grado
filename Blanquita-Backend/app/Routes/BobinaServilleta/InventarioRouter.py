@@ -18,7 +18,9 @@ from app.Models.BobinaServilleta.InventarioBobinaServilleta import(
     ResumenInventarioSubBobinaServilletaResponse,
     DetalleInventarioSubBobinaServilletaRequest,
     DetalleInventarioSubBobinaServilletaResponse,
-    SubBobinaServilletaFueraInventarioResponse
+    SubBobinaServilletaFueraInventarioResponse,
+    EditarBobinaServilletaRequest,
+    EditarBobinaServilletaResponse
 )
 
 
@@ -113,3 +115,15 @@ def VerSubBobinaFueraInventario(
     service: InventarioBobinaServilletaService = Depends(inventario_bobina_servilleta_service)
 ):
     return service.VerSubBobinasServilletaFueraInventario()
+
+@InventarioBobinaServilletaRouter.post(
+    "/editar",
+    response_model=list[EditarBobinaServilletaResponse],
+    status_code=200
+)
+def EditarBobinaServilleta(
+    data: EditarBobinaServilletaRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+    service: InventarioBobinaServilletaService = Depends(inventario_bobina_servilleta_service)
+):
+    return service.EditarBobinaServilleta(data, usuario_actual["IdUsuario"])

@@ -64,6 +64,20 @@ class DeshacerTrasladoRodelaResponse(BaseModel):
     FechaMovimiento: datetime
 
 
+class EditarRodelaRequest(BaseModel):
+    IdRodela: int
+    CodigoRodela: str
+    Observacion: str
+
+
+class EditarRodelaResponse(BaseModel):
+    IdRodela: int
+    CodigoAnterior: str
+    CodigoRodela: str
+    IdEstadoMateriaPrima: int
+    FechaMovimiento: datetime
+
+
 class RodelaReingresableResponse(BaseModel):
     IdRodela: int
     CodigoRodela: str

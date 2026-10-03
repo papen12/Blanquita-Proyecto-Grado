@@ -58,6 +58,17 @@ class InventarioRodelaRepository:
         """
         return self.caller.LlamarUnRegistro(sql, params)
 
+    def EditarRodela(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "EditarRodela"(
+                :p_IdRodela,
+                :p_IdUsuario,
+                :p_CodigoRodela,
+                :p_Observacion
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)
+
     def ListarRodelasReingresables(self) -> list[dict]:
         sql = """
             SELECT * FROM "ListarRodelasReingresables"()
