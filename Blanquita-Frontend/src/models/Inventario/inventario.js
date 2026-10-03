@@ -108,6 +108,32 @@ export const AjusteNegativoInventarioResponse = ({
   CantidadActual,
 });
 
+export const CorreccionProductoTerminadoRequest = ({
+  IdPresentacion,
+  Cantidad,
+  Observacion,
+}) => ({
+  IdPresentacion,
+  Cantidad,
+  Observacion,
+});
+
+export const CorreccionProductoTerminadoResponse = ({
+  IdPresentacion,
+  CodigoPresentacion,
+  NombreProducto,
+  NombreTipoMovimientoInventario,
+  CantidadAplicada,
+  CantidadActual,
+}) => ({
+  IdPresentacion,
+  CodigoPresentacion,
+  NombreProducto,
+  NombreTipoMovimientoInventario,
+  CantidadAplicada,
+  CantidadActual,
+});
+
 export const VerInventarioProductoTerminadoRequest = ({ IdProducto = null } = {}) => ({
   IdProducto,
 });

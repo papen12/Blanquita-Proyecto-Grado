@@ -47,6 +47,18 @@ class ProductoFinalRepository:
         """
         return self.caller.LlamarUnRegistro(sql, params)
 
+    def CorregirInventarioProductoTerminado(self, params: dict) -> dict | None:
+        sql = """
+            SELECT * FROM "CorregirInventarioProductoTerminado"(
+                :p_IdTipoMovimientoInventario,
+                :p_IdPresentacion,
+                :p_IdUsuario,
+                :p_Cantidad,
+                :p_Observacion
+            )
+        """
+        return self.caller.LlamarUnRegistro(sql, params)
+
     def VerInventarioProductoTerminado(self, params: dict) -> list[dict]:
         sql = """
             SELECT * FROM "VerInventarioProductoTerminado"(

@@ -7,6 +7,8 @@ import {
   AjustePositivoInventarioResponse,
   AjusteNegativoInventarioRequest,
   AjusteNegativoInventarioResponse,
+  CorreccionProductoTerminadoRequest,
+  CorreccionProductoTerminadoResponse,
   VerInventarioProductoTerminadoQueryParams,
   VerInventarioProductoTerminadoResponseList
 } from "../../models/Inventario/inventario";
@@ -91,6 +93,28 @@ export async function ajusteNegativoInventarioProductoTerminado(idPresentacion, 
   const data = await response.json();
 
   return AjusteNegativoInventarioResponse(data);
+}
+
+export async function corregirInventarioProductoTerminado(idPresentacion, cantidad, observacion) {
+  const payload = CorreccionProductoTerminadoRequest({
+    IdPresentacion: idPresentacion,
+    Cantidad: cantidad,
+    Observacion: observacion
+  });
+
+  const response = await fetch("/api/productofinal/correccion", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    await manejarErrorBackend(response);
+  }
+
+  const data = await response.json();
+
+  return CorreccionProductoTerminadoResponse(data);
 }
 
 export async function verInventarioProductoTerminado(idProducto) {

@@ -12,6 +12,8 @@ from app.Models.InventarioFinal.ProductoFinal import(
       AjusteNegativoInventarioResponse,
       AjustePositivoInventarioRequest,
       AjustePositivoInventarioResponse,
+      CorreccionProductoTerminadoRequest,
+      CorreccionProductoTerminadoResponse,
       VerInventarioProductoTerminadoResponse,
       VerInventarioProductoTerminadoRequest
 )
@@ -77,6 +79,18 @@ def AjusteNegativoInventarioProductoTerminado(
     service: ProductoFinalService = Depends(producto_terminado_service)
 ):
     return service.AjusteNegativoInventarioProductoTerminado(data, usuario_actual["IdUsuario"])
+
+@ProductoFinalRouter.post(
+    "/correccion",
+    response_model=CorreccionProductoTerminadoResponse,
+    status_code=201
+)
+def CorregirInventarioProductoTerminado(
+    data: CorreccionProductoTerminadoRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProductoFinalService = Depends(producto_terminado_service)
+):
+    return service.CorregirInventarioProductoTerminado(data, usuario_actual["IdUsuario"])
 
 @ProductoFinalRouter.get(
     "/inventario/ver",

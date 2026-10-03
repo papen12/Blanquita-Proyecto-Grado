@@ -41,3 +41,8 @@ export async function manejarErrorBackend(response) {
 
   throw error;
 }
+
+export const aEntero = (valor) => {
+  const n = Number(valor);
+  return Number.isInteger(n) && n > 0 ? n : 0;
+};

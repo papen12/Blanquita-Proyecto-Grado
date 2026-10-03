@@ -161,7 +161,7 @@ export const AREAS_TRABAJO = [
       },
       {
         titulo: "Movimientos",
-        descripcion: "Ingreso de varias presentaciones a la vez",
+        descripcion: "Ingresos y correcciones de producto terminado",
         icono: Combine,
         ruta: "movimientos",
       },
@@ -176,6 +176,14 @@ export const ObservacionesRodela = [
   "Rodela enviada a un tipo de producción incorrecto",
   "Traslado duplicado de la misma rodela",
   "La producción se canceló antes de usar la rodela",
+];
+
+
+export const MotivosCorreccionProductoTerminado = [
+  "Cantidad ingresada mayor a la real",
+  "Ingreso duplicado",
+  "Presentación equivocada",
+  "Producto registrado por error",
 ];
 
 

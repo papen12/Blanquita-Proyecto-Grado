@@ -67,6 +67,21 @@ class AjusteNegativoInventarioResponse(BaseModel):
     CantidadActual: int
 
 
+class CorreccionProductoTerminadoRequest(BaseModel):
+    IdPresentacion: int
+    Cantidad: int
+    Observacion: str
+
+
+class CorreccionProductoTerminadoResponse(BaseModel):
+    IdPresentacion: int
+    CodigoPresentacion: str
+    NombreProducto: str
+    NombreTipoMovimientoInventario: str
+    CantidadAplicada: int
+    CantidadActual: int
+
+
 
 class VerInventarioProductoTerminadoRequest(BaseModel):
     IdProducto: int | None = None
