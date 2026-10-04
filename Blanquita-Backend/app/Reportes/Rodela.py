@@ -12,6 +12,7 @@ from app.utils.dates import ZONA_BOLIVIA
 
 def construir_reporte_inventario_rodela(
     data: ReporteInventarioRodelaResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     tipos = ", ".join(r.NombreTipoRodela for r in data.Resumen) or "Todos"
 
@@ -20,6 +21,7 @@ def construir_reporte_inventario_rodela(
         subtitulo="Rodelas en almacén",
         filtros={"Tipos": tipos},
         generado_en=data.FechaGeneracion,
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Resumen por tipo")
@@ -59,6 +61,7 @@ def nombre_archivo_inventario_rodela() -> str:
 
 def construir_reporte_historial_movimientos_rodela(
     data: ReporteHistorialMovimientosRodelaResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Historial de movimientos - Rodela",
@@ -68,6 +71,7 @@ def construir_reporte_historial_movimientos_rodela(
             "Movimientos": f"{len(data.Movimientos):,}".replace(",", "."),
         },
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion(f"Movimientos ({len(data.Movimientos)})")
@@ -99,6 +103,7 @@ def nombre_archivo_historial_movimientos_rodela(id_rodela: int) -> str:
 
 def construir_reporte_lote_rodela_detalle(
     data: ReporteLoteRodelaDetalleResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Detalle de lote - Rodela",
@@ -108,6 +113,7 @@ def construir_reporte_lote_rodela_detalle(
             "Recepción": data.FechaRecepcion.strftime("%d/%m/%Y"),
         },
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Datos generales")
@@ -143,6 +149,7 @@ def nombre_archivo_lote_rodela_detalle(id_lote_rodela: int) -> str:
 
 def construir_reporte_lotes_rodela_por_periodo(
     data: ReporteLotesRodelaPorPeriodoResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Ingresos por período - Rodela",
@@ -155,6 +162,7 @@ def construir_reporte_lotes_rodela_por_periodo(
             "Rodelas": f"{data.TotalRodelas:,}".replace(",", "."),
         },
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     if not data.Lotes:

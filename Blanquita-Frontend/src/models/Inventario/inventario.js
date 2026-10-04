@@ -158,3 +158,8 @@ export const VerInventarioProductoTerminadoResponse = ({
 
 export const VerInventarioProductoTerminadoResponseList = (jsonList) =>
   (jsonList ?? []).map((item) => VerInventarioProductoTerminadoResponse(item));
+
+export const ProductoResponse = ({ IdProducto, NombreProducto }) => ({
+  IdProducto,
+  NombreProducto,
+});

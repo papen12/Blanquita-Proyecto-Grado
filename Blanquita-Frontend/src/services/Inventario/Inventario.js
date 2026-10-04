@@ -9,7 +9,8 @@ import {
   AjusteNegativoInventarioResponse,
   CorreccionProductoTerminadoRequest,
   CorreccionProductoTerminadoResponse,
-  VerInventarioProductoTerminadoResponseList
+  VerInventarioProductoTerminadoResponseList,
+  ProductoResponse
 } from "../../models/Inventario/inventario";
 
 import { pedirJson } from "@/utils/api";
@@ -88,4 +89,10 @@ export async function verInventarioProductoTerminado(idProducto) {
   );
 
   return VerInventarioProductoTerminadoResponseList(data);
+}
+
+export async function obtenerProductos() {
+  const data = await pedirJson("/api/productofinal/obtenerproductos");
+
+  return data.map(ProductoResponse);
 }

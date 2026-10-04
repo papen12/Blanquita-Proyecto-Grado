@@ -57,6 +57,22 @@ def require_role(roles_permitidos: list[int]):
     return verificar_rol
 
 
+def get_generado_por(
+    usuario_actual: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> str | None:
+    perfil = UsuarioRepository(db).ObtenerPerfil(
+        {"p_IdUsuario": usuario_actual["IdUsuario"]}
+    )
+    if perfil is None:
+        return None
+
+    return (
+        f"{perfil['PrimerNombreOut']} {perfil['ApellidoPaternoOut']}"
+        f" - CI {perfil['CiOut']} - {perfil['NombreRolOut']}"
+    )
+
+
 def require_admin(usuario_actual: dict = Depends(get_current_user)) -> dict:
     if not usuario_actual["IsAdmin"]:
         raise HTTPException(

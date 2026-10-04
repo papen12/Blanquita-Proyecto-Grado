@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.Config.supabase import get_db
 
-from app.Auth.Dependencies import require_role
+from app.Auth.Dependencies import require_role, get_generado_por
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION
 
 from app.Models.Rodela.Reporte import (
@@ -82,12 +82,13 @@ def ReporteInventarioRodelas(
         default=None,
         description="IDs de TipoRodela a incluir. Vacío = todos los tipos.",
     ),
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteRodelaService = Depends(reporte_rodela_service),
 ):
     data = service.ReporteInventario(
         ReporteInventarioRodelaRequest(IdsTipoRodela=tipos)
     )
-    pdf = construir_reporte_inventario_rodela(data)
+    pdf = construir_reporte_inventario_rodela(data, generado_por)
 
     return Response(
         content=pdf,
@@ -107,12 +108,13 @@ def ReporteInventarioRodelas(
 )
 def ReporteRodelaMovimientos(
     id_rodela: int,
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteRodelaService = Depends(reporte_rodela_service),
 ):
     data = service.ReporteHistorialMovimientosRodela(
         ReporteHistorialMovimientosRodelaRequest(IdRodela=id_rodela)
     )
-    pdf = construir_reporte_historial_movimientos_rodela(data)
+    pdf = construir_reporte_historial_movimientos_rodela(data, generado_por)
 
     return Response(
         content=pdf,
@@ -159,12 +161,13 @@ def ObtenerLoteRodelaCatalogo(
 )
 def CrearReporteLoteRodela(
     id_lote_rodela: int,
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteRodelaService = Depends(reporte_rodela_service),
 ):
     data = service.ReporteLoteRodelaDetalle(
         ReporteLoteRodelaDetalleRequest(IdLoteRodela=id_lote_rodela)
     )
-    pdf = construir_reporte_lote_rodela_detalle(data)
+    pdf = construir_reporte_lote_rodela_detalle(data, generado_por)
 
     return Response(
         content=pdf,
@@ -185,12 +188,13 @@ def CrearReporteLoteRodela(
 def ReporteLotesRodelaPorPeriodo(
     FechaInicio: date,
     FechaFin: date,
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteRodelaService = Depends(reporte_rodela_service),
 ):
     data = service.ReporteLotesPorPeriodo(
         ReporteLotesRodelaPorPeriodoRequest(FechaInicio=FechaInicio, FechaFin=FechaFin)
     )
-    pdf = construir_reporte_lotes_rodela_por_periodo(data)
+    pdf = construir_reporte_lotes_rodela_por_periodo(data, generado_por)
 
     return Response(
         content=pdf,

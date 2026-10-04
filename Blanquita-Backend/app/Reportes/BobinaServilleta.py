@@ -104,6 +104,7 @@ def _escribir_inventario_bobina_servilleta(
 
 def construir_reporte_inventario_bobina_servilleta(
     data: ReporteInventarioBobinaServilletaResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     tipos = ", ".join(r.NombreTipoBobinaServilleta for r in data.Resumen) or "Todos"
 
@@ -112,6 +113,7 @@ def construir_reporte_inventario_bobina_servilleta(
         subtitulo="Bobinas en almacén",
         filtros={"Tipos": tipos},
         generado_en=data.FechaGeneracion,
+        generado_por=generado_por,
     )
 
     _escribir_inventario_bobina_servilleta(reporte, data)
@@ -161,11 +163,13 @@ def _escribir_inventario_subbobina_servilleta(
 
 def construir_reporte_inventario_subbobina_servilleta(
     data: ReporteInventarioSubBobinaServilletaResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Informe de inventario - Sub-bobina de servilleta",
         subtitulo="Sub-bobinas en almacén",
         generado_en=data.FechaGeneracion,
+        generado_por=generado_por,
     )
 
     _escribir_inventario_subbobina_servilleta(reporte, data)
@@ -180,6 +184,7 @@ def nombre_archivo_inventario_subbobina_servilleta() -> str:
 
 def construir_reporte_inventario_completo_servilleta(
     data: ReporteInventarioCompletoServilletaResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     generado_en = (
         data.Bobinas.FechaGeneracion
@@ -193,6 +198,7 @@ def construir_reporte_inventario_completo_servilleta(
         titulo="Informe de inventario - Bobina de servilleta",
         subtitulo="Bobinas y sub-bobinas en almacén",
         generado_en=generado_en,
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Bobinas de servilleta")
@@ -217,12 +223,14 @@ def nombre_archivo_inventario_completo_servilleta() -> str:
 
 def construir_reporte_historial_movimientos_unidad_servilleta(
     data: ReporteHistorialMovimientosUnidadServilletaResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Historial de movimientos - Unidad de bobina servilleta",
         subtitulo=f"Unidad {data.CodigoBobina} - {data.NombreTipoBobinaServilleta}",
         filtros={"Estado actual": data.TipoEstado, "Formato": data.DescripcionFormato},
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion(f"Movimientos ({len(data.Movimientos)})")
@@ -256,12 +264,14 @@ def nombre_archivo_historial_movimientos_unidad_servilleta(id_unidad: int) -> st
 
 def construir_reporte_detalle_bobina_servilleta(
     data: ReporteDetalleBobinaServilletaResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Detalle de bobina - Servilleta",
         subtitulo=f"Bobina #{data.IdBobinaServilleta} - {data.NombreTipoBobinaServilleta}",
         filtros={"Estado": data.TipoEstado, "Lote": data.CodigoLote},
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Datos generales")
@@ -360,6 +370,7 @@ def _columnas_bobinas_lote(reporte: Reporte) -> list:
 
 def construir_reporte_lote_bobina_servilleta_detalle(
     data: ReporteLoteBobinaServilletaDetalleResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Detalle de lote - Bobina de servilleta",
@@ -369,6 +380,7 @@ def construir_reporte_lote_bobina_servilleta_detalle(
             "Recepción": data.FechaRecepcion.strftime("%d/%m/%Y"),
         },
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Datos generales")
@@ -397,6 +409,7 @@ def nombre_archivo_lote_servilleta_detalle(id_lote: int) -> str:
 
 def construir_reporte_lotes_servilleta_por_periodo(
     data: ReporteLotesServilletaPorPeriodoResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Ingresos por período - Bobina de servilleta",
@@ -409,6 +422,7 @@ def construir_reporte_lotes_servilleta_por_periodo(
             "Bobinas": f"{data.TotalBobinas:,}".replace(",", "."),
         },
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     if not data.Lotes:
@@ -458,12 +472,14 @@ def _subbobina_utilizada_servilleta(data) -> list[dict]:
 
 def construir_reporte_detalle_produccion_servilleta(
     data: ReporteProduccionServilletaDetalleResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Detalle de producción - Servilleta",
         subtitulo=f"Producción #{data.IdProduccionServilleta} - {data.NombreTipoBobinaServilleta}",
         filtros={"Estado": data.NombreEstadoProduccion, "Turno": data.NombreTurno},
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Datos generales")
@@ -498,12 +514,14 @@ def nombre_archivo_detalle_produccion_servilleta(id_produccion: int) -> str:
 
 def construir_reporte_cancelacion_produccion_servilleta(
     data: ReporteCancelacionProduccionServilletaResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Producción cancelada - Servilleta",
         subtitulo=f"Producción #{data.IdProduccionServilleta} - {data.NombreTipoBobinaServilleta}",
         filtros={"Turno": data.NombreTurno, "Cancelada por": data.Cancelacion.Operador},
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Motivo de cancelación")
@@ -549,6 +567,7 @@ def nombre_archivo_cancelacion_produccion_servilleta(id_produccion: int) -> str:
 
 def construir_reporte_produccion_servilleta_por_periodo(
     data: ReporteProduccionServilletaPorPeriodoResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Producción por período - Servilleta",
@@ -560,6 +579,7 @@ def construir_reporte_produccion_servilleta_por_periodo(
             "Producciones": f"{data.TotalProducciones:,}".replace(",", "."),
         },
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Resumen")

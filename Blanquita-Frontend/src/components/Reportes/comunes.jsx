@@ -212,7 +212,13 @@ export function TarjetaFiltros({ reporte, informe, children }) {
   );
 }
 
-export function BotonInforme({ descargar, exito, ayuda, disponible = true }) {
+export function BotonInforme({
+  descargar,
+  exito,
+  ayuda,
+  disponible = true,
+  ayudaNoDisponible = AYUDA_SIN_RANGO,
+}) {
   const { descargando, iniciar } = useDescarga(descargar, exito);
 
   return (
@@ -235,7 +241,7 @@ export function BotonInforme({ descargar, exito, ayuda, disponible = true }) {
           </span>
         }
       />
-      <TooltipContent>{disponible ? ayuda : AYUDA_SIN_RANGO}</TooltipContent>
+      <TooltipContent>{disponible ? ayuda : ayudaNoDisponible}</TooltipContent>
     </Tooltip>
   );
 }

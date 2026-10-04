@@ -47,6 +47,7 @@ def _seccion_movimientos_logs(reporte: Reporte, movimientos) -> None:
 
 def construir_reporte_inventario_bobina_papel(
     data: ReporteInventarioBobinaPapelResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     tipos = ", ".join(r.NombreTipoBobina for r in data.Resumen) or "Todos"
 
@@ -55,6 +56,7 @@ def construir_reporte_inventario_bobina_papel(
         subtitulo="Bobinas en almacén",
         filtros={"Tipos": tipos},
         generado_en=data.FechaGeneracion,
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Resumen por tipo")
@@ -106,12 +108,14 @@ def nombre_archivo_inventario() -> str:
 
 def construir_reporte_detalle_produccion_bobina_papel(
     data: ReporteProduccionBobinaTuboDetalleResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Detalle de producción - Bobina de papel",
         subtitulo=f"Producción #{data.IdProduccionBobinaTubo} - {data.TipoBobina}",
         filtros={"Estado": data.NombreEstadoProduccion, "Turno": data.NombreTurno},
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Datos generales")
@@ -195,6 +199,7 @@ def nombre_archivo_detalle_produccion(id_produccion: int) -> str:
 
 def construir_reporte_lote_bobina_papel_detalle(
     data: ReporteLoteBobinaPapelDetalleResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Detalle de lote - Bobina de papel",
@@ -204,6 +209,7 @@ def construir_reporte_lote_bobina_papel_detalle(
             "Recepción": data.FechaRecepcion.strftime("%d/%m/%Y"),
         },
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Datos generales")
@@ -247,6 +253,7 @@ def nombre_archivo_lote_detalle(id_lote_bobina: int) -> str:
 
 def construir_reporte_lotes_por_periodo(
     data: ReporteLotesPorPeriodoResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Ingresos por período - Bobina de papel",
@@ -259,6 +266,7 @@ def construir_reporte_lotes_por_periodo(
             "Bobinas": f"{data.TotalBobinas:,}".replace(",", "."),
         },
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     if not data.Lotes:
@@ -304,12 +312,14 @@ def nombre_archivo_lotes_periodo(fecha_inicio: date, fecha_fin: date) -> str:
 
 def construir_reporte_cancelacion_produccion_bobina_papel(
     data: ReporteCancelacionProduccionBobinaTuboResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Producción cancelada - Bobina de papel",
         subtitulo=f"Producción #{data.IdProduccionBobinaTubo} - {data.TipoBobina}",
         filtros={"Turno": data.NombreTurno, "Cancelada por": data.Cancelacion.Operador},
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Motivo de cancelación")
@@ -403,6 +413,7 @@ def nombre_archivo_cancelacion_produccion(id_produccion: int) -> str:
 
 def construir_reporte_produccion_por_periodo(
     data: ReporteProduccionPorPeriodoResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Producción por período - Bobina de papel",
@@ -415,6 +426,7 @@ def construir_reporte_produccion_por_periodo(
             "Logs": f"{data.TotalLogs:,}".replace(",", "."),
         },
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion("Resumen")
@@ -509,6 +521,7 @@ def nombre_archivo_produccion_por_periodo(fecha_inicio: date, fecha_fin: date) -
 
 def construir_reporte_historial_movimientos_bobina(
     data: ReporteHistorialMovimientosBobinaResponse,
+    generado_por: str | None = None,
 ) -> bytes:
     reporte = Reporte(
         titulo="Historial de movimientos - Bobina de papel",
@@ -518,6 +531,7 @@ def construir_reporte_historial_movimientos_bobina(
             "Movimientos": f"{len(data.Movimientos):,}".replace(",", "."),
         },
         generado_en=datetime.now(ZONA_BOLIVIA),
+        generado_por=generado_por,
     )
 
     reporte.titulo_seccion(f"Movimientos ({len(data.Movimientos)})")

@@ -1,0 +1,72 @@
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Optional
+
+from pydantic import BaseModel
+
+
+class ReporteProduccionDiariaProductoTerminadoRequest(BaseModel):
+    FechaInicio: date
+    FechaFin: date
+    IdsProducto: Optional[list[int]] = None
+    VerMovimientos: bool = False
+
+
+class ProduccionPresentacionResponse(BaseModel):
+    IdPresentacion: int
+    CodigoPresentacion: str
+    NombrePresentacion: str
+    Entradas: int
+    Aumentos: int
+    Descuentos: int
+    Correcciones: int
+    Total: int
+    NumeroRegistros: int
+
+
+class ProduccionLineaResponse(BaseModel):
+    IdProducto: int
+    NombreProducto: str
+    Unidad: str
+    Entradas: int
+    Correcciones: int
+    Total: int
+    NumeroRegistros: int
+    DiasConProduccion: int
+    PromedioPorDia: Optional[Decimal]
+    Presentaciones: list[ProduccionPresentacionResponse]
+
+
+class ProduccionDiaResponse(BaseModel):
+    Fecha: date
+    TotalesPorLinea: dict[int, int]
+
+
+class MovimientoProduccionProductoTerminadoResponse(BaseModel):
+    IdMovimientoProductoTerminado: int
+    FechaMovimiento: datetime
+    IdProducto: int
+    NombreProducto: str
+    IdPresentacion: int
+    CodigoPresentacion: str
+    CantidadRollosUnidades: Optional[int]
+    NombrePresentacion: str
+    IdTipoMovimientoInventario: int
+    NombreTipoMovimientoInventario: str
+    Cantidad: int
+    Observacion: Optional[str]
+    Ci: str
+    PrimerNombre: str
+    ApellidoPaterno: str
+    NombreRol: str
+
+
+class ReporteProduccionDiariaProductoTerminadoResponse(BaseModel):
+    PeriodoInicio: date
+    PeriodoFin: date
+    DiasPeriodo: int
+    DiasConProduccion: int
+    TodasLasLineas: bool
+    Lineas: list[ProduccionLineaResponse]
+    ProduccionPorDia: list[ProduccionDiaResponse]
+    Movimientos: Optional[list[MovimientoProduccionProductoTerminadoResponse]] = None

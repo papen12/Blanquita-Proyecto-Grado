@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.Config.supabase import get_db
 
-from app.Auth.Dependencies import require_role
+from app.Auth.Dependencies import require_role, get_generado_por
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 
 from app.Models.BobinaServilleta.Reporte import (
@@ -72,10 +72,11 @@ def ReporteInventarioCompletoServilleta(
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
 ):
     data = service.ReporteInventarioCompleto()
-    pdf = construir_reporte_inventario_completo_servilleta(data)
+    pdf = construir_reporte_inventario_completo_servilleta(data, generado_por)
 
     return Response(
         content=pdf,
@@ -100,12 +101,13 @@ def ReporteInventarioBobinasServilleta(
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
 ):
     data = service.ReporteInventario(
         ReporteInventarioBobinaServilletaRequest(IdsTipoBobinaServilleta=tipos)
     )
-    pdf = construir_reporte_inventario_bobina_servilleta(data)
+    pdf = construir_reporte_inventario_bobina_servilleta(data, generado_por)
 
     return Response(
         content=pdf,
@@ -154,10 +156,11 @@ def ReporteInventarioSubBobinasServilleta(
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
 ):
     data = service.ReporteInventarioSubBobina()
-    pdf = construir_reporte_inventario_subbobina_servilleta(data)
+    pdf = construir_reporte_inventario_subbobina_servilleta(data, generado_por)
 
     return Response(
         content=pdf,
@@ -213,6 +216,7 @@ def ReporteHistorialMovimientosUnidadServilleta(
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
 ):
     data = service.ReporteHistorialMovimientosUnidad(
@@ -220,7 +224,7 @@ def ReporteHistorialMovimientosUnidadServilleta(
             IdUnidadBobinaServilleta=id_unidad_bobina_servilleta
         )
     )
-    pdf = construir_reporte_historial_movimientos_unidad_servilleta(data)
+    pdf = construir_reporte_historial_movimientos_unidad_servilleta(data, generado_por)
 
     return Response(
         content=pdf,
@@ -242,12 +246,13 @@ def ReporteDetalleBobinaServilletaRoute(
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
 ):
     data = service.ReporteDetalleBobinaServilleta(
         ReporteDetalleBobinaServilletaRequest(IdBobinaServilleta=id_bobina_servilleta)
     )
-    pdf = construir_reporte_detalle_bobina_servilleta(data)
+    pdf = construir_reporte_detalle_bobina_servilleta(data, generado_por)
 
     return Response(
         content=pdf,
@@ -298,6 +303,7 @@ def ReporteLoteServilletaDetalle(
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
 ):
     data = service.ReporteLoteBobinaServilletaDetalle(
@@ -305,7 +311,7 @@ def ReporteLoteServilletaDetalle(
             IdLoteBobinaServilleta=id_lote_bobina_servilleta
         )
     )
-    pdf = construir_reporte_lote_bobina_servilleta_detalle(data)
+    pdf = construir_reporte_lote_bobina_servilleta_detalle(data, generado_por)
 
     return Response(
         content=pdf,
@@ -328,6 +334,7 @@ def ReporteLotesServilletaPorPeriodo(
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
 ):
     data = service.ReporteLotesServilletaPorPeriodo(
@@ -335,7 +342,7 @@ def ReporteLotesServilletaPorPeriodo(
             FechaInicio=FechaInicio, FechaFin=FechaFin
         )
     )
-    pdf = construir_reporte_lotes_servilleta_por_periodo(data)
+    pdf = construir_reporte_lotes_servilleta_por_periodo(data, generado_por)
 
     return Response(
         content=pdf,
@@ -393,6 +400,7 @@ def ObtenerDetalleProduccionServilleta(
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
 ):
     data = service.ReporteDetalleProduccion(
@@ -401,7 +409,7 @@ def ObtenerDetalleProduccionServilleta(
             VerPausas=VerPausas,
         )
     )
-    pdf = construir_reporte_detalle_produccion_servilleta(data)
+    pdf = construir_reporte_detalle_produccion_servilleta(data, generado_por)
 
     return Response(
         content=pdf,
@@ -423,12 +431,13 @@ def ReporteProduccionServilletaCancelada(
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
 ):
     data = service.ReporteCancelacionProduccion(
         ReporteCancelacionProduccionServilletaRequest(IdProduccion=id_produccion)
     )
-    pdf = construir_reporte_cancelacion_produccion_servilleta(data)
+    pdf = construir_reporte_cancelacion_produccion_servilleta(data, generado_por)
 
     return Response(
         content=pdf,
@@ -452,6 +461,7 @@ def ReporteProduccionServilletaPorPeriodo(
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaServilletaService = Depends(reporte_bobina_servilleta_service),
 ):
     data = service.ReporteProduccionPorPeriodo(
@@ -461,7 +471,7 @@ def ReporteProduccionServilletaPorPeriodo(
             VerCancelaciones=VerCancelaciones,
         )
     )
-    pdf = construir_reporte_produccion_servilleta_por_periodo(data)
+    pdf = construir_reporte_produccion_servilleta_por_periodo(data, generado_por)
 
     return Response(
         content=pdf,

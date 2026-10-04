@@ -95,3 +95,8 @@ class VerInventarioProductoTerminadoResponse(BaseModel):
     CantidadRollosUnidades: int | None
     CantidadPorUnidadTerminada: int | None
     CantidadActual: int
+
+
+class ProductoResponse(BaseModel):
+    IdProducto: int
+    NombreProducto: str

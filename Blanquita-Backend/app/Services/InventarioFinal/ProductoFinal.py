@@ -23,7 +23,8 @@ from app.Models.InventarioFinal.ProductoFinal import(
       CorreccionProductoTerminadoRequest,
       CorreccionProductoTerminadoResponse,
       VerInventarioProductoTerminadoRequest,
-      VerInventarioProductoTerminadoResponse
+      VerInventarioProductoTerminadoResponse,
+      ProductoResponse
 )
 
 ID_TIPO_MOVIMIENTO_DESCUENTO = 3
@@ -154,3 +155,8 @@ class ProductoFinalService:
         filas = self.repository.VerInventarioProductoTerminado(params)
 
         return [VerInventarioProductoTerminadoResponse(**fila) for fila in filas]
+
+    def ObtenerProductos(self) -> list[ProductoResponse]:
+        filas = self.repository.ObtenerProductos()
+
+        return [ProductoResponse(**fila) for fila in filas]

@@ -118,6 +118,15 @@ export const RutasReportes = [
     ],
   },
   {
+    titulo: "Productos",
+    icono: ShelvingUnit,
+    ruta: "producto",
+    subrutas: [
+      { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
+      { titulo: "Producción", icono: Factory, ruta: "produccion" },
+    ],
+  },
+  {
     titulo: "Volver a la Planta",
     icono: Factory,
     ruta: "",

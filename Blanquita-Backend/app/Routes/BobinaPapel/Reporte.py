@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.Config.supabase import get_db
 
-from app.Auth.Dependencies import require_role
+from app.Auth.Dependencies import require_role, get_generado_por
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION
 
 from app.Models.BobinaPapel.Reportes import (
@@ -66,12 +66,13 @@ def ReporteInventarioBobinasPapel(
         default=None,
         description="IDs de TipoBobina a incluir. Vacío = todos los tipos.",
     ),
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaPapelService = Depends(reporte_bobina_papel_service),
 ):
     data = service.ReporteInventario(
         ReporteInventarioBobinaPapelRequest(IdsTipoBobina=tipos)
     )
-    pdf = construir_reporte_inventario_bobina_papel(data)
+    pdf = construir_reporte_inventario_bobina_papel(data, generado_por)
 
     return Response(
         content=pdf,
@@ -125,6 +126,7 @@ def ObtenerDetalleProduccion(
     id_produccion: int,
     VerPausas: bool = False,
     VerMovimientos: bool = False,
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaPapelService = Depends(reporte_bobina_papel_service),
 ):
     data = service.ReporteDetalleProduccion(
@@ -134,7 +136,7 @@ def ObtenerDetalleProduccion(
             VerMovimientos=VerMovimientos,
         )
     )
-    pdf = construir_reporte_detalle_produccion_bobina_papel(data)
+    pdf = construir_reporte_detalle_produccion_bobina_papel(data, generado_por)
 
     return Response(
         content=pdf,
@@ -152,12 +154,13 @@ def ObtenerDetalleProduccion(
 )
 def ReporteProduccionCancelada(
     id_produccion: int,
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaPapelService = Depends(reporte_bobina_papel_service),
 ):
     data = service.ReporteCancelacionProduccion(
         ReporteCancelacionProduccionBobinaTuboRequest(IdProduccion=id_produccion)
     )
-    pdf = construir_reporte_cancelacion_produccion_bobina_papel(data)
+    pdf = construir_reporte_cancelacion_produccion_bobina_papel(data, generado_por)
 
     return Response(
         content=pdf,
@@ -204,12 +207,13 @@ def ObtenerLoteCatalogo(
 )
 def CrearReporteLote(
     id_lote_bobina: int,
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaPapelService = Depends(reporte_bobina_papel_service),
 ):
     data = service.ReporteLoteBobinaPapelDetalle(
         ReporteLoteBobinaPapelDetalleRequest(IdLoteBobina=id_lote_bobina)
     )
-    pdf = construir_reporte_lote_bobina_papel_detalle(data)
+    pdf = construir_reporte_lote_bobina_papel_detalle(data, generado_por)
 
     return Response(
         content=pdf,
@@ -230,12 +234,13 @@ def CrearReporteLote(
 def ReporteLotesPorPeriodo(
     FechaInicio: date,
     FechaFin: date,
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaPapelService = Depends(reporte_bobina_papel_service),
 ):
     data = service.ReporteLotesPorPeriodo(
         ReporteLotesPorPeriodoRequest(FechaInicio=FechaInicio, FechaFin=FechaFin)
     )
-    pdf = construir_reporte_lotes_por_periodo(data)
+    pdf = construir_reporte_lotes_por_periodo(data, generado_por)
 
     return Response(
         content=pdf,
@@ -257,6 +262,7 @@ def ReporteProduccionPorPeriodo(
     FechaInicio: date,
     FechaFin: date,
     VerCancelaciones: bool = False,
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaPapelService = Depends(reporte_bobina_papel_service),
 ):
     data = service.ReporteProduccionPorPeriodo(
@@ -266,7 +272,7 @@ def ReporteProduccionPorPeriodo(
             VerCancelaciones=VerCancelaciones,
         )
     )
-    pdf = construir_reporte_produccion_por_periodo(data)
+    pdf = construir_reporte_produccion_por_periodo(data, generado_por)
 
     return Response(
         content=pdf,
@@ -312,12 +318,13 @@ def CatalogoBobinas(
 )
 def ReporteBobinaMovimientos(
     id_bobina_papel: int,
+    generado_por: str | None = Depends(get_generado_por),
     service: ReporteBobinaPapelService = Depends(reporte_bobina_papel_service),
 ):
     data = service.ReporteHistorialMovimientosBobina(
         ReporteHistorialMovimientosBobinaRequest(IdBobinaPapel=id_bobina_papel)
     )
-    pdf = construir_reporte_historial_movimientos_bobina(data)
+    pdf = construir_reporte_historial_movimientos_bobina(data, generado_por)
 
     return Response(
         content=pdf,

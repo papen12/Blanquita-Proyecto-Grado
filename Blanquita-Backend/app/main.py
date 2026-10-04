@@ -25,6 +25,7 @@ from app.Routes.BobinaServilleta.InventarioRouter import InventarioBobinaServill
 from app.Routes.BobinaServilleta.Reporte import bs_ReporteRouter
 
 from app.Routes.InventarioFinal.ProductoFinal import ProductoFinalRouter
+from app.Routes.InventarioFinal.Reporte import ProductoFinalReporteRouter
 
 from app.Routes.Proveedor.Proveedor import ProveedorRouter
 
@@ -103,6 +104,7 @@ app.include_router(EmpaqueBolsaRouter)
 
 #ROUTERS INVENTARIO PRODUCTO FINAL
 app.include_router(ProductoFinalRouter)
+app.include_router(ProductoFinalReporteRouter)
 
 #ROUTERS PROVEEDOR
 app.include_router(ProveedorRouter)

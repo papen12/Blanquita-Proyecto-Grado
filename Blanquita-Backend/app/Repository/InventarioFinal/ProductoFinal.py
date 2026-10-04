@@ -66,3 +66,11 @@ class ProductoFinalRepository:
             )
         """
         return self.caller.LlamarFuncion(sql, params)
+
+    def ObtenerProductos(self) -> list[dict]:
+        sql = """
+            SELECT "IdProducto", "NombreProducto"
+            FROM "Producto"
+            ORDER BY "IdProducto"
+        """
+        return self.caller.LlamarFuncion(sql)

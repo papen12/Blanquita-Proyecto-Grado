@@ -53,12 +53,14 @@ class Reporte:
         subtitulo: str | None = None,
         filtros: dict[str, str] | None = None,
         generado_en: datetime | None = None,
+        generado_por: str | None = None,
         tamanio_hoja=letter,
     ):
         self.titulo = titulo
         self.subtitulo = subtitulo
         self.filtros = filtros or {}
         self.generado_en = generado_en or datetime.now()
+        self.generado_por = generado_por
         self.tamanio_hoja = tamanio_hoja
 
         estilos = getSampleStyleSheet()
@@ -242,6 +244,10 @@ class Reporte:
         lienzo.drawRightString(ancho - self.MARGEN, tope - 0.4 * cm, texto_generado)
         if texto_filtros:
             lienzo.drawRightString(ancho - self.MARGEN, tope - 1.0 * cm, texto_filtros)
+        if self.generado_por:
+            lienzo.drawRightString(
+                ancho - self.MARGEN, tope - 1.9 * cm, f"Generado por: {self.generado_por}"
+            )
 
         linea_y = alto - self.MARGEN - self.ALTO_ENCABEZADO + 0.35 * cm
         lienzo.setStrokeColor(self.COLOR_BORDE)

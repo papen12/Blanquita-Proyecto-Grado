@@ -15,7 +15,8 @@ from app.Models.InventarioFinal.ProductoFinal import(
       CorreccionProductoTerminadoRequest,
       CorreccionProductoTerminadoResponse,
       VerInventarioProductoTerminadoResponse,
-      VerInventarioProductoTerminadoRequest
+      VerInventarioProductoTerminadoRequest,
+      ProductoResponse
 )
 
 from app.Auth.Dependencies import require_role
@@ -103,3 +104,14 @@ def VerInventarioProductoTerminado(
     service: ProductoFinalService = Depends(producto_terminado_service)
 ):
     return service.VerInventarioProductoTerminado(IdProducto)
+
+@ProductoFinalRouter.get(
+    "/obtenerproductos",
+    response_model=list[ProductoResponse],
+    status_code=200
+)
+def ObtenerProductos(
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    service: ProductoFinalService = Depends(producto_terminado_service)
+):
+    return service.ObtenerProductos()
