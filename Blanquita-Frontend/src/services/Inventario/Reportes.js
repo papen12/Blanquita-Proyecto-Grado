@@ -1,9 +1,11 @@
 import {
   ResumenProduccionDiariaRequest,
-  ResumenProduccionDiariaResponse
+  ResumenProduccionDiariaResponse,
+  ResumenInventarioRequest,
+  ResumenInventarioResponse
 } from "../../models/Inventario/Reportes";
 import { pedirJson } from "@/utils/api";
-import { construirQueryParams } from "@/utils/params";
+import { construirQueryParams, conQueryParams } from "@/utils/params";
 import { descargarReportePDF } from "@/utils/downloadFile";
 
 const BASE_URL = "/api/productofinal/reportes";
@@ -28,5 +30,21 @@ export async function descargarReporteProduccionDiaria(fechaInicio, fechaFin, id
   await descargarReportePDF(
     `${BASE_URL}/produccion/diaria?${params.toString()}`,
     `produccion-diaria-${fechaInicio}-${fechaFin}.pdf`
+  );
+}
+
+export async function verResumenInventario(filtros) {
+  const payload = ResumenInventarioRequest(filtros);
+  const params = construirQueryParams(payload);
+
+  const data = await pedirJson(`${BASE_URL}/inventario/resumen?${params.toString()}`);
+
+  return ResumenInventarioResponse(data);
+}
+
+export async function descargarReporteInventarioProducto(idsProducto) {
+  await descargarReportePDF(
+    conQueryParams(`${BASE_URL}/inventario`, { IdsProducto: idsProducto }),
+    "reporte-inventario-producto-terminado.pdf"
   );
 }

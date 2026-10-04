@@ -25,3 +25,11 @@ class ReporteProductoTerminadoRepository:
             )
         """
         return self.caller.LlamarFuncion(sql, params)
+
+    def ReporteInventario(self, params: dict) -> list[dict]:
+        sql = """
+            SELECT * FROM "ReporteInventarioProductoTerminado"(
+                CAST(:p_IdsProducto AS integer[])
+            )
+        """
+        return self.caller.LlamarFuncion(sql, params)

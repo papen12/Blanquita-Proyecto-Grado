@@ -280,7 +280,7 @@ class Reporte:
     @staticmethod
     def _formatear(valor) -> tuple[str, bool]:
         if valor is None or valor == "":
-            return "—", False
+            return "-", False
         if isinstance(valor, bool):
             return ("Sí" if valor else "No"), False
         if isinstance(valor, (Decimal, float)):

@@ -19,7 +19,7 @@ from app.utils.dates import ZONA_BOLIVIA
 
 def _formatear_duracion(duracion: Optional[timedelta]) -> str:
     if duracion is None:
-        return "—"
+        return "-"
     total_segundos = int(duracion.total_seconds())
     horas, resto = divmod(total_segundos, 3600)
     minutos = resto // 60

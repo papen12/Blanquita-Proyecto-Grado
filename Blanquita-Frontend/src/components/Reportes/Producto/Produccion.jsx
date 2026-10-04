@@ -1,16 +1,5 @@
 import { useState } from "react";
-import { RefreshCcw } from "lucide-react";
 import { endOfMonth, startOfMonth, startOfWeek, subDays, subMonths } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import DoubleDatePicker from "@/components/layout/dates/DoubleDatePicker";
 import { PaginaReporte } from "@/components/Reportes/PaginaReporte";
@@ -31,6 +20,7 @@ import {
   descargarReporteProduccionDiaria,
 } from "@/services/Inventario/Reportes";
 import { LINEA_PRODUCTO } from "./filtros";
+import { SeccionResumenLineas, TarjetaFila, CantidadUnidad } from "./comunes";
 
 const ATAJOS = [
   { valor: "hoy", texto: "Hoy", rango: (hoy) => ({ from: hoy, to: hoy }) },
@@ -71,12 +61,7 @@ function TotalLinea({ linea }) {
     return <span className="text-slate-400">Sin producción</span>;
   }
 
-  return (
-    <>
-      <strong className="text-slate-900">{formatearNumero(linea.Total, { decimales: 0 })}</strong>{" "}
-      <span className="text-slate-500">{linea.Unidad}</span>
-    </>
-  );
+  return <CantidadUnidad valor={linea.Total} unidad={linea.Unidad} />;
 }
 
 const COLUMNAS = [
@@ -91,105 +76,20 @@ const COLUMNAS = [
   { titulo: "Registros", ...DERECHA, valor: (l) => l.NumeroRegistros },
 ];
 
-function TarjetaLinea({ linea }) {
+function tarjetaProduccion(linea) {
   const conProduccion = linea.NumeroRegistros > 0;
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-[15px] font-bold text-slate-900">{linea.NombreProducto}</span>
-        <span className="text-[12.5px] text-slate-500">
-          {conProduccion
-            ? `${contar(linea.DiasConProduccion, "día", "días")} · ${formatearNumero(linea.PromedioPorDia, { vacio: "-" })} por día · ${contar(linea.NumeroRegistros, "registro", "registros")}`
-            : "Sin producción"}
-        </span>
-      </div>
-      {conProduccion && (
-        <span className="shrink-0 text-right text-[15px] tabular-nums">
-          <TotalLinea linea={linea} />
-        </span>
-      )}
-    </div>
-  );
-}
-
-function ResumenProduccion({ reporte }) {
-  const { catalogo: resumen, cargando, error, recargar } = reporte;
-  const listo = !cargando && !error;
-
-  return (
-    <section className="mt-6 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-      <div className="border-b border-slate-100 px-5 py-4 text-base font-extrabold text-slate-900">
-        Producción del período
-      </div>
-
-      {cargando && (
-        <div className="flex flex-col gap-2 p-5">
-          {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-lg" />
-          ))}
-        </div>
-      )}
-
-      {!cargando && error && (
-        <div className="flex flex-wrap items-center justify-between gap-3 p-6 text-sm font-semibold text-red-600">
-          {error}
-          <Button
-            variant="outline"
-            onClick={recargar}
-            className="h-9 gap-1.5 border-red-300 font-bold text-red-600 hover:bg-red-50"
-          >
-            <RefreshCcw size={14} strokeWidth={2.5} />
-            Reintentar
-          </Button>
-        </div>
-      )}
-
-      {listo && !resumen && (
-        <div className="p-10 text-center text-sm text-slate-400">
-          Elegí una fecha de inicio y una de fin para ver la producción.
-        </div>
-      )}
-
-      {listo && resumen && (
-        <>
-          <div className="hidden md:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {COLUMNAS.map((columna) => (
-                    <TableHead key={columna.titulo} className={columna.claseTitulo}>
-                      {columna.titulo}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {resumen.Lineas.map((linea) => (
-                  <TableRow key={linea.IdProducto}>
-                    {COLUMNAS.map((columna) => (
-                      <TableCell key={columna.titulo} className={columna.clase}>
-                        {columna.valor(linea)}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="flex flex-col gap-3 p-4 md:hidden">
-            {resumen.Lineas.map((linea) => (
-              <TarjetaLinea key={linea.IdProducto} linea={linea} />
-            ))}
-          </div>
-
-          <div className="border-t border-slate-100 px-5 py-3.5 text-[12.5px] font-semibold text-slate-500">
-            Días con producción: {resumen.DiasConProduccion} de {resumen.DiasPeriodo}
-          </div>
-        </>
-      )}
-    </section>
+    <TarjetaFila
+      nombre={linea.NombreProducto}
+      detalle={
+        conProduccion
+          ? `${contar(linea.DiasConProduccion, "día", "días")} · ${formatearNumero(linea.PromedioPorDia, { vacio: "-" })} por día · ${contar(linea.NumeroRegistros, "registro", "registros")}`
+          : "Sin producción"
+      }
+    >
+      {conProduccion && <CantidadUnidad valor={linea.Total} unidad={linea.Unidad} />}
+    </TarjetaFila>
   );
 }
 
@@ -288,7 +188,17 @@ export default function ProduccionReporteProducto({ usuario }) {
         </CampoFiltro>
       </TarjetaFiltros>
 
-      <ResumenProduccion reporte={reporte} />
+      <SeccionResumenLineas
+        reporte={reporte}
+        titulo="Producción del período"
+        columnas={COLUMNAS}
+        tarjeta={tarjetaProduccion}
+        pie={
+          resumen &&
+          `Días con producción: ${resumen.DiasConProduccion} de ${resumen.DiasPeriodo}`
+        }
+        mensajeVacio="Elegí una fecha de inicio y una de fin para ver la producción."
+      />
     </PaginaReporte>
   );
 }

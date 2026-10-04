@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy.orm import Session
@@ -13,9 +13,14 @@ from app.Models.InventarioFinal.Reporte import (
     ProduccionLineaResponse,
     ProduccionDiaResponse,
     MovimientoProduccionProductoTerminadoResponse,
+    ReporteInventarioProductoTerminadoRequest,
+    ReporteInventarioProductoTerminadoResponse,
+    InventarioLineaResponse,
+    InventarioPresentacionResponse,
 )
 from app.Repository.InventarioFinal.ProductoFinal import ProductoFinalRepository
 from app.Repository.InventarioFinal.Reporte import ReporteProductoTerminadoRepository
+from app.utils.dates import ZONA_BOLIVIA
 
 ID_PRODUCTO_MERMA = 6
 # Mega Rollo, Económico y Merma se cuentan en unidades; el resto de líneas en jabas.
@@ -75,23 +80,7 @@ class ReporteProductoTerminadoService:
                 detail=f"El rango de fechas no puede superar los {DIAS_MAXIMOS_REPORTE_PRODUCCION} días",
             )
 
-        productos = self.producto_repository.ObtenerProductos()
-        ids_solicitados = set(data.IdsProducto or [])
-
-        if ids_solicitados - {p["IdProducto"] for p in productos}:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="Una o más líneas seleccionadas no existen",
-            )
-
-        lineas_solicitadas = sorted(
-            (
-                p
-                for p in productos
-                if not ids_solicitados or p["IdProducto"] in ids_solicitados
-            ),
-            key=lambda p: (p["IdProducto"] == ID_PRODUCTO_MERMA, p["IdProducto"]),
-        )
+        lineas_solicitadas, todas_las_lineas = self._LineasSolicitadas(data.IdsProducto)
 
         filas = self.repository.ReporteProduccionDiaria(self._ParametrosPeriodo(data))
 
@@ -137,13 +126,81 @@ class ReporteProductoTerminadoService:
             PeriodoFin=data.FechaFin,
             DiasPeriodo=dias_periodo,
             DiasConProduccion=len(set().union(*dias_con_produccion.values())),
-            TodasLasLineas=len(lineas_solicitadas) == len(productos),
+            TodasLasLineas=todas_las_lineas,
             Lineas=lineas,
             ProduccionPorDia=[
                 ProduccionDiaResponse(Fecha=fecha, TotalesPorLinea=dict(totales))
                 for fecha, totales in sorted(produccion_por_dia.items())
             ],
         )
+
+    def ReporteInventario(
+        self, data: ReporteInventarioProductoTerminadoRequest
+    ) -> ReporteInventarioProductoTerminadoResponse:
+        lineas_solicitadas, todas_las_lineas = self._LineasSolicitadas(data.IdsProducto)
+
+        filas = self.repository.ReporteInventario(
+            {"p_IdsProducto": data.IdsProducto or None}
+        )
+
+        if not filas:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No hay presentaciones registradas para las líneas seleccionadas",
+            )
+
+        presentaciones: dict[int, list[InventarioPresentacionResponse]] = defaultdict(list)
+        for fila in filas:
+            presentaciones[fila["IdProducto"]].append(
+                InventarioPresentacionResponse(
+                    **fila,
+                    NombrePresentacion=_nombre_presentacion(
+                        fila["NombreProducto"], fila["CantidadRollosUnidades"]
+                    ),
+                )
+            )
+
+        lineas = []
+        for producto in lineas_solicitadas:
+            presentaciones_linea = presentaciones[producto["IdProducto"]]
+            lineas.append(
+                InventarioLineaResponse(
+                    IdProducto=producto["IdProducto"],
+                    NombreProducto=producto["NombreProducto"],
+                    Unidad=_unidad_linea(producto["IdProducto"]),
+                    Total=sum(p.CantidadActual for p in presentaciones_linea),
+                    Presentaciones=presentaciones_linea,
+                )
+            )
+
+        return ReporteInventarioProductoTerminadoResponse(
+            FechaGeneracion=datetime.now(ZONA_BOLIVIA),
+            TodasLasLineas=todas_las_lineas,
+            Lineas=lineas,
+        )
+
+    def _LineasSolicitadas(
+        self, ids_producto: list[int] | None
+    ) -> tuple[list[dict], bool]:
+        productos = self.producto_repository.ObtenerProductos()
+        ids_solicitados = set(ids_producto or [])
+
+        if ids_solicitados - {p["IdProducto"] for p in productos}:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Una o más líneas seleccionadas no existen",
+            )
+
+        lineas = sorted(
+            (
+                p
+                for p in productos
+                if not ids_solicitados or p["IdProducto"] in ids_solicitados
+            ),
+            key=lambda p: (p["IdProducto"] == ID_PRODUCTO_MERMA, p["IdProducto"]),
+        )
+
+        return lineas, len(lineas) == len(productos)
 
     def _ParametrosPeriodo(
         self, data: ReporteProduccionDiariaProductoTerminadoRequest

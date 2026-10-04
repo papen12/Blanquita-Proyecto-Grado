@@ -2,6 +2,7 @@ from datetime import date, datetime
 
 from app.Models.InventarioFinal.Reporte import (
     ReporteProduccionDiariaProductoTerminadoResponse,
+    ReporteInventarioProductoTerminadoResponse,
 )
 from app.Reportes.reporte import Reporte
 from app.utils.dates import ZONA_BOLIVIA
@@ -15,7 +16,10 @@ def _texto_periodo(inicio: date, fin: date) -> str:
     return f"Del {inicio.strftime('%d/%m/%Y')} al {fin.strftime('%d/%m/%Y')}"
 
 
-def _texto_lineas(data: ReporteProduccionDiariaProductoTerminadoResponse) -> str:
+def _texto_lineas(
+    data: ReporteProduccionDiariaProductoTerminadoResponse
+    | ReporteInventarioProductoTerminadoResponse,
+) -> str:
     if data.TodasLasLineas:
         return "Todas"
     if len(data.Lineas) <= 3:
@@ -25,6 +29,12 @@ def _texto_lineas(data: ReporteProduccionDiariaProductoTerminadoResponse) -> str
 
 def _texto_fecha_con_dia(fecha: date) -> str:
     return f"{DIAS_SEMANA[fecha.weekday()]} {fecha.strftime('%d/%m/%Y')}"
+
+
+def _texto_paquetes(cantidad: int | None) -> str | None:
+    if cantidad is None:
+        return None
+    return f"{cantidad} paquete" if cantidad == 1 else f"{cantidad} paquetes"
 
 
 def construir_reporte_produccion_diaria_producto_terminado(
@@ -146,3 +156,50 @@ def nombre_archivo_produccion_diaria_producto_terminado(
         f"produccion-diaria-producto-terminado-{fecha_inicio:%Y%m%d}-{fecha_fin:%Y%m%d}"
         f"-{ahora:%Y%m%d-%H%M}.pdf"
     )
+
+
+def construir_reporte_inventario_producto_terminado(
+    data: ReporteInventarioProductoTerminadoResponse,
+    generado_por: str | None = None,
+) -> bytes:
+    reporte = Reporte(
+        titulo="Informe de inventario - Producto terminado",
+        subtitulo="Stock actual en almacén",
+        filtros={"Líneas": _texto_lineas(data)},
+        generado_en=data.FechaGeneracion,
+        generado_por=generado_por,
+    )
+
+    reporte.titulo_seccion("Resumen por línea")
+    reporte.tabla(
+        columnas=[
+            ("Línea", "NombreProducto"),
+            ("Unidad", lambda linea: linea.Unidad.capitalize()),
+            ("Stock", "Total"),
+            ("Presentaciones", lambda linea: len(linea.Presentaciones)),
+        ],
+        filas=data.Lineas,
+    )
+
+    for linea in data.Lineas:
+        total = f"{linea.Total:,}".replace(",", ".")
+        reporte.titulo_seccion(f"{linea.NombreProducto}: {total} {linea.Unidad}")
+        reporte.tabla(
+            columnas=[
+                ("Código", "CodigoPresentacion"),
+                ("Producto", "NombrePresentacion"),
+                ("Contenedor", "TipoContenedor"),
+                ("Contenido", lambda p: _texto_paquetes(p.CantidadPorUnidadTerminada)),
+                ("Stock", "CantidadActual"),
+                ("Último movimiento", "FechaUltimoMovimiento"),
+            ],
+            filas=linea.Presentaciones,
+            fila_total=["TOTAL", "", "", "", linea.Total, ""],
+        )
+
+    return reporte.a_pdf()
+
+
+def nombre_archivo_inventario_producto_terminado() -> str:
+    ahora = datetime.now(ZONA_BOLIVIA)
+    return f"informe-inventario-producto-terminado-{ahora:%Y%m%d-%H%M}.pdf"

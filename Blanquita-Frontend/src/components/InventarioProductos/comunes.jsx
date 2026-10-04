@@ -27,7 +27,7 @@ export const descripcionContenido = (p) => {
     partes.push(
       `${p.CantidadPorUnidadTerminada} por ${(p.TipoContenedor || "unidad").toLowerCase()}`,
     );
-  return partes.length > 0 ? partes.join(" · ") : "—";
+  return partes.length > 0 ? partes.join(" · ") : "-";
 };
 
 const TONOS = {

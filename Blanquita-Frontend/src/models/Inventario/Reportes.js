@@ -43,3 +43,32 @@ export const ResumenProduccionDiariaResponse = (data) => ({
   Lineas: (data.Lineas ?? []).map(ProduccionLineaResponse),
   ProduccionPorDia: (data.ProduccionPorDia ?? []).map(ProduccionDiaResponse)
 });
+
+export const ResumenInventarioRequest = (filtros = {}) => ({
+  IdsProducto: filtros.IdsProducto ?? null
+});
+
+export const InventarioPresentacionResponse = (data) => ({
+  IdPresentacion: data.IdPresentacion,
+  CodigoPresentacion: data.CodigoPresentacion,
+  NombrePresentacion: data.NombrePresentacion,
+  TipoContenedor: data.TipoContenedor,
+  CantidadRollosUnidades: data.CantidadRollosUnidades ?? null,
+  CantidadPorUnidadTerminada: data.CantidadPorUnidadTerminada ?? null,
+  CantidadActual: data.CantidadActual,
+  FechaUltimoMovimiento: data.FechaUltimoMovimiento ?? null
+});
+
+export const InventarioLineaResponse = (data) => ({
+  IdProducto: data.IdProducto,
+  NombreProducto: data.NombreProducto,
+  Unidad: data.Unidad,
+  Total: data.Total,
+  Presentaciones: (data.Presentaciones ?? []).map(InventarioPresentacionResponse)
+});
+
+export const ResumenInventarioResponse = (data) => ({
+  FechaGeneracion: data.FechaGeneracion,
+  TodasLasLineas: data.TodasLasLineas,
+  Lineas: (data.Lineas ?? []).map(InventarioLineaResponse)
+});

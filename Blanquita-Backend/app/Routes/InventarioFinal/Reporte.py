@@ -11,11 +11,15 @@ from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION
 from app.Models.InventarioFinal.Reporte import (
     ReporteProduccionDiariaProductoTerminadoRequest,
     ReporteProduccionDiariaProductoTerminadoResponse,
+    ReporteInventarioProductoTerminadoRequest,
+    ReporteInventarioProductoTerminadoResponse,
 )
 from app.Services.InventarioFinal.Reporte import ReporteProductoTerminadoService
 from app.Reportes.ProductoTerminado import (
     construir_reporte_produccion_diaria_producto_terminado,
     nombre_archivo_produccion_diaria_producto_terminado,
+    construir_reporte_inventario_producto_terminado,
+    nombre_archivo_inventario_producto_terminado,
 )
 
 
@@ -92,5 +96,56 @@ def ReporteProduccionDiariaProductoTerminado(
         media_type="application/pdf",
         headers={
             "Content-Disposition": f'attachment; filename="{nombre_archivo_produccion_diaria_producto_terminado(FechaInicio, FechaFin)}"'
+        },
+    )
+
+
+@ProductoFinalReporteRouter.get(
+    "/inventario/resumen",
+    response_model=ReporteInventarioProductoTerminadoResponse,
+    status_code=200,
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION]))],
+)
+def ResumenInventarioProductoTerminado(
+    IdsProducto: list[int] | None = Query(
+        default=None,
+        description="IDs de Producto (líneas) a incluir. Vacío = todas las líneas.",
+    ),
+    service: ReporteProductoTerminadoService = Depends(
+        reporte_producto_terminado_service
+    ),
+):
+    return service.ReporteInventario(
+        ReporteInventarioProductoTerminadoRequest(IdsProducto=IdsProducto)
+    )
+
+
+@ProductoFinalReporteRouter.get(
+    "/inventario",
+    status_code=200,
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION]))],
+)
+def ReporteInventarioProductoTerminado(
+    IdsProducto: list[int] | None = Query(
+        default=None,
+        description="IDs de Producto (líneas) a incluir. Vacío = todas las líneas.",
+    ),
+    generado_por: str | None = Depends(get_generado_por),
+    service: ReporteProductoTerminadoService = Depends(
+        reporte_producto_terminado_service
+    ),
+):
+    data = service.ReporteInventario(
+        ReporteInventarioProductoTerminadoRequest(IdsProducto=IdsProducto)
+    )
+    pdf = construir_reporte_inventario_producto_terminado(data, generado_por)
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo_inventario_producto_terminado()}"'
         },
     )

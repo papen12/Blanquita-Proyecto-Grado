@@ -70,3 +70,32 @@ class ReporteProduccionDiariaProductoTerminadoResponse(BaseModel):
     Lineas: list[ProduccionLineaResponse]
     ProduccionPorDia: list[ProduccionDiaResponse]
     Movimientos: Optional[list[MovimientoProduccionProductoTerminadoResponse]] = None
+
+
+class ReporteInventarioProductoTerminadoRequest(BaseModel):
+    IdsProducto: Optional[list[int]] = None
+
+
+class InventarioPresentacionResponse(BaseModel):
+    IdPresentacion: int
+    CodigoPresentacion: str
+    NombrePresentacion: str
+    TipoContenedor: str
+    CantidadRollosUnidades: Optional[int]
+    CantidadPorUnidadTerminada: Optional[int]
+    CantidadActual: int
+    FechaUltimoMovimiento: Optional[datetime]
+
+
+class InventarioLineaResponse(BaseModel):
+    IdProducto: int
+    NombreProducto: str
+    Unidad: str
+    Total: int
+    Presentaciones: list[InventarioPresentacionResponse]
+
+
+class ReporteInventarioProductoTerminadoResponse(BaseModel):
+    FechaGeneracion: datetime
+    TodasLasLineas: bool
+    Lineas: list[InventarioLineaResponse]

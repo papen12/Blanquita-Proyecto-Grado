@@ -69,8 +69,8 @@ function calcularCambios(form, bobina) {
     if (antes !== despues) {
       cambios.push({
         campo,
-        antes: antes === null ? "—" : `${fmt(antes)}${unidad}`,
-        despues: despues === null ? "—" : `${fmt(despues)}${unidad}`,
+        antes: antes === null ? "-" : `${fmt(antes)}${unidad}`,
+        despues: despues === null ? "-" : `${fmt(despues)}${unidad}`,
       });
     }
   });
@@ -153,7 +153,7 @@ export default function ModalEditarBobina({
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl bg-slate-50 p-3.5 text-[13px] ring-1 ring-slate-200 sm:grid-cols-4">
             <div>
               <div className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Tipo</div>
-              <div className="font-semibold text-slate-800">{nombreTipo ?? "—"}</div>
+              <div className="font-semibold text-slate-800">{nombreTipo ?? "-"}</div>
             </div>
             <div>
               <div className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Lote</div>
