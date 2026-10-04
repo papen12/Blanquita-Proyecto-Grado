@@ -28,3 +28,6 @@ export const ACENTOS = [
     ring: "ring-eco1/40",
   },
 ];
+
+export const PILDORA_FILTRO =
+  "h-auto rounded-full border-2 border-slate-200 bg-white px-3.5 py-2 text-[12.5px] font-bold text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-600 aria-pressed:border-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white aria-pressed:hover:border-slate-900 aria-pressed:hover:bg-slate-900 aria-pressed:hover:text-white";

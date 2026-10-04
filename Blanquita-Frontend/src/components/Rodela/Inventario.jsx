@@ -53,8 +53,8 @@ import {
 import Header from "@/components/layout/Header";
 import {
   Roles,
-  OBSERVACION_RODELA_MIN,
-  OBSERVACION_RODELA_MAX,
+  MOTIVO_CORRECCION_MIN,
+  MOTIVO_CORRECCION_MAX,
 } from "@/constants/Values";
 
 const ESTADO_ALMACEN = "En almacén";
@@ -235,8 +235,8 @@ export default function InventarioRodelas({ usuario }) {
     codigoLimpio !== "" &&
     codigoLimpio !== dialogEditar.rodela.CodigoRodela;
   const motivoValido =
-    motivoLimpio.length >= OBSERVACION_RODELA_MIN &&
-    motivoLimpio.length <= OBSERVACION_RODELA_MAX;
+    motivoLimpio.length >= MOTIVO_CORRECCION_MIN &&
+    motivoLimpio.length <= MOTIVO_CORRECCION_MAX;
 
   const abrirEditar = (rodela) => {
     setFormCodigo(rodela.CodigoRodela);
@@ -436,11 +436,11 @@ export default function InventarioRodelas({ usuario }) {
                 onChange={(e) => setFormMotivo(e.target.value)}
                 placeholder="Ej. Error de digitación al registrar el ingreso..."
                 className="min-h-20"
-                maxLength={OBSERVACION_RODELA_MAX}
+                maxLength={MOTIVO_CORRECCION_MAX}
               />
               <span className="text-xs text-slate-500">
-                {motivoLimpio.length}/{OBSERVACION_RODELA_MAX} · mínimo{" "}
-                {OBSERVACION_RODELA_MIN} caracteres
+                {motivoLimpio.length}/{MOTIVO_CORRECCION_MAX} · mínimo{" "}
+                {MOTIVO_CORRECCION_MIN} caracteres
               </span>
             </div>
 

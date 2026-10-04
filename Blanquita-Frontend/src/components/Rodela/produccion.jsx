@@ -20,11 +20,7 @@ import {
   deshacerTrasladoRodela,
 } from "../../services/Rodela/Inventario";
 import { ObservacionesRodela } from "@/constants/OperadorConfig";
-import {
-  OBSERVACION_RODELA_MIN,
-  OBSERVACION_RODELA_MAX,
-  MAX_MOTIVOS_OBSERVACION_RODELA,
-} from "@/constants/Values";
+import { MOTIVO_CORRECCION_MIN, MOTIVO_CORRECCION_MAX } from "@/constants/Values";
 import { dateFormatter } from "@/utils/dates";
 import { alternarMotivoEnTexto } from "@/utils/handlers";
 import { extraerMensajeError } from "@/utils/validators";
@@ -140,12 +136,11 @@ export default function ProduccionRodela({ usuario }) {
   const motivosSeleccionados = ObservacionesRodela.filter((m) =>
     formMotivo.includes(m),
   );
-  const topeMotivos = motivosSeleccionados.length >= MAX_MOTIVOS_OBSERVACION_RODELA;
 
   const motivoLimpio = formMotivo.trim();
   const motivoValido =
-    motivoLimpio.length >= OBSERVACION_RODELA_MIN &&
-    motivoLimpio.length <= OBSERVACION_RODELA_MAX;
+    motivoLimpio.length >= MOTIVO_CORRECCION_MIN &&
+    motivoLimpio.length <= MOTIVO_CORRECCION_MAX;
 
   const abrirDialog = (rodela) => {
     setFormMotivo("");
@@ -163,7 +158,7 @@ export default function ProduccionRodela({ usuario }) {
 
     if (!motivoValido) {
       setErrorReingreso(
-        `El motivo debe tener entre ${OBSERVACION_RODELA_MIN} y ${OBSERVACION_RODELA_MAX} caracteres`,
+        `El motivo debe tener entre ${MOTIVO_CORRECCION_MIN} y ${MOTIVO_CORRECCION_MAX} caracteres`,
       );
       return;
     }
@@ -271,25 +266,17 @@ export default function ProduccionRodela({ usuario }) {
                 value={motivosSeleccionados}
                 className="flex flex-wrap justify-start gap-2"
               >
-                {ObservacionesRodela.map((motivo) => {
-                  const activo = motivosSeleccionados.includes(motivo);
-                  return (
-                    <ToggleGroupItem
-                      key={motivo}
-                      value={motivo}
-                      disabled={topeMotivos && !activo}
-                      onClick={() => alternarMotivo(motivo)}
-                      className="h-auto whitespace-normal rounded-full border-2 border-slate-200 px-3.5 py-2 text-left text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
-                    >
-                      {motivo}
-                    </ToggleGroupItem>
-                  );
-                })}
+                {ObservacionesRodela.map((motivo) => (
+                  <ToggleGroupItem
+                    key={motivo}
+                    value={motivo}
+                    onClick={() => alternarMotivo(motivo)}
+                    className="h-auto whitespace-normal rounded-full border-2 border-slate-200 px-3.5 py-2 text-left text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+                  >
+                    {motivo}
+                  </ToggleGroupItem>
+                ))}
               </ToggleGroup>
-              <span className="text-xs text-slate-500">
-                Hasta {MAX_MOTIVOS_OBSERVACION_RODELA} motivos ·{" "}
-                {motivosSeleccionados.length} seleccionados
-              </span>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -305,11 +292,11 @@ export default function ProduccionRodela({ usuario }) {
                 onChange={(e) => setFormMotivo(e.target.value)}
                 placeholder="Ej. Se escaneó la rodela equivocada al enviar a producción..."
                 className="min-h-20"
-                maxLength={OBSERVACION_RODELA_MAX}
+                maxLength={MOTIVO_CORRECCION_MAX}
               />
               <span className="text-xs text-slate-500">
-                {motivoLimpio.length}/{OBSERVACION_RODELA_MAX} · mínimo{" "}
-                {OBSERVACION_RODELA_MIN} caracteres
+                {motivoLimpio.length}/{MOTIVO_CORRECCION_MAX} · mínimo{" "}
+                {MOTIVO_CORRECCION_MIN} caracteres
               </span>
             </div>
 
