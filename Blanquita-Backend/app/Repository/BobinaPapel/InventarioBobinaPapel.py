@@ -30,16 +30,6 @@ class InventarioBobinaPapelRepository:
         """
         return self.caller.LlamarUnRegistro(sql, params)
 
-    def DarDeBajaBobina(self, params: dict) -> dict | None:
-        sql = """
-            SELECT * FROM "DarDeBajaBobina"(
-                :p_IdBobinaPapel,
-                :p_IdUsuario,
-                :p_Observacion
-            )
-        """
-        return self.caller.LlamarUnRegistro(sql, params)
-
     def VerBobinasFueraInventario(self) -> list[dict]:
         sql = """
             SELECT * FROM "VerBobinasPapelFueraInventario"()

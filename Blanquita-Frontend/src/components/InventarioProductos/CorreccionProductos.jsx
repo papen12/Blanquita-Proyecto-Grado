@@ -21,7 +21,7 @@ import {
   MotivosAumentoProductoTerminado,
 } from "@/constants/OperadorConfig";
 import { MOTIVO_CORRECCION_MIN, MOTIVO_CORRECCION_MAX } from "@/constants/Values";
-import { aEntero } from "@/utils/validators";
+import { aEntero, limpiarObservacion } from "@/utils/validators";
 import {
   descripcionContenido,
   BadgeEstado,
@@ -172,7 +172,7 @@ function CardCorreccion({
         </div>
         <Textarea
           value={observacion}
-          onChange={(e) => onObservacion(e.target.value)}
+          onChange={(e) => onObservacion(limpiarObservacion(e.target.value))}
           placeholder="Elige una opción o escribe la observación"
           maxLength={MOTIVO_CORRECCION_MAX}
           aria-label="Observación"

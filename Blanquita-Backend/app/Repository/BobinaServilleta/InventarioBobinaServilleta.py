@@ -15,16 +15,6 @@ class InventarioBobinaServilletaRepository:
         """
         return self.caller.LlamarUnRegistro(sql, params)
 
-    def DarDeBajaSubBobina(self, params: dict) -> dict | None:
-        sql = """
-            SELECT * FROM "DarDeBajaSubBobina"(
-                :p_IdSubBobina,
-                :p_IdUsuario,
-                :p_Observacion
-            )
-        """
-        return self.caller.LlamarUnRegistro(sql, params)
-
     def VerResumenInventarioBobinaServilleta(self) -> list[dict]:
         sql = """
             SELECT * FROM "VerResumenInventarioBobinaServilleta"()

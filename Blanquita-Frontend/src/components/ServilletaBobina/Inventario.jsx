@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Loader2, RotateCcw, Ban, Database, Disc, Check, SquarePen } from "lucide-react";
+import { Plus, Loader2, Database, Disc, Check, SquarePen } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,6 @@ import {
   verDetalleInventarioSubBobinaServilleta,
   verSubBobinasServilletaFueraInventario,
   reingresarSubBobinaInventario,
-  darDeBajaSubBobina,
   editarBobinaServilleta,
 } from "../../services/BobinaServilleta/Inventario";
 import {
@@ -44,7 +43,11 @@ import {
 } from "../../services/BobinaServilleta/Reportes";
 import { dateFormatter } from "@/utils/dates";
 import { aCodigo } from "@/utils/handlers";
-import { extraerMensajeError, numeroONulo } from "@/utils/validators";
+import {
+  extraerMensajeError,
+  numeroONulo,
+  limpiarObservacion,
+} from "@/utils/validators";
 import { useCatalogo } from "@/hooks/useCatalogo";
 import { useDetalleInventario } from "@/hooks/useDetalleInventario";
 import { useEjecutar } from "@/hooks/useEjecutar";
@@ -65,6 +68,7 @@ import {
   BarraSeleccion,
   ItemFueraInventario,
   BadgeReingresada,
+  DialogReingreso,
 } from "@/components/Inventario/comunes";
 import Header from "@/components/layout/Header";
 import {
@@ -74,6 +78,8 @@ import {
 } from "@/constants/Values";
 
 const ESTADO_ALMACEN_ID = 1;
+
+const sinDatos = async () => [];
 
 const aTexto = (valor) => (valor === null || valor === undefined ? "" : String(valor));
 
@@ -298,13 +304,14 @@ export default function InventarioBobinaServilleta({ usuario }) {
 
   const resumenBobinas = useCatalogo(verResumenInventarioBobinaServilleta);
   const resumenSubs = useCatalogo(verResumenInventarioSubBobinaServilleta);
-  const fuera = useCatalogo(verSubBobinasServilletaFueraInventario);
+  const fuera = useCatalogo(esEncargado ? verSubBobinasServilletaFueraInventario : sinDatos);
   const detalle = useDetalleInventario(cargarDetalle, mismaSeleccion);
   const traslado = useEjecutar();
   const apertura = useEjecutar();
   const accionesFuera = useEjecutar();
 
   const [mostrarFuera, setMostrarFuera] = useState(false);
+  const [porReingresar, setPorReingresar] = useState(null);
 
   const [dialogEditar, setDialogEditar] = useState({ open: false, bobina: null });
   const [unidadesOriginales, setUnidadesOriginales] = useState([]);
@@ -390,24 +397,19 @@ export default function InventarioBobinaServilleta({ usuario }) {
   const quitarDeFuera = (id) =>
     fuera.setDatos((prev) => prev.filter((s) => s.IdSubBobinaServilleta !== id));
 
-  const reingresar = (sub) =>
+  const reingresar = (observacion) => {
+    const sub = porReingresar;
     accionesFuera.ejecutar(
       sub.IdSubBobinaServilleta,
-      () => reingresarSubBobinaInventario(sub.IdSubBobinaServilleta),
+      () => reingresarSubBobinaInventario(sub.IdSubBobinaServilleta, observacion),
       `Sub-bobina #${sub.IdSubBobinaServilleta} reingresada al inventario`,
       () => {
+        setPorReingresar(null);
         quitarDeFuera(sub.IdSubBobinaServilleta);
         recargarResumen();
       },
     );
-
-  const darDeBaja = (sub) =>
-    accionesFuera.ejecutar(
-      sub.IdSubBobinaServilleta,
-      () => darDeBajaSubBobina(sub.IdSubBobinaServilleta),
-      `Sub-bobina #${sub.IdSubBobinaServilleta} dada de baja`,
-      () => quitarDeFuera(sub.IdSubBobinaServilleta),
-    );
+  };
 
   const abrirEditar = async (bobina) => {
     setDialogEditar({ open: true, bobina });
@@ -589,13 +591,15 @@ export default function InventarioBobinaServilleta({ usuario }) {
                     textoVer="Ver sub-bobinas"
                   />
                 ))}
-                <TarjetaFueraInventario
-                  cantidad={fuera.datos.length}
-                  activo={mostrarFuera}
-                  onClick={() => setMostrarFuera((v) => !v)}
-                  unidad="sub-bobinas dadas de baja o retiradas"
-                  textoVer="Ver sub-bobinas"
-                />
+                {esEncargado && (
+                  <TarjetaFueraInventario
+                    cantidad={fuera.datos.length}
+                    activo={mostrarFuera}
+                    onClick={() => setMostrarFuera((v) => !v)}
+                    unidad="sub-bobinas retiradas de producción"
+                    textoVer="Ver sub-bobinas"
+                  />
+                )}
               </div>
             </section>
           </div>
@@ -700,7 +704,7 @@ export default function InventarioBobinaServilleta({ usuario }) {
           </PanelDetalle>
         )}
 
-        {mostrarFuera && (
+        {esEncargado && mostrarFuera && (
           <PanelFuera
             titulo="Sub-bobinas fuera de inventario"
             onCerrar={() => setMostrarFuera(false)}
@@ -727,20 +731,7 @@ export default function InventarioBobinaServilleta({ usuario }) {
                     observacion={s.UltimaObservacion}
                     fechaMovimiento={s.FechaUltimoMovimiento}
                     procesando={accionesFuera.enProceso === s.IdSubBobinaServilleta}
-                    onReingresar={() => reingresar(s)}
-                    onRetirar={() => darDeBaja(s)}
-                    contenidoReingresar={
-                      <>
-                        <RotateCcw size={14} strokeWidth={2.75} />
-                        Reingresar
-                      </>
-                    }
-                    contenidoRetirar={
-                      <>
-                        <Ban size={14} strokeWidth={2.75} />
-                        Baja
-                      </>
-                    }
+                    onReingresar={() => setPorReingresar(s)}
                   />
                 ))}
               </div>
@@ -748,6 +739,19 @@ export default function InventarioBobinaServilleta({ usuario }) {
           </PanelFuera>
         )}
       </main>
+
+      {esEncargado && (
+        <DialogReingreso
+          abierto={porReingresar !== null}
+          titulo={porReingresar ? `sub-bobina #${porReingresar.IdSubBobinaServilleta}` : ""}
+          procesando={
+            porReingresar !== null &&
+            accionesFuera.enProceso === porReingresar.IdSubBobinaServilleta
+          }
+          onCancelar={() => setPorReingresar(null)}
+          onConfirmar={reingresar}
+        />
+      )}
 
       <Dialog
         open={dialogEditar.open}
@@ -849,7 +853,7 @@ export default function InventarioBobinaServilleta({ usuario }) {
                   <Textarea
                     id="motivo-editar-bobina-servilleta"
                     value={formMotivo}
-                    onChange={(e) => setFormMotivo(e.target.value)}
+                    onChange={(e) => setFormMotivo(limpiarObservacion(e.target.value))}
                     placeholder="Ej. Error de digitación al registrar el ingreso..."
                     className="min-h-20"
                     maxLength={MOTIVO_CORRECCION_MAX}

@@ -23,6 +23,7 @@ import {
 import { MOTIVO_CANCELACION_MIN, MOTIVO_CANCELACION_MAX } from "@/constants/Values";
 import { dateFormatter } from "@/utils/dates";
 import { alternarMotivoEnTexto } from "@/utils/handlers";
+import { limpiarObservacion } from "@/utils/validators";
 import { ResumenProduccion } from "./comunes";
 
 const ETIQUETA = "text-xs font-bold uppercase tracking-wide text-slate-600";
@@ -91,7 +92,7 @@ export function DialogoPausar({ dialogo, tituloDe, opciones }) {
             <Textarea
               id="motivo-pausa"
               value={dialogo.motivo}
-              onChange={(e) => dialogo.setMotivo(e.target.value)}
+              onChange={(e) => dialogo.setMotivo(limpiarObservacion(e.target.value))}
               placeholder="Ej. Falla de máquina, cambio de turno..."
               className="min-h-20"
               maxLength={MOTIVO_CANCELACION_MAX}
@@ -143,7 +144,7 @@ export function DialogoCancelar({ dialogo, tituloDe, placeholder }) {
             <Textarea
               id="motivo-cancelacion"
               value={dialogo.motivo}
-              onChange={(e) => dialogo.setMotivo(e.target.value)}
+              onChange={(e) => dialogo.setMotivo(limpiarObservacion(e.target.value))}
               placeholder={placeholder}
               className="min-h-20"
               maxLength={MOTIVO_CANCELACION_MAX}

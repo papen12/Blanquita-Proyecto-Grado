@@ -11,17 +11,6 @@ export const ReingresarSubBobinaInventarioResponse = (data) => ({
   FechaMovimiento: data.FechaMovimiento
 });
 
-export const DarDeBajaSubBobinaRequest = (idSubBobina, observacion) => ({
-  IdSubBobina: idSubBobina,
-  Observacion: observacion ?? null
-});
-
-export const DarDeBajaSubBobinaResponse = (data) => ({
-  IdSubBobina: data.IdSubBobina,
-  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
-  FechaMovimiento: data.FechaMovimiento
-});
-
 export const ResumenInventarioBobinaServilletaResponse = (data) => ({
   IdTipoBobinaServilleta: data.IdTipoBobinaServilleta,
   NombreTipoBobinaServilleta: data.NombreTipoBobinaServilleta,

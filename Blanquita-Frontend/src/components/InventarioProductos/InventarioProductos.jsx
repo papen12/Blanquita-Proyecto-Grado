@@ -55,6 +55,7 @@ import {
   ajusteNegativoInventarioProductoTerminado,
 } from "../../services/Inventario/Inventario";
 import { descargarReporteInventarioProducto } from "@/services/Inventario/Reportes";
+import { limpiarObservacion } from "@/utils/validators";
 import { Roles } from "@/constants/Values";
 import Header from "@/components/layout/Header";
 import { BotonDescarga } from "@/components/layout/BotonDescarga";
@@ -700,7 +701,7 @@ export default function InventarioProductoTerminado({ usuario }) {
                   </div>
                   <Textarea
                     value={observacionGlobal}
-                    onChange={(e) => setObservacionGlobal(e.target.value)}
+                    onChange={(e) => setObservacionGlobal(limpiarObservacion(e.target.value))}
                     placeholder="Se aplica a todas las líneas (opcional)"
                     className="min-h-16 resize-none"
                   />
@@ -811,7 +812,7 @@ export default function InventarioProductoTerminado({ usuario }) {
                 </div>
                 <Textarea
                   value={observacionAjuste}
-                  onChange={(e) => setObservacionAjuste(e.target.value)}
+                  onChange={(e) => setObservacionAjuste(limpiarObservacion(e.target.value))}
                   placeholder="Motivo del ajuste..."
                   className="min-h-20 resize-none"
                 />

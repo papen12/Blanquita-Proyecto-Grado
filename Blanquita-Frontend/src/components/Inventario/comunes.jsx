@@ -1,11 +1,24 @@
-import { X, ArrowRight, Loader2, Search, Check, PackageX } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, ArrowRight, Loader2, Search, Check, PackageX, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { ACENTOS } from "@/constants/Acentos";
+import { MOTIVO_CORRECCION_MIN, MOTIVO_CORRECCION_MAX } from "@/constants/Values";
 import { dateFormatter } from "@/utils/dates";
+import { limpiarObservacion } from "@/utils/validators";
 
 export const GRID_TARJETAS = "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3";
 
@@ -105,7 +118,7 @@ export function TarjetaFueraInventario({ cantidad, activo, onClick, unidad, text
         <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
           Acciones disponibles
         </div>
-        <div className="text-sm font-bold text-slate-900">Reingresar o retirar definitivamente</div>
+        <div className="text-sm font-bold text-slate-900">Reingresar al almacén</div>
       </div>
 
       <div className="flex items-center justify-end gap-1.5 text-xs font-bold text-amber-600">
@@ -371,12 +384,13 @@ export function ItemFueraInventario({
   fechaMovimiento,
   procesando,
   onReingresar,
-  onRetirar,
-  contenidoReingresar = "Reingresar",
-  contenidoRetirar = "Retirar",
+  contenidoReingresar = (
+    <>
+      <RotateCcw size={14} strokeWidth={2.75} />
+      Reingresar
+    </>
+  ),
 }) {
-  const spinner = <Loader2 size={15} className="animate-spin" />;
-
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-col gap-1.5">
@@ -397,23 +411,78 @@ export function ItemFueraInventario({
           </div>
         )}
       </div>
-      <div className="flex gap-2">
-        <Button
-          onClick={onReingresar}
-          disabled={procesando}
-          className="h-10 gap-2 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
-        >
-          {procesando ? spinner : contenidoReingresar}
-        </Button>
-        <Button
-          onClick={onRetirar}
-          disabled={procesando}
-          variant="outline"
-          className="h-10 gap-2 border-red-300 font-bold text-red-600 hover:bg-red-50"
-        >
-          {procesando ? spinner : contenidoRetirar}
-        </Button>
-      </div>
+      <Button
+        onClick={onReingresar}
+        disabled={procesando}
+        className="h-10 gap-2 self-start bg-emerald-600 font-bold text-white hover:bg-emerald-700 sm:self-auto"
+      >
+        {procesando ? <Loader2 size={15} className="animate-spin" /> : contenidoReingresar}
+      </Button>
     </div>
+  );
+}
+
+export function DialogReingreso({ abierto, titulo, procesando, onCancelar, onConfirmar }) {
+  const [observacion, setObservacion] = useState("");
+  const observacionLimpia = observacion.trim();
+  const valida =
+    observacionLimpia.length >= MOTIVO_CORRECCION_MIN &&
+    observacionLimpia.length <= MOTIVO_CORRECCION_MAX;
+
+  useEffect(() => {
+    if (abierto) setObservacion("");
+  }, [abierto]);
+
+  return (
+    <Dialog open={abierto} onOpenChange={(open) => !open && !procesando && onCancelar()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Reingresar {titulo}</DialogTitle>
+          <DialogDescription>
+            Vuelve al almacén y queda disponible para producción. Indica cómo llega, por
+            ejemplo si conserva su ficha.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-1.5">
+          <Label
+            htmlFor="observacion-reingreso"
+            className="text-xs font-bold uppercase tracking-wide text-slate-600"
+          >
+            Observación
+          </Label>
+          <Textarea
+            id="observacion-reingreso"
+            value={observacion}
+            onChange={(e) => setObservacion(limpiarObservacion(e.target.value))}
+            placeholder="Ej. Llega sin ficha, se identificó por el peso y el tipo..."
+            className="min-h-20"
+            maxLength={MOTIVO_CORRECCION_MAX}
+          />
+          <span className="text-xs text-slate-500">
+            {observacionLimpia.length}/{MOTIVO_CORRECCION_MAX} · mínimo{" "}
+            {MOTIVO_CORRECCION_MIN} caracteres
+          </span>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onCancelar} disabled={procesando}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => onConfirmar(observacionLimpia)}
+            disabled={!valida || procesando}
+            className="gap-2 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
+          >
+            {procesando ? (
+              <Loader2 size={15} className="animate-spin" />
+            ) : (
+              <RotateCcw size={14} strokeWidth={2.75} />
+            )}
+            Reingresar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -10,7 +10,7 @@ from app.Constants.Cantidades import (
     LONGITUD_MINIMA_DESCRIPCION,
     LONGITUD_MAXIMA_DESCRIPCION,
 )
-from app.utils.validators import EsCantidadValida, ValidarTexto
+from app.utils.validators import EsCantidadValida, ValidarTexto, REGLA_CARACTERES_OBSERVACION
 from app.Models.InventarioFinal.ProductoFinal import(
       IngresoProductoTerminadoRequest,
       IngresoProductoTerminadoResponse,
@@ -140,7 +140,7 @@ class ProductoFinalService:
         if not ValidarTexto(LONGITUD_MINIMA_DESCRIPCION, LONGITUD_MAXIMA_DESCRIPCION, observacion):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail=f"La observación es obligatoria y debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres",
+                detail=f"La observación es obligatoria, debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres, {REGLA_CARACTERES_OBSERVACION}",
             )
 
         params = {

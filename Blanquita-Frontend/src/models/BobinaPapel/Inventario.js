@@ -34,17 +34,6 @@ export const ReingresarBobinaAInventarioResponse = (data) => ({
   FechaMovimiento: data.FechaMovimiento
 });
 
-export const DarDeBajaBobinaRequest = (idBobinaPapel, observacion) => ({
-  IdBobinaPapel: idBobinaPapel,
-  Observacion: observacion ?? null
-});
-
-export const DarDeBajaBobinaResponse = (data) => ({
-  IdBobinaPapel: data.IdBobinaPapel,
-  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
-  FechaMovimiento: data.FechaMovimiento
-});
-
 export const VerBobinasPapelFueraInventarioResponse = (data) => ({
   IdBobinaPapel: data.IdBobinaPapel,
   CodigoBobina: data.CodigoBobina,

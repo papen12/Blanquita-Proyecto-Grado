@@ -13,7 +13,7 @@ from app.Models.BobinaPapel.BobinaPapel import (
     EditarBobinaPapelRequest,
     EditarBobinaPapelResponse,
 )
-from app.utils.validators import ValidarTexto
+from app.utils.validators import ValidarTexto, REGLA_CARACTERES_OBSERVACION
 from app.Constants.Cantidades import (
     LONGITUD_MINIMA_DESCRIPCION,
     LONGITUD_MAXIMA_DESCRIPCION,
@@ -82,7 +82,7 @@ class BobinaPapelService:
         if not ValidarTexto(LONGITUD_MINIMA_DESCRIPCION, LONGITUD_MAXIMA_DESCRIPCION, motivo):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail=f"El motivo de la corrección es obligatorio y debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres",
+                detail=f"El motivo de la corrección es obligatorio, debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres, {REGLA_CARACTERES_OBSERVACION}",
             )
 
         params = {

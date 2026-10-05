@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 
 from app.Repository.Rodela.InventarioRodela import InventarioRodelaRepository
-from app.utils.validators import ValidarTexto
+from app.utils.validators import ValidarTexto, REGLA_CARACTERES_OBSERVACION
 from app.Constants.Cantidades import OBSERVACION_RODELA_MIN, OBSERVACION_RODELA_MAX
 from app.Models.Rodela.InventarioRodela import (
     ResumenInventarioRodelaResponse,
@@ -154,8 +154,8 @@ class InventarioRodelaService:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=(
-                    "La observación es obligatoria y debe tener entre "
-                    f"{OBSERVACION_RODELA_MIN} y {OBSERVACION_RODELA_MAX} caracteres"
+                    "La observación es obligatoria, debe tener entre "
+                    f"{OBSERVACION_RODELA_MIN} y {OBSERVACION_RODELA_MAX} caracteres, {REGLA_CARACTERES_OBSERVACION}"
                 ),
             )
 
@@ -217,8 +217,8 @@ class InventarioRodelaService:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=(
-                    "El motivo de la corrección es obligatorio y debe tener entre "
-                    f"{OBSERVACION_RODELA_MIN} y {OBSERVACION_RODELA_MAX} caracteres"
+                    "El motivo de la corrección es obligatorio, debe tener entre "
+                    f"{OBSERVACION_RODELA_MIN} y {OBSERVACION_RODELA_MAX} caracteres, {REGLA_CARACTERES_OBSERVACION}"
                 ),
             )
 

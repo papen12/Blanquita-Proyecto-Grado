@@ -198,3 +198,9 @@ export const ObservacionServilleta=[
   "Error en la máquina",
   "Falta de personal para producción"
 ]
+
+export const ObservacionReingreso=[
+  "Reingreso almacén para producción",
+  "Reingreso por selección de bobina errona a producción",
+  "Bobina reparada"
+]
