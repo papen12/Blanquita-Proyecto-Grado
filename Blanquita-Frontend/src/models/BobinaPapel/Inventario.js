@@ -18,7 +18,9 @@ export const VerDetalleInventarioBobinaPapelResponse = (data) => ({
   NombreProveedor: data.NombreProveedor,
   PesoBrutoKg: data.PesoBrutoKg,
   PesoNetoKg: data.PesoNetoKg,
-  Gramaje: data.Gramaje
+  Gramaje: data.Gramaje,
+  Reingresada: data.Reingresada ?? false,
+  FechaUltimoReingreso: data.FechaUltimoReingreso ?? null
 });
 
 export const ReingresarBobinaAInventarioRequest = (idBobinaPapel, observacion) => ({

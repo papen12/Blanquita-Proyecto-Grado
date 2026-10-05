@@ -74,6 +74,8 @@ class DetalleInventarioSubBobinaServilletaRequest(BaseModel):
 class DetalleInventarioSubBobinaServilletaResponse(BaseModel):
     IdSubBobinaServilleta: int
     CodigoUnidadOrigen: str
+    Reingresada: bool
+    FechaUltimoReingreso: datetime | None
 
 
 

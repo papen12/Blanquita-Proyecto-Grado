@@ -58,7 +58,9 @@ export const DetalleInventarioSubBobinaServilletaRequest = (idTipoMedidaSubBobin
 
 export const DetalleInventarioSubBobinaServilletaResponse = (data) => ({
   IdSubBobinaServilleta: data.IdSubBobinaServilleta,
-  CodigoUnidadOrigen: data.CodigoUnidadOrigen
+  CodigoUnidadOrigen: data.CodigoUnidadOrigen,
+  Reingresada: data.Reingresada ?? false,
+  FechaUltimoReingreso: data.FechaUltimoReingreso ?? null
 });
 
 export const SubBobinaServilletaFueraInventarioResponse = (data) => ({

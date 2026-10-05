@@ -64,6 +64,7 @@ import {
   CasillaSeleccion,
   BarraSeleccion,
   ItemFueraInventario,
+  BadgeReingresada,
 } from "@/components/Inventario/comunes";
 import Header from "@/components/layout/Header";
 import {
@@ -237,7 +238,10 @@ function TablaSubBobinas({ subBobinas, tipoSel, marcada, onToggle }) {
                   />
                 </TableCell>
                 <TableCell className={cn("font-mono font-bold", tipoSel.text)}>
-                  #{s.IdSubBobinaServilleta}
+                  <div className="flex items-center gap-2">
+                    #{s.IdSubBobinaServilleta}
+                    {s.Reingresada && <BadgeReingresada fecha={s.FechaUltimoReingreso} />}
+                  </div>
                 </TableCell>
                 <TableCell className="pr-5 font-mono text-slate-700">
                   {s.CodigoUnidadOrigen}
@@ -266,12 +270,20 @@ function ListaMovilSubBobinas({ subBobinas, tipoSel, marcada, onToggle }) {
             )}
           >
             <div>
-              <div className={cn("font-mono text-[15px] font-extrabold", tipoSel.text)}>
-                #{s.IdSubBobinaServilleta}
+              <div className="flex items-center gap-2">
+                <div className={cn("font-mono text-[15px] font-extrabold", tipoSel.text)}>
+                  #{s.IdSubBobinaServilleta}
+                </div>
+                {s.Reingresada && <BadgeReingresada fecha={s.FechaUltimoReingreso} />}
               </div>
               <div className="font-mono text-[12.5px] text-slate-600">
                 {s.CodigoUnidadOrigen}
               </div>
+              {s.Reingresada && s.FechaUltimoReingreso && (
+                <div className="text-[12.5px] font-semibold text-amber-700">
+                  Reingreso: {dateFormatter(s.FechaUltimoReingreso)}
+                </div>
+              )}
             </div>
             <CasillaSeleccion marcada={on} acento={tipoSel} grande />
           </button>

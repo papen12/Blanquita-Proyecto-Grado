@@ -26,6 +26,8 @@ class VerDetalleInventarioBobinaPapelResponse(BaseModel):
     PesoBrutoKg: Decimal
     PesoNetoKg: Decimal
     Gramaje: Decimal
+    Reingresada: bool
+    FechaUltimoReingreso: Optional[datetime]
 
 
 class ReingresarBobinaAInventarioRequest(BaseModel):

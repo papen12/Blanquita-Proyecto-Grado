@@ -10,7 +10,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { dateFormatter } from "@/utils/dates";
-import { CasillaSeleccion } from "@/components/Inventario/comunes";
+import { CasillaSeleccion, BadgeReingresada } from "@/components/Inventario/comunes";
 import { fmt } from "./constantes";
 
 export function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle, onEditar }) {
@@ -43,7 +43,10 @@ export function TablaBobinas({ bobinas, tipoSel, marcadas, onToggle, onEditar })
                   <CasillaSeleccion marcada={on} acento={tipoSel} />
                 </TableCell>
                 <TableCell className={cn("font-mono font-bold", tipoSel.text)}>
-                  {b.CodigoBobina}
+                  <div className="flex items-center gap-2">
+                    {b.CodigoBobina}
+                    {b.Reingresada && <BadgeReingresada fecha={b.FechaUltimoReingreso} />}
+                  </div>
                 </TableCell>
                 <TableCell className="text-slate-600">{b.CodigoLote}</TableCell>
                 <TableCell className="text-slate-600">

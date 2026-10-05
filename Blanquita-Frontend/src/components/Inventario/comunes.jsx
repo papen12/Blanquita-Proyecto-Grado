@@ -301,6 +301,18 @@ export function CasillaSeleccion({ marcada, acento, grande = false, onClick }) {
   return <span className={clase}>{marca}</span>;
 }
 
+export function BadgeReingresada({ fecha }) {
+  return (
+    <Badge
+      variant="outline"
+      title={fecha ? `Reingresada el ${dateFormatter(fecha)}` : undefined}
+      className="border-amber-300 bg-amber-50 font-sans font-bold text-amber-700"
+    >
+      Reingresada
+    </Badge>
+  );
+}
+
 export function BarraSeleccion({
   chips,
   estado,
