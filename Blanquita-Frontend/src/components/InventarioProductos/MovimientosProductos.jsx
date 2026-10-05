@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PackagePlus, PackageMinus } from "lucide-react";
+import { PackageCheck, PackageMinus, PackagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +11,7 @@ import CorreccionProductoTerminado from "./CorreccionProductos";
 const SUBTITULO_POR_VISTA = {
   ingreso: "Registrar ingreso",
   correccion: "Registrar corrección",
+  aumento: "Registrar aumento",
 };
 
 export default function MovimientosProductoTerminado({ usuario }) {
@@ -58,14 +59,18 @@ export default function MovimientosProductoTerminado({ usuario }) {
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-5 sm:px-6">
         <Tabs value={vista} onValueChange={setVista} className="mb-5">
-          <TabsList className="grid w-full grid-cols-2 sm:w-80">
+          <TabsList className="grid w-full grid-cols-3 sm:w-120">
             <TabsTrigger value="ingreso" className="gap-1.5 font-bold">
-              <PackagePlus size={15} strokeWidth={2.75} />
+              <PackageCheck size={15} strokeWidth={2.75} />
               Ingreso
             </TabsTrigger>
             <TabsTrigger value="correccion" className="gap-1.5 font-bold">
               <PackageMinus size={15} strokeWidth={2.75} />
               Corrección
+            </TabsTrigger>
+            <TabsTrigger value="aumento" className="gap-1.5 font-bold">
+              <PackagePlus size={15} strokeWidth={2.75} />
+              Aumento
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -98,6 +103,14 @@ export default function MovimientosProductoTerminado({ usuario }) {
             </div>
             <div hidden={vista !== "correccion"}>
               <CorreccionProductoTerminado
+                tipo="descuento"
+                inventario={inventario}
+                onStockActualizado={actualizarStock}
+              />
+            </div>
+            <div hidden={vista !== "aumento"}>
+              <CorreccionProductoTerminado
+                tipo="aumento"
                 inventario={inventario}
                 onStockActualizado={actualizarStock}
               />

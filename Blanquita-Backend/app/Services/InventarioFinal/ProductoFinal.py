@@ -28,6 +28,7 @@ from app.Models.InventarioFinal.ProductoFinal import(
 )
 
 ID_TIPO_MOVIMIENTO_DESCUENTO = 3
+ID_TIPO_MOVIMIENTO_AUMENTO = 4
 
 class ProductoFinalService:
     def __init__(self, db: Session):
@@ -111,6 +112,19 @@ class ProductoFinalService:
     def CorregirInventarioProductoTerminado(
         self, data: CorreccionProductoTerminadoRequest, id_usuario: int
     ) -> CorreccionProductoTerminadoResponse:
+        return self._RegistrarCorreccion(data, id_usuario, ID_TIPO_MOVIMIENTO_DESCUENTO)
+
+    def AumentarInventarioProductoTerminado(
+        self, data: CorreccionProductoTerminadoRequest, id_usuario: int
+    ) -> CorreccionProductoTerminadoResponse:
+        return self._RegistrarCorreccion(data, id_usuario, ID_TIPO_MOVIMIENTO_AUMENTO)
+
+    def _RegistrarCorreccion(
+        self,
+        data: CorreccionProductoTerminadoRequest,
+        id_usuario: int,
+        id_tipo_movimiento: int,
+    ) -> CorreccionProductoTerminadoResponse:
         if data.Cantidad <= 0:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -130,7 +144,7 @@ class ProductoFinalService:
             )
 
         params = {
-            "p_IdTipoMovimientoInventario": ID_TIPO_MOVIMIENTO_DESCUENTO,
+            "p_IdTipoMovimientoInventario": id_tipo_movimiento,
             "p_IdPresentacion": data.IdPresentacion,
             "p_IdUsuario": id_usuario,
             "p_Cantidad": data.Cantidad,

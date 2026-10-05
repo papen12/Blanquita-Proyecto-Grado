@@ -46,6 +46,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   verInventarioProductoTerminado,
   insertarIngresoProductoTerminado,
@@ -53,7 +54,10 @@ import {
   ajustePositivoInventarioProductoTerminado,
   ajusteNegativoInventarioProductoTerminado,
 } from "../../services/Inventario/Inventario";
+import { descargarReporteInventarioProducto } from "@/services/Inventario/Reportes";
+import { Roles } from "@/constants/Values";
 import Header from "@/components/layout/Header";
+import { BotonDescarga } from "@/components/layout/BotonDescarga";
 import { estadoStock, ESTILO_ESTADO, descripcionContenido } from "./comunes";
 
 const FILTROS = [
@@ -164,6 +168,7 @@ function FilaEnCarrito({ linea, presentacion, onCantidad, onQuitar }) {
 }
 
 export default function InventarioProductoTerminado({ usuario }) {
+  const esEncargado = usuario?.IdRol === Roles.Encargado;
   const [inventario, setInventario] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -376,10 +381,21 @@ export default function InventarioProductoTerminado({ usuario }) {
 
   return (
     <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
-      <Header
-        titulo="Almacén · Producto Terminado"
-        subtitulo="Inventario de Producto Terminado"
-      />
+      <TooltipProvider>
+        <Header
+          titulo="Almacén · Producto Terminado"
+          subtitulo="Inventario de Producto Terminado"
+        >
+          {esEncargado && (
+            <BotonDescarga
+              texto="Reporte stock"
+              ayuda="PDF con el stock actual de todas las líneas y el detalle de cada presentación"
+              exito="Reporte de stock descargado"
+              descargar={() => descargarReporteInventarioProducto(null)}
+            />
+          )}
+        </Header>
+      </TooltipProvider>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import {
   X,
   Loader2,
-  PackagePlus,
   PackageCheck,
   ListChecks,
 } from "lucide-react";
@@ -288,7 +287,7 @@ export default function IngresoProductoTerminado({ inventario, onStockActualizad
                   onClick={solicitarConfirmacion}
                   className="h-11 gap-2 bg-emerald-600 font-extrabold text-white hover:bg-emerald-700"
                 >
-                  <PackagePlus size={16} strokeWidth={2.75} />
+                  <PackageCheck size={16} strokeWidth={2.75} />
                   Registrar ingreso
                 </Button>
               </div>

@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { X, Loader2, PackageMinus, ListChecks } from "lucide-react";
+import { X, Loader2, PackageMinus, PackagePlus, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -11,8 +12,15 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { corregirInventarioProductoTerminado } from "../../services/Inventario/Inventario";
-import { MotivosCorreccionProductoTerminado } from "@/constants/OperadorConfig";
+import {
+  corregirInventarioProductoTerminado,
+  aumentarInventarioProductoTerminado,
+} from "../../services/Inventario/Inventario";
+import {
+  MotivosCorreccionProductoTerminado,
+  MotivosAumentoProductoTerminado,
+} from "@/constants/OperadorConfig";
+import { MOTIVO_CORRECCION_MIN, MOTIVO_CORRECCION_MAX } from "@/constants/Values";
 import { aEntero } from "@/utils/validators";
 import {
   descripcionContenido,
@@ -26,17 +34,59 @@ import {
 
 const CANTIDAD_MAXIMA_CORRECCION = 50;
 
-const construirObservacion = ({ cantidad, nombreProducto, codigo, motivo }) =>
-  `Corrección de ingreso: ${cantidad} ${nombreProducto} (${codigo}). Motivo: ${motivo}`;
+const TIPOS = {
+  descuento: {
+    signo: -1,
+    tono: "correccion",
+    Icono: PackageMinus,
+    motivos: MotivosCorreccionProductoTerminado,
+    registrar: corregirInventarioProductoTerminado,
+    titulo: "Corrección",
+    nombre: "corrección",
+    accion: "descontar",
+    confirmacion: (cantidad) => `Se descontarán ${cantidad} unidades del inventario.`,
+    exito: "Corrección registrada",
+    clases: {
+      borde: "border-red-300",
+      motivo: "border-red-400 bg-red-50 text-red-700",
+      boton: "bg-red-600 hover:bg-red-700",
+      cantidad: "text-red-700",
+    },
+  },
+  aumento: {
+    signo: 1,
+    tono: "ingreso",
+    Icono: PackagePlus,
+    motivos: MotivosAumentoProductoTerminado,
+    registrar: aumentarInventarioProductoTerminado,
+    titulo: "Aumento",
+    nombre: "aumento",
+    accion: "aumentar",
+    confirmacion: (cantidad) => `Se sumarán ${cantidad} unidades al inventario.`,
+    exito: "Aumento registrado",
+    clases: {
+      borde: "border-emerald-300",
+      motivo: "border-emerald-400 bg-emerald-50 text-emerald-700",
+      boton: "bg-emerald-600 hover:bg-emerald-700",
+      cantidad: "text-emerald-700",
+    },
+  },
+};
+
+const esObservacionValida = (texto) => {
+  const largo = texto.trim().length;
+  return largo >= MOTIVO_CORRECCION_MIN && largo <= MOTIVO_CORRECCION_MAX;
+};
 
 function CardCorreccion({
+  config,
   presentacion,
   valor,
   maximo,
-  motivo,
+  observacion,
   invalido,
   onCantidad,
-  onMotivo,
+  onObservacion,
   onQuitar,
 }) {
   const cantidad = aEntero(valor);
@@ -46,7 +96,7 @@ function CardCorreccion({
     <div
       className={cn(
         "flex flex-col gap-3.5 rounded-2xl border-2 bg-white p-4 shadow-sm",
-        cantidad > 0 ? "border-red-300" : "border-slate-200",
+        cantidad > 0 ? config.clases.borde : "border-slate-200",
       )}
     >
       <div className="flex items-start justify-between gap-2.5">
@@ -78,7 +128,7 @@ function CardCorreccion({
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between gap-2">
           <div className="text-[12px] font-bold uppercase tracking-wide text-slate-500">
-            Cantidad a descontar
+            Cantidad a {config.accion}
           </div>
           <div className="text-[12px] font-semibold text-slate-400">
             Máx. {maximo}
@@ -88,32 +138,31 @@ function CardCorreccion({
           valor={valor}
           onChange={onCantidad}
           maximo={maximo}
-          tono="correccion"
+          tono={config.tono}
           autoFocus
           invalido={invalido}
-          etiqueta="Cantidad a descontar"
+          etiqueta={`Cantidad a ${config.accion}`}
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
         <div className="text-[12px] font-bold uppercase tracking-wide text-slate-500">
-          Motivo
+          Observación
         </div>
         <div className="flex flex-wrap gap-2">
-          {MotivosCorreccionProductoTerminado.map((m) => {
-            const activo = motivo === m;
+          {config.motivos.map((m) => {
+            const activo = observacion.trim() === m;
             return (
               <button
                 key={m}
                 type="button"
-                onClick={() => onMotivo(m)}
+                onClick={() => onObservacion(m)}
                 aria-pressed={activo}
                 className={cn(
                   "min-h-10 rounded-xl border-2 px-3 py-1.5 text-left text-[13px] font-bold transition-colors",
                   activo
-                    ? "border-red-400 bg-red-50 text-red-700"
+                    ? config.clases.motivo
                     : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
-                  invalido && !motivo && "border-red-300",
                 )}
               >
                 {m}
@@ -121,22 +170,45 @@ function CardCorreccion({
             );
           })}
         </div>
+        <Textarea
+          value={observacion}
+          onChange={(e) => onObservacion(e.target.value)}
+          placeholder="Elige una opción o escribe la observación"
+          maxLength={MOTIVO_CORRECCION_MAX}
+          aria-label="Observación"
+          className={cn(
+            "min-h-20",
+            invalido && !esObservacionValida(observacion) && "border-red-400 ring-1 ring-red-200",
+          )}
+        />
+        <span className="text-xs text-slate-500">
+          {observacion.trim().length}/{MOTIVO_CORRECCION_MAX} · mínimo{" "}
+          {MOTIVO_CORRECCION_MIN} caracteres
+        </span>
       </div>
 
       <ResumenStock
         actual={actual}
-        nuevo={cantidad > 0 ? actual - cantidad : null}
-        tono="correccion"
+        nuevo={cantidad > 0 ? actual + config.signo * cantidad : null}
+        tono={config.tono}
       />
     </div>
   );
 }
 
-export default function CorreccionProductoTerminado({ inventario, onStockActualizado }) {
+export default function CorreccionProductoTerminado({
+  inventario,
+  onStockActualizado,
+  tipo = "descuento",
+}) {
+  const config = TIPOS[tipo];
+  const { Icono } = config;
+  const signoTexto = config.signo > 0 ? "+" : "-";
+
   const [linea, setLinea] = useState("");
   const [idSeleccionada, setIdSeleccionada] = useState(null);
   const [cantidad, setCantidad] = useState("");
-  const [motivo, setMotivo] = useState("");
+  const [observacion, setObservacion] = useState("");
   const [tocado, setTocado] = useState(false);
 
   const [confirmando, setConfirmando] = useState(false);
@@ -158,29 +230,28 @@ export default function CorreccionProductoTerminado({ inventario, onStockActuali
       : inventario.find((p) => p.IdPresentacion === idSeleccionada) ?? null;
 
   const actual = Number(seleccionada?.CantidadActual || 0);
-  const maximo = Math.min(actual, CANTIDAD_MAXIMA_CORRECCION);
+  const maximo =
+    config.signo < 0
+      ? Math.min(actual, CANTIDAD_MAXIMA_CORRECCION)
+      : CANTIDAD_MAXIMA_CORRECCION;
   const cantidadNum = aEntero(cantidad);
-  const observacion = seleccionada
-    ? construirObservacion({
-        cantidad: cantidadNum,
-        nombreProducto: seleccionada.NombreProducto,
-        codigo: seleccionada.CodigoPresentacion,
-        motivo,
-      })
-    : "";
+  const observacionLimpia = observacion.trim();
+
+  const sinStockParaDescontar = (presentacion) =>
+    config.signo < 0 && Number(presentacion.CantidadActual || 0) === 0;
 
   const seleccionar = (presentacion) => {
-    if (Number(presentacion.CantidadActual || 0) === 0) return;
+    if (sinStockParaDescontar(presentacion)) return;
     setIdSeleccionada(presentacion.IdPresentacion);
     setCantidad("");
-    setMotivo("");
+    setObservacion("");
     setTocado(false);
   };
 
   const limpiar = () => {
     setIdSeleccionada(null);
     setCantidad("");
-    setMotivo("");
+    setObservacion("");
     setTocado(false);
   };
 
@@ -188,15 +259,17 @@ export default function CorreccionProductoTerminado({ inventario, onStockActuali
     setTocado(true);
     if (!seleccionada) return;
     if (cantidadNum === 0) {
-      toast.error("Ingresa la cantidad a descontar");
+      toast.error(`Ingresa la cantidad a ${config.accion}`);
       return;
     }
     if (cantidadNum > maximo) {
-      toast.error(`La cantidad máxima a descontar es ${maximo}`);
+      toast.error(`La cantidad máxima a ${config.accion} es ${maximo}`);
       return;
     }
-    if (!motivo) {
-      toast.error("Selecciona el motivo de la corrección");
+    if (!esObservacionValida(observacion)) {
+      toast.error(
+        `La observación debe tener entre ${MOTIVO_CORRECCION_MIN} y ${MOTIVO_CORRECCION_MAX} caracteres`,
+      );
       return;
     }
     setConfirmando(true);
@@ -205,14 +278,14 @@ export default function CorreccionProductoTerminado({ inventario, onStockActuali
   const confirmarCorreccion = async () => {
     setEnviando(true);
     try {
-      const respuesta = await corregirInventarioProductoTerminado(
+      const respuesta = await config.registrar(
         seleccionada.IdPresentacion,
         cantidadNum,
-        observacion,
+        observacionLimpia,
       );
       onStockActualizado([respuesta]);
       toast.success(
-        `Corrección registrada: -${respuesta.CantidadAplicada} ${respuesta.CodigoPresentacion}`,
+        `${config.exito}: ${signoTexto}${respuesta.CantidadAplicada} ${respuesta.CodigoPresentacion}`,
       );
       limpiar();
       setConfirmando(false);
@@ -238,10 +311,10 @@ export default function CorreccionProductoTerminado({ inventario, onStockActuali
                 <OpcionPresentacion
                   key={p.IdPresentacion}
                   presentacion={p}
-                  tono="correccion"
+                  tono={config.tono}
                   marcada={p.IdPresentacion === idSeleccionada}
                   textoMarcada="Seleccionada"
-                  deshabilitada={Number(p.CantidadActual || 0) === 0}
+                  deshabilitada={sinStockParaDescontar(p)}
                   onSeleccionar={seleccionar}
                 />
               ))}
@@ -257,31 +330,30 @@ export default function CorreccionProductoTerminado({ inventario, onStockActuali
           <div className="flex items-center gap-2 px-1">
             <ListChecks size={17} strokeWidth={2.5} className="text-c3" />
             <h2 className="text-[15px] font-extrabold text-slate-900">
-              Corrección a registrar
+              {config.titulo} a registrar
             </h2>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <CardCorreccion
-              key={seleccionada.IdPresentacion}
-              presentacion={seleccionada}
-              valor={cantidad}
-              maximo={maximo}
-              motivo={motivo}
-              invalido={tocado}
-              onCantidad={setCantidad}
-              onMotivo={setMotivo}
-              onQuitar={limpiar}
-            />
-          </div>
+          <CardCorreccion
+            key={seleccionada.IdPresentacion}
+            config={config}
+            presentacion={seleccionada}
+            valor={cantidad}
+            maximo={maximo}
+            observacion={observacion}
+            invalido={tocado}
+            onCantidad={setCantidad}
+            onObservacion={setObservacion}
+            onQuitar={limpiar}
+          />
 
           <div className="mt-2 flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="text-[14px] font-extrabold text-slate-900">
                 {cantidadNum > 0
-                  ? `-${cantidadNum} u. de ${seleccionada.CodigoPresentacion}`
+                  ? `${signoTexto}${cantidadNum} u. de ${seleccionada.CodigoPresentacion}`
                   : seleccionada.CodigoPresentacion}
                 <span className="ml-2 text-[12px] font-semibold text-slate-400">
-                  Una presentación por corrección
+                  Una presentación por {config.nombre}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -294,10 +366,10 @@ export default function CorreccionProductoTerminado({ inventario, onStockActuali
                 </Button>
                 <Button
                   onClick={solicitarConfirmacion}
-                  className="h-11 gap-2 bg-red-600 font-extrabold text-white hover:bg-red-700"
+                  className={cn("h-11 gap-2 font-extrabold text-white", config.clases.boton)}
                 >
-                  <PackageMinus size={16} strokeWidth={2.75} />
-                  Registrar corrección
+                  <Icono size={16} strokeWidth={2.75} />
+                  Registrar {config.nombre}
                 </Button>
               </div>
             </div>
@@ -312,17 +384,17 @@ export default function CorreccionProductoTerminado({ inventario, onStockActuali
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg font-extrabold">
-              Confirmar corrección
+              Confirmar {config.nombre}
             </DialogTitle>
             <DialogDescription>
-              Se descontarán {cantidadNum} unidades del inventario. Esta acción
-              no se puede deshacer desde aquí.
+              {config.confirmacion(cantidadNum)} Esta acción no se puede deshacer
+              desde aquí.
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-xl bg-slate-50 px-3.5 py-2.5 text-[12.5px] text-slate-600">
             <span className="font-bold text-slate-500">Observación: </span>
-            {observacion}
+            {observacionLimpia}
           </div>
 
           {seleccionada && (
@@ -336,11 +408,17 @@ export default function CorreccionProductoTerminado({ inventario, onStockActuali
                 </span>
               </div>
               <div className="text-right">
-                <div className="text-[15px] font-extrabold tabular-nums text-red-700">
-                  -{cantidadNum}
+                <div
+                  className={cn(
+                    "text-[15px] font-extrabold tabular-nums",
+                    config.clases.cantidad,
+                  )}
+                >
+                  {signoTexto}
+                  {cantidadNum}
                 </div>
                 <div className="text-[11.5px] tabular-nums text-slate-400">
-                  {actual} → {actual - cantidadNum}
+                  {actual} → {actual + config.signo * cantidadNum}
                 </div>
               </div>
             </div>
@@ -358,7 +436,7 @@ export default function CorreccionProductoTerminado({ inventario, onStockActuali
             <Button
               onClick={confirmarCorreccion}
               disabled={enviando}
-              className="h-11 gap-2 bg-red-600 font-extrabold text-white hover:bg-red-700"
+              className={cn("h-11 gap-2 font-extrabold text-white", config.clases.boton)}
             >
               {enviando ? (
                 <>
@@ -367,7 +445,7 @@ export default function CorreccionProductoTerminado({ inventario, onStockActuali
                 </>
               ) : (
                 <>
-                  <PackageMinus size={16} strokeWidth={2.75} />
+                  <Icono size={16} strokeWidth={2.75} />
                   Confirmar
                 </>
               )}
