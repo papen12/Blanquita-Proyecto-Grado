@@ -1,9 +1,17 @@
 import { useState, useEffect } from "react";
-import { PackageCheck, PackageMinus, PackagePlus } from "lucide-react";
+import {
+  PackageCheck,
+  PackageMinus,
+  PackagePlus,
+  ClipboardPlus,
+  ClipboardMinus,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { verInventarioProductoTerminado } from "../../services/Inventario/Inventario";
+import { Roles } from "@/constants/Values";
 import Header from "@/components/layout/Header";
 import IngresoProductoTerminado from "./IngresoProductos";
 import CorreccionProductoTerminado from "./CorreccionProductos";
@@ -12,9 +20,12 @@ const SUBTITULO_POR_VISTA = {
   ingreso: "Registrar ingreso",
   correccion: "Registrar corrección",
   aumento: "Registrar aumento",
+  ajustePositivo: "Registrar ajuste positivo",
+  ajusteNegativo: "Registrar ajuste negativo",
 };
 
 export default function MovimientosProductoTerminado({ usuario }) {
+  const esEncargado = usuario?.IdRol === Roles.Encargado;
   const [inventario, setInventario] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -49,29 +60,51 @@ export default function MovimientosProductoTerminado({ usuario }) {
     );
   };
 
+  const claseTab = cn("gap-1.5 font-bold", esEncargado && "col-span-2 xl:col-span-1");
+  const claseTabAjuste = "col-span-3 gap-1.5 font-bold xl:col-span-1";
+
   return (
     <div className="contenido-con-sidebar flex min-h-screen flex-col bg-slate-50 pt-20 font-sans text-slate-900 md:pt-0">
       <Header
         titulo="Movimientos producto terminado"
         subtitulo={SUBTITULO_POR_VISTA[vista]}
-        volver={`/${usuario?.IdRol === 2 ? "encargado" : "operador"}/producto/inventario`}
+        volver={`/${esEncargado ? "encargado" : "operador"}/producto/inventario`}
       />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-5 sm:px-6">
         <Tabs value={vista} onValueChange={setVista} className="mb-5">
-          <TabsList className="grid w-full grid-cols-3 sm:w-120">
-            <TabsTrigger value="ingreso" className="gap-1.5 font-bold">
+          <TabsList
+            className={cn(
+              "grid w-full",
+              esEncargado
+                ? "grid-cols-6 gap-y-[3px] group-data-horizontal/tabs:h-auto xl:grid-cols-5"
+                : "grid-cols-3 sm:w-120",
+            )}
+          >
+            <TabsTrigger value="ingreso" className={claseTab}>
               <PackageCheck size={15} strokeWidth={2.75} />
               Ingreso
             </TabsTrigger>
-            <TabsTrigger value="correccion" className="gap-1.5 font-bold">
+            <TabsTrigger value="correccion" className={claseTab}>
               <PackageMinus size={15} strokeWidth={2.75} />
               Corrección
             </TabsTrigger>
-            <TabsTrigger value="aumento" className="gap-1.5 font-bold">
+            <TabsTrigger value="aumento" className={claseTab}>
               <PackagePlus size={15} strokeWidth={2.75} />
               Aumento
             </TabsTrigger>
+            {esEncargado && (
+              <>
+                <TabsTrigger value="ajustePositivo" className={claseTabAjuste}>
+                  <ClipboardPlus size={15} strokeWidth={2.75} />
+                  Ajuste positivo
+                </TabsTrigger>
+                <TabsTrigger value="ajusteNegativo" className={claseTabAjuste}>
+                  <ClipboardMinus size={15} strokeWidth={2.75} />
+                  Ajuste negativo
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
         </Tabs>
 
@@ -115,6 +148,24 @@ export default function MovimientosProductoTerminado({ usuario }) {
                 onStockActualizado={actualizarStock}
               />
             </div>
+            {esEncargado && (
+              <>
+                <div hidden={vista !== "ajustePositivo"}>
+                  <CorreccionProductoTerminado
+                    tipo="ajustePositivo"
+                    inventario={inventario}
+                    onStockActualizado={actualizarStock}
+                  />
+                </div>
+                <div hidden={vista !== "ajusteNegativo"}>
+                  <CorreccionProductoTerminado
+                    tipo="ajusteNegativo"
+                    inventario={inventario}
+                    onStockActualizado={actualizarStock}
+                  />
+                </div>
+              </>
+            )}
           </>
         )}
       </main>

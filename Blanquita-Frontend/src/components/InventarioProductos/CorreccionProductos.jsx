@@ -1,5 +1,13 @@
 import { useState, useMemo } from "react";
-import { X, Loader2, PackageMinus, PackagePlus, ListChecks } from "lucide-react";
+import {
+  X,
+  Loader2,
+  PackageMinus,
+  PackagePlus,
+  ClipboardMinus,
+  ClipboardPlus,
+  ListChecks,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,12 +23,16 @@ import {
 import {
   corregirInventarioProductoTerminado,
   aumentarInventarioProductoTerminado,
+  ajustePositivoInventarioProductoTerminado,
+  ajusteNegativoInventarioProductoTerminado,
 } from "../../services/Inventario/Inventario";
 import {
   MotivosCorreccionProductoTerminado,
   MotivosAumentoProductoTerminado,
+  MotivosAjustePositivoProductoTerminado,
+  MotivosAjusteNegativoProductoTerminado,
 } from "@/constants/OperadorConfig";
-import { MOTIVO_CORRECCION_MIN, MOTIVO_CORRECCION_MAX } from "@/constants/Values";
+import { MOTIVO_CORRECCION_MIN, MOTIVO_CORRECCION_MAX, AjusteMax } from "@/constants/Values";
 import { aEntero, limpiarObservacion } from "@/utils/validators";
 import {
   descripcionContenido,
@@ -34,6 +46,20 @@ import {
 
 const CANTIDAD_MAXIMA_CORRECCION = 50;
 
+const CLASES_RESTA = {
+  borde: "border-red-300",
+  motivo: "border-red-400 bg-red-50 text-red-700",
+  boton: "bg-red-600 hover:bg-red-700",
+  cantidad: "text-red-700",
+};
+
+const CLASES_SUMA = {
+  borde: "border-emerald-300",
+  motivo: "border-emerald-400 bg-emerald-50 text-emerald-700",
+  boton: "bg-emerald-600 hover:bg-emerald-700",
+  cantidad: "text-emerald-700",
+};
+
 const TIPOS = {
   descuento: {
     signo: -1,
@@ -46,12 +72,8 @@ const TIPOS = {
     accion: "descontar",
     confirmacion: (cantidad) => `Se descontarán ${cantidad} unidades del inventario.`,
     exito: "Corrección registrada",
-    clases: {
-      borde: "border-red-300",
-      motivo: "border-red-400 bg-red-50 text-red-700",
-      boton: "bg-red-600 hover:bg-red-700",
-      cantidad: "text-red-700",
-    },
+    cantidadMaxima: CANTIDAD_MAXIMA_CORRECCION,
+    clases: CLASES_RESTA,
   },
   aumento: {
     signo: 1,
@@ -64,12 +86,36 @@ const TIPOS = {
     accion: "aumentar",
     confirmacion: (cantidad) => `Se sumarán ${cantidad} unidades al inventario.`,
     exito: "Aumento registrado",
-    clases: {
-      borde: "border-emerald-300",
-      motivo: "border-emerald-400 bg-emerald-50 text-emerald-700",
-      boton: "bg-emerald-600 hover:bg-emerald-700",
-      cantidad: "text-emerald-700",
-    },
+    cantidadMaxima: CANTIDAD_MAXIMA_CORRECCION,
+    clases: CLASES_SUMA,
+  },
+  ajustePositivo: {
+    signo: 1,
+    tono: "ingreso",
+    Icono: ClipboardPlus,
+    motivos: MotivosAjustePositivoProductoTerminado,
+    registrar: ajustePositivoInventarioProductoTerminado,
+    titulo: "Ajuste positivo",
+    nombre: "ajuste positivo",
+    accion: "sumar",
+    confirmacion: (cantidad) => `Se sumarán ${cantidad} unidades al inventario.`,
+    exito: "Ajuste positivo registrado",
+    cantidadMaxima: AjusteMax,
+    clases: CLASES_SUMA,
+  },
+  ajusteNegativo: {
+    signo: -1,
+    tono: "correccion",
+    Icono: ClipboardMinus,
+    motivos: MotivosAjusteNegativoProductoTerminado,
+    registrar: ajusteNegativoInventarioProductoTerminado,
+    titulo: "Ajuste negativo",
+    nombre: "ajuste negativo",
+    accion: "restar",
+    confirmacion: (cantidad) => `Se restarán ${cantidad} unidades del inventario.`,
+    exito: "Ajuste negativo registrado",
+    cantidadMaxima: AjusteMax,
+    clases: CLASES_RESTA,
   },
 };
 
@@ -232,8 +278,8 @@ export default function CorreccionProductoTerminado({
   const actual = Number(seleccionada?.CantidadActual || 0);
   const maximo =
     config.signo < 0
-      ? Math.min(actual, CANTIDAD_MAXIMA_CORRECCION)
-      : CANTIDAD_MAXIMA_CORRECCION;
+      ? Math.min(actual, config.cantidadMaxima)
+      : config.cantidadMaxima;
   const cantidadNum = aEntero(cantidad);
   const observacionLimpia = observacion.trim();
 

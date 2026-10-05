@@ -192,6 +192,17 @@ export const MotivosAumentoProductoTerminado = [
   "Presentación equivocada",
 ];
 
+export const MotivosAjustePositivoProductoTerminado = [
+  "Conteo físico mayor al registrado",
+  "Producto encontrado en otra ubicación",
+];
+
+export const MotivosAjusteNegativoProductoTerminado = [
+  "Conteo físico menor al registrado",
+  "Producto dañado en almacén",
+  "Producto extraviado",
+];
+
 
 export const ObservacionServilleta=[
   "Empalme sub bobina",

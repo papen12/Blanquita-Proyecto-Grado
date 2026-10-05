@@ -38,21 +38,11 @@ import {
   SheetDescription,
   SheetFooter,
 } from "@/components/ui/sheet";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   verInventarioProductoTerminado,
   insertarIngresoProductoTerminado,
   insertarSalidaProductoTerminado,
-  ajustePositivoInventarioProductoTerminado,
-  ajusteNegativoInventarioProductoTerminado,
 } from "../../services/Inventario/Inventario";
 import { descargarReporteInventarioProducto } from "@/services/Inventario/Reportes";
 import { limpiarObservacion } from "@/utils/validators";
@@ -182,11 +172,6 @@ export default function InventarioProductoTerminado({ usuario }) {
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [observacionGlobal, setObservacionGlobal] = useState("");
   const [enviando, setEnviando] = useState(false);
-
-  const [ajuste, setAjuste] = useState(null);
-  const [cantidadAjuste, setCantidadAjuste] = useState("");
-  const [observacionAjuste, setObservacionAjuste] = useState("");
-  const [guardandoAjuste, setGuardandoAjuste] = useState(false);
 
   useEffect(() => {
     cargarInventario();
@@ -318,65 +303,6 @@ export default function InventarioProductoTerminado({ usuario }) {
       cargarInventario();
     } finally {
       setEnviando(false);
-    }
-  };
-
-  const abrirAjuste = (presentacion) => {
-    setAjuste({ Presentacion: presentacion, Tipo: "positivo" });
-    setCantidadAjuste("");
-    setObservacionAjuste("");
-  };
-
-  const cerrarAjuste = () => {
-    setAjuste(null);
-    setCantidadAjuste("");
-    setObservacionAjuste("");
-  };
-
-  const confirmarAjuste = async () => {
-    if (!ajuste) return;
-
-    const cantidad = Number(cantidadAjuste);
-    if (!cantidad || cantidad <= 0) {
-      toast.error("Ingresa una cantidad válida");
-      return;
-    }
-    if (
-      ajuste.Tipo === "negativo" &&
-      cantidad > Number(ajuste.Presentacion.CantidadActual || 0)
-    ) {
-      toast.error("La cantidad supera el stock disponible");
-      return;
-    }
-    if (!observacionAjuste.trim()) {
-      toast.error("La observación es obligatoria para un ajuste");
-      return;
-    }
-
-    setGuardandoAjuste(true);
-    try {
-      if (ajuste.Tipo === "positivo") {
-        await ajustePositivoInventarioProductoTerminado(
-          ajuste.Presentacion.IdPresentacion,
-          cantidad,
-          observacionAjuste.trim(),
-        );
-      } else {
-        await ajusteNegativoInventarioProductoTerminado(
-          ajuste.Presentacion.IdPresentacion,
-          cantidad,
-          observacionAjuste.trim(),
-        );
-      }
-      toast.success(
-        `Ajuste aplicado a ${ajuste.Presentacion.CodigoPresentacion}`,
-      );
-      cerrarAjuste();
-      cargarInventario();
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setGuardandoAjuste(false);
     }
   };
 
@@ -620,7 +546,6 @@ export default function InventarioProductoTerminado({ usuario }) {
                           </Badge>
                         </div>
                       </div>
-
                     </div>
                   );
                 })}
@@ -736,120 +661,6 @@ export default function InventarioProductoTerminado({ usuario }) {
           </SheetFooter>
         </SheetContent>
       </Sheet>
-
-      <Dialog
-        open={ajuste !== null}
-        onOpenChange={(abierto) => !abierto && cerrarAjuste()}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold">
-              Ajuste de inventario
-            </DialogTitle>
-            <DialogDescription>
-              {ajuste
-                ? `${ajuste.Presentacion.CodigoPresentacion} · ${ajuste.Presentacion.NombreProducto} · stock actual ${ajuste.Presentacion.CantidadActual}`
-                : ""}
-            </DialogDescription>
-          </DialogHeader>
-
-          {ajuste && (
-            <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  onClick={() => setAjuste({ ...ajuste, Tipo: "positivo" })}
-                  className={cn(
-                    "flex flex-col items-start gap-1 rounded-xl border-2 px-3.5 py-3 text-left transition-colors",
-                    ajuste.Tipo === "positivo"
-                      ? "border-emerald-500 bg-emerald-50"
-                      : "border-slate-200 bg-white",
-                  )}
-                >
-                  <div className="flex items-center gap-1.5 text-sm font-extrabold text-emerald-700">
-                    <Plus size={14} strokeWidth={3} />
-                    Positivo
-                  </div>
-                  <div className="text-[12px] text-slate-500">
-                    Suma unidades al stock
-                  </div>
-                </button>
-                <button
-                  onClick={() => setAjuste({ ...ajuste, Tipo: "negativo" })}
-                  className={cn(
-                    "flex flex-col items-start gap-1 rounded-xl border-2 px-3.5 py-3 text-left transition-colors",
-                    ajuste.Tipo === "negativo"
-                      ? "border-red-400 bg-red-50"
-                      : "border-slate-200 bg-white",
-                  )}
-                >
-                  <div className="flex items-center gap-1.5 text-sm font-extrabold text-red-600">
-                    <Minus size={14} strokeWidth={3} />
-                    Negativo
-                  </div>
-                  <div className="text-[12px] text-slate-500">
-                    Resta unidades del stock
-                  </div>
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <div className="text-[12px] font-bold uppercase tracking-wide text-slate-500">
-                  Cantidad
-                </div>
-                <Input
-                  type="number"
-                  min={1}
-                  value={cantidadAjuste}
-                  onChange={(e) => setCantidadAjuste(e.target.value)}
-                  placeholder="0"
-                  className="h-11 font-bold tabular-nums"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <div className="text-[12px] font-bold uppercase tracking-wide text-slate-500">
-                  Observación
-                </div>
-                <Textarea
-                  value={observacionAjuste}
-                  onChange={(e) => setObservacionAjuste(limpiarObservacion(e.target.value))}
-                  placeholder="Motivo del ajuste..."
-                  className="min-h-20 resize-none"
-                />
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="ghost"
-              onClick={cerrarAjuste}
-              className="h-11 font-bold text-slate-500 hover:text-slate-900"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={confirmarAjuste}
-              disabled={guardandoAjuste}
-              className={cn(
-                "h-11 gap-2 font-extrabold text-white",
-                ajuste && ajuste.Tipo === "negativo"
-                  ? "bg-red-600 hover:bg-red-700"
-                  : "bg-emerald-600 hover:bg-emerald-700",
-              )}
-            >
-              {guardandoAjuste ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Guardando...
-                </>
-              ) : (
-                "Aplicar ajuste"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

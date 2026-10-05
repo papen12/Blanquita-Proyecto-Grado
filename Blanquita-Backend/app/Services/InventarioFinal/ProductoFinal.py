@@ -7,6 +7,7 @@ from app.Repository.InventarioFinal.ProductoFinal import ProductoFinalRepository
 from app.Constants.Cantidades import (
     CANTIDAD_INGRESO_PRODUCTO_TERMINADO,
     CANTIDAD_CORRECCION_PRODUCTO_TERMINADO,
+    CANTIDAD_AJUSTE_PRODUCTO_TERMINADO,
     LONGITUD_MINIMA_DESCRIPCION,
     LONGITUD_MAXIMA_DESCRIPCION,
 )
@@ -16,10 +17,6 @@ from app.Models.InventarioFinal.ProductoFinal import(
       IngresoProductoTerminadoResponse,
       SalidaProductoTerminadoRequest,
       SalidaProductoTerminadoResponse,
-      AjusteNegativoInventarioRequest,
-      AjusteNegativoInventarioResponse,
-      AjustePositivoInventarioRequest,
-      AjustePositivoInventarioResponse,
       CorreccionProductoTerminadoRequest,
       CorreccionProductoTerminadoResponse,
       VerInventarioProductoTerminadoRequest,
@@ -29,6 +26,8 @@ from app.Models.InventarioFinal.ProductoFinal import(
 
 ID_TIPO_MOVIMIENTO_DESCUENTO = 3
 ID_TIPO_MOVIMIENTO_AUMENTO = 4
+ID_TIPO_MOVIMIENTO_AJUSTE_POSITIVO = 5
+ID_TIPO_MOVIMIENTO_AJUSTE_NEGATIVO = 6
 
 class ProductoFinalService:
     def __init__(self, db: Session):
@@ -82,58 +81,49 @@ class ProductoFinalService:
 
 
     def AjustePositivoInventarioProductoTerminado(
-        self, data: AjustePositivoInventarioRequest, id_usuario: int
-    ) -> AjustePositivoInventarioResponse:
-        params = {
-            "p_IdPresentacion": data.IdPresentacion,
-            "p_IdUsuario": id_usuario,
-            "p_Cantidad": data.Cantidad,
-            "p_Observacion": data.Observacion
-        }
-
-        fila = self.repository.AjustePositivoInventarioProductoTerminado(params)
-
-        return AjustePositivoInventarioResponse(**fila)
+        self, data: CorreccionProductoTerminadoRequest, id_usuario: int
+    ) -> CorreccionProductoTerminadoResponse:
+        return self._RegistrarCorreccion(
+            data, id_usuario, ID_TIPO_MOVIMIENTO_AJUSTE_POSITIVO, CANTIDAD_AJUSTE_PRODUCTO_TERMINADO
+        )
 
     def AjusteNegativoInventarioProductoTerminado(
-        self, data: AjusteNegativoInventarioRequest, id_usuario: int
-    ) -> AjusteNegativoInventarioResponse:
-        params = {
-            "p_IdPresentacion": data.IdPresentacion,
-            "p_IdUsuario": id_usuario,
-            "p_Cantidad": data.Cantidad,
-            "p_Observacion": data.Observacion
-        }
-
-        fila = self.repository.AjusteNegativoInventarioProductoTerminado(params)
-
-        return AjusteNegativoInventarioResponse(**fila)
+        self, data: CorreccionProductoTerminadoRequest, id_usuario: int
+    ) -> CorreccionProductoTerminadoResponse:
+        return self._RegistrarCorreccion(
+            data, id_usuario, ID_TIPO_MOVIMIENTO_AJUSTE_NEGATIVO, CANTIDAD_AJUSTE_PRODUCTO_TERMINADO
+        )
 
     def CorregirInventarioProductoTerminado(
         self, data: CorreccionProductoTerminadoRequest, id_usuario: int
     ) -> CorreccionProductoTerminadoResponse:
-        return self._RegistrarCorreccion(data, id_usuario, ID_TIPO_MOVIMIENTO_DESCUENTO)
+        return self._RegistrarCorreccion(
+            data, id_usuario, ID_TIPO_MOVIMIENTO_DESCUENTO, CANTIDAD_CORRECCION_PRODUCTO_TERMINADO
+        )
 
     def AumentarInventarioProductoTerminado(
         self, data: CorreccionProductoTerminadoRequest, id_usuario: int
     ) -> CorreccionProductoTerminadoResponse:
-        return self._RegistrarCorreccion(data, id_usuario, ID_TIPO_MOVIMIENTO_AUMENTO)
+        return self._RegistrarCorreccion(
+            data, id_usuario, ID_TIPO_MOVIMIENTO_AUMENTO, CANTIDAD_CORRECCION_PRODUCTO_TERMINADO
+        )
 
     def _RegistrarCorreccion(
         self,
         data: CorreccionProductoTerminadoRequest,
         id_usuario: int,
         id_tipo_movimiento: int,
+        cantidad_maxima: int,
     ) -> CorreccionProductoTerminadoResponse:
         if data.Cantidad <= 0:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="La cantidad a corregir debe ser mayor a 0",
+                detail="La cantidad debe ser mayor a 0",
             )
-        if not EsCantidadValida(data.Cantidad, CANTIDAD_CORRECCION_PRODUCTO_TERMINADO):
+        if not EsCantidadValida(data.Cantidad, cantidad_maxima):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail=f"La cantidad máxima de corrección por presentación es de {CANTIDAD_CORRECCION_PRODUCTO_TERMINADO}",
+                detail=f"La cantidad máxima por presentación es de {cantidad_maxima}",
             )
 
         observacion = (data.Observacion or "").strip()

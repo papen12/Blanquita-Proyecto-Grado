@@ -60,54 +60,6 @@ export const SalidaProductoTerminadoResponse = ({
 export const SalidaProductoTerminadoResponseList = (jsonList) =>
   (jsonList ?? []).map((item) => SalidaProductoTerminadoResponse(item));
 
-export const AjustePositivoInventarioRequest = ({
-  IdPresentacion,
-  Cantidad,
-  Observacion = null,
-}) => ({
-  IdPresentacion,
-  Cantidad,
-  Observacion,
-});
-
-export const AjustePositivoInventarioResponse = ({
-  IdPresentacion,
-  CodigoPresentacion,
-  NombreProducto,
-  CantidadAjustada,
-  CantidadActual,
-}) => ({
-  IdPresentacion,
-  CodigoPresentacion,
-  NombreProducto,
-  CantidadAjustada,
-  CantidadActual,
-});
-
-export const AjusteNegativoInventarioRequest = ({
-  IdPresentacion,
-  Cantidad,
-  Observacion = null,
-}) => ({
-  IdPresentacion,
-  Cantidad,
-  Observacion,
-});
-
-export const AjusteNegativoInventarioResponse = ({
-  IdPresentacion,
-  CodigoPresentacion,
-  NombreProducto,
-  CantidadAjustada,
-  CantidadActual,
-}) => ({
-  IdPresentacion,
-  CodigoPresentacion,
-  NombreProducto,
-  CantidadAjustada,
-  CantidadActual,
-});
-
 export const CorreccionProductoTerminadoRequest = ({
   IdPresentacion,
   Cantidad,

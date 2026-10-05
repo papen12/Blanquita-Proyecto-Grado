@@ -42,3 +42,5 @@ export const MOTIVO_CANCELACION_MAX = 150;
 
 export const MOTIVO_CORRECCION_MIN = 5;
 export const MOTIVO_CORRECCION_MAX = 150;
+
+export const AjusteMax=500

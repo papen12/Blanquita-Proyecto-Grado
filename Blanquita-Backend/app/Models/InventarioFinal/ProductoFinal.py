@@ -39,34 +39,6 @@ class SalidaProductoTerminadoResponse(BaseModel):
 
 
 
-class AjustePositivoInventarioRequest(BaseModel):
-    IdPresentacion: int
-    Cantidad: int
-    Observacion: str | None = None
-
-
-class AjustePositivoInventarioResponse(BaseModel):
-    IdPresentacion: int
-    CodigoPresentacion: str
-    NombreProducto: str
-    CantidadAjustada: int
-    CantidadActual: int
-
-
-class AjusteNegativoInventarioRequest(BaseModel):
-    IdPresentacion: int
-    Cantidad: int
-    Observacion: str | None = None
-
-
-class AjusteNegativoInventarioResponse(BaseModel):
-    IdPresentacion: int
-    CodigoPresentacion: str
-    NombreProducto: str
-    CantidadAjustada: int
-    CantidadActual: int
-
-
 class CorreccionProductoTerminadoRequest(BaseModel):
     IdPresentacion: int
     Cantidad: int
