@@ -130,14 +130,6 @@ export const RutasReportes = [
     titulo:"Códigos Qr",
     icono:QrCode,
     ruta:"qr",
-    subrutas:[
-      {
-        titulo: "Bobina Papel",
-        icono: toiletRoll,
-        esIconoLab: true,
-        ruta: "bobinapapel",
-      }
-    ]
   },
   {
     titulo: "Volver a la Planta",

@@ -1,9 +1,9 @@
 ---
-import Layout from '../../../../layouts/Layout.astro';
+import Layout from '../../../layouts/Layout.astro';
 const { usuario } = Astro.locals;
 import NavBar from '@/components/layout/NavBar';
 import SideBar from '@/components/layout/SideBar';
-import QrBobinaPapel from '@/components/Reportes/Qr/BobinaPapel';
+import CodigosQr from '@/components/Reportes/Qr/CodigosQr';
 ---
 
 <Layout>
@@ -13,5 +13,5 @@ import QrBobinaPapel from '@/components/Reportes/Qr/BobinaPapel';
 	<div class="hidden md:block">
 		<SideBar client:media="(min-width: 768px)" idRol={usuario.IdRol} seccion="reportes" />
 	</div>
-	<QrBobinaPapel client:load usuario={usuario} />
+	<CodigosQr client:load usuario={usuario} />
 </Layout>
