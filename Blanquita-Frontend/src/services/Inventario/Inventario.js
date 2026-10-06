@@ -3,10 +3,6 @@ import {
   IngresoProductoTerminadoResponseList,
   SalidaProductoTerminadoRequest,
   SalidaProductoTerminadoResponseList,
-  AjustePositivoInventarioRequest,
-  AjustePositivoInventarioResponse,
-  AjusteNegativoInventarioRequest,
-  AjusteNegativoInventarioResponse,
   CorreccionProductoTerminadoRequest,
   CorreccionProductoTerminadoResponse,
   VerInventarioProductoTerminadoResponseList,
@@ -39,10 +35,10 @@ export async function insertarSalidaProductoTerminado(presentaciones) {
 }
 
 export async function ajustePositivoInventarioProductoTerminado(idPresentacion, cantidad, observacion) {
-  const payload = AjustePositivoInventarioRequest({
+  const payload = CorreccionProductoTerminadoRequest({
     IdPresentacion: idPresentacion,
     Cantidad: cantidad,
-    Observacion: observacion ?? null
+    Observacion: observacion
   });
 
   const data = await pedirJson("/api/productofinal/ajuste/positivo", {
@@ -50,14 +46,14 @@ export async function ajustePositivoInventarioProductoTerminado(idPresentacion, 
     body: payload
   });
 
-  return AjustePositivoInventarioResponse(data);
+  return CorreccionProductoTerminadoResponse(data);
 }
 
 export async function ajusteNegativoInventarioProductoTerminado(idPresentacion, cantidad, observacion) {
-  const payload = AjusteNegativoInventarioRequest({
+  const payload = CorreccionProductoTerminadoRequest({
     IdPresentacion: idPresentacion,
     Cantidad: cantidad,
-    Observacion: observacion ?? null
+    Observacion: observacion
   });
 
   const data = await pedirJson("/api/productofinal/ajuste/negativo", {
@@ -65,7 +61,7 @@ export async function ajusteNegativoInventarioProductoTerminado(idPresentacion, 
     body: payload
   });
 
-  return AjusteNegativoInventarioResponse(data);
+  return CorreccionProductoTerminadoResponse(data);
 }
 
 export async function corregirInventarioProductoTerminado(idPresentacion, cantidad, observacion) {

@@ -12,6 +12,7 @@ class QrParametros(BaseModel):
     ruta: str = Field(min_length=1)
     titulo: str = Field(min_length=1)
     subtitulo: str = Field(min_length=1)
+    generado_por: str | None = None
 
 
 class QrCartel:
@@ -19,10 +20,13 @@ class QrCartel:
     BORDE = 4
     MARGEN_TITULO = 2.2 * cm
     MARGEN_SUBTITULO = 1.6 * cm
+    MARGEN_PIE = 1.5 * cm
     TAMANIO_TITULO = 30
     TAMANIO_SUBTITULO = 15
+    TAMANIO_PIE = 9
     FUENTE_TITULO = "Helvetica-Bold"
     FUENTE_SUBTITULO = "Helvetica"
+    FUENTE_PIE = "Helvetica"
 
     def __init__(self, parametros: QrParametros):
         self.parametros = parametros
@@ -98,6 +102,14 @@ class QrCartel:
             centroY - self.LADO_QR / 2 - self.MARGEN_SUBTITULO,
             self.parametros.subtitulo,
         )
+
+        if self.parametros.generado_por:
+            lienzo.setFont(self.FUENTE_PIE, self.TAMANIO_PIE)
+            lienzo.drawString(
+                self.MARGEN_PIE,
+                self.MARGEN_PIE,
+                f"Generado por: {self.parametros.generado_por}",
+            )
 
         lienzo.showPage()
         lienzo.save()

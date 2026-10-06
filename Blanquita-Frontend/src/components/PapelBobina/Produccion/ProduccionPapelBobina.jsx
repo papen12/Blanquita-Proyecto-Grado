@@ -28,7 +28,7 @@ import { descargarReporteProduccionPorPeriodo } from "../../../services/BobinaPa
 import { movimientosOperador, ObservacionesInsertarLogs } from "../../../constants/OperadorConfig";
 import { Roles } from "@/constants/Values";
 import { alternarMotivoEnTexto } from "@/utils/handlers";
-import { extraerMensajeError } from "@/utils/validators";
+import { extraerMensajeError, limpiarObservacion } from "@/utils/validators";
 import { useProduccion } from "@/hooks/useProduccion";
 import {
   ResumenProduccion,
@@ -409,7 +409,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
                   <Textarea
                     id="observacion-log"
                     value={formObservacionLog}
-                    onChange={(e) => setFormObservacionLog(e.target.value)}
+                    onChange={(e) => setFormObservacionLog(limpiarObservacion(e.target.value))}
                     placeholder="Motivo de la corrección..."
                     className="min-h-20"
                   />

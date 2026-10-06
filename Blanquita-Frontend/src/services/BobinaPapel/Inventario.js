@@ -3,8 +3,6 @@ import {
   VerDetalleInventarioBobinaPapelResponse,
   ReingresarBobinaAInventarioRequest,
   ReingresarBobinaAInventarioResponse,
-  DarDeBajaBobinaRequest,
-  DarDeBajaBobinaResponse,
   VerBobinasPapelFueraInventarioResponse
 } from "../../models/BobinaPapel/Inventario";
 import { pedirJson } from "@/utils/api";
@@ -31,17 +29,6 @@ export async function reingresarBobinaInventario(idBobinaPapel, observacion) {
   });
 
   return ReingresarBobinaAInventarioResponse(data);
-}
-
-export async function darDeBajaBobina(idBobinaPapel, observacion) {
-  const payload = DarDeBajaBobinaRequest(idBobinaPapel, observacion);
-
-  const data = await pedirJson("/api/papelbobina/inventario/dardebaja", {
-    method: "POST",
-    body: payload
-  });
-
-  return DarDeBajaBobinaResponse(data);
 }
 
 export async function verBobinasPapelFueraInventario() {

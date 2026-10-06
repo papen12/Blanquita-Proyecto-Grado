@@ -1,7 +1,4 @@
-const PREFIJO_SCAN = "/scan/";
-const PATRON_CODIGO = /^[A-Za-z0-9._:-]{1,64}$/;
-
-export function resolverRutaQR(valor, origen) {
+export function resolverRutaQR(valor, origen, prefijo) {
   if (typeof valor !== "string") {
     return { error: "El código no se pudo leer. Intenta de nuevo." };
   }
@@ -16,19 +13,16 @@ export function resolverRutaQR(valor, origen) {
   }
 
   if (texto.startsWith("/")) {
-    return { ruta: texto };
+    return { ruta: `/${prefijo}${texto}` };
   }
 
   try {
     const url = new URL(texto);
     if (url.origin === origen) {
-      return { ruta: url.pathname + url.search };
+      return { ruta: `/${prefijo}${url.pathname}${url.search}` };
     }
     return { error: "Este código no pertenece al sistema." };
   } catch {
-    if (!PATRON_CODIGO.test(texto)) {
-      return { error: "Este código no corresponde a un material." };
-    }
-    return { ruta: PREFIJO_SCAN + encodeURIComponent(texto) };
+    return { error: "Este código no pertenece al sistema." };
   }
 }

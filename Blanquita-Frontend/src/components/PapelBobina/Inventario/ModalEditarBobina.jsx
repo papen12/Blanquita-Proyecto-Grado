@@ -16,6 +16,7 @@ import InputForModal from "@/components/layout/InputForModal";
 import { editarBobinaPapel } from "../../../services/BobinaPapel/BobinaPapel";
 import { MOTIVO_CORRECCION_MIN, MOTIVO_CORRECCION_MAX } from "@/constants/Values";
 import { aCodigo, codigoKeyDown } from "@/utils/handlers";
+import { limpiarObservacion } from "@/utils/validators";
 import { dateFormatter } from "@/utils/dates";
 import { fmt } from "./constantes";
 
@@ -233,7 +234,7 @@ export default function ModalEditarBobina({
             <Textarea
               id="MotivoCorreccion"
               value={form.Observacion}
-              onChange={(e) => actualizar("Observacion")(e.target.value)}
+              onChange={(e) => actualizar("Observacion")(limpiarObservacion(e.target.value))}
               maxLength={MOTIVO_CORRECCION_MAX}
               placeholder="Ej. Error de digitación en el peso neto"
               aria-invalid={Boolean(errores.Observacion)}

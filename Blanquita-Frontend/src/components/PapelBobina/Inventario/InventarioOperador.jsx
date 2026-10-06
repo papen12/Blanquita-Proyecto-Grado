@@ -7,7 +7,6 @@ import {
   verDetalleInventarioBobinaPapel,
   verBobinasPapelFueraInventario,
   reingresarBobinaInventario,
-  darDeBajaBobina,
 } from "../../../services/BobinaPapel/Inventario";
 import { iniciarProduccion } from "../../../services/BobinaPapel/Produccion";
 import { descargarReporteInventarioBobinaPapel } from "../../../services/BobinaPapel/Reportes";
@@ -31,6 +30,7 @@ import {
   ContenidoLista,
   BarraSeleccion,
   ItemFueraInventario,
+  DialogReingreso,
 } from "@/components/Inventario/comunes";
 import { fmt } from "./constantes";
 import { TablaBobinas } from "./TablaBobinas";
@@ -39,17 +39,20 @@ import ModalEditarBobina from "./ModalEditarBobina";
 import Header from "@/components/layout/Header";
 import { Roles } from "@/constants/Values";
 
+const sinDatos = async () => [];
+
 export default function InventarioBobinasPapel({ usuario }) {
   const esLider = usuario?.IdRol === Roles.Encargado;
 
   const resumen = useCatalogo(verResumenInventarioBobinaPapel);
-  const fuera = useCatalogo(verBobinasPapelFueraInventario);
+  const fuera = useCatalogo(esLider ? verBobinasPapelFueraInventario : sinDatos);
   const detalle = useDetalleInventario(verDetalleInventarioBobinaPapel);
   const envio = useEjecutar();
   const accionesFuera = useEjecutar();
 
   const [mostrarFuera, setMostrarFuera] = useState(false);
   const [busquedaFuera, setBusquedaFuera] = useState("");
+  const [porReingresar, setPorReingresar] = useState(null);
 
   const [bobinaEditar, setBobinaEditar] = useState(null);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
@@ -123,24 +126,19 @@ export default function InventarioBobinasPapel({ usuario }) {
   const quitarDeFuera = (idBobinaPapel) =>
     fuera.setDatos((prev) => prev.filter((b) => b.IdBobinaPapel !== idBobinaPapel));
 
-  const reingresar = (b) =>
+  const reingresar = (observacion) => {
+    const b = porReingresar;
     accionesFuera.ejecutar(
       b.IdBobinaPapel,
-      () => reingresarBobinaInventario(b.IdBobinaPapel),
+      () => reingresarBobinaInventario(b.IdBobinaPapel, observacion),
       `Bobina ${b.CodigoBobina} reingresada al inventario`,
       () => {
+        setPorReingresar(null);
         quitarDeFuera(b.IdBobinaPapel);
         resumen.recargar();
       },
     );
-
-  const darDeBaja = (b) =>
-    accionesFuera.ejecutar(
-      b.IdBobinaPapel,
-      () => darDeBajaBobina(b.IdBobinaPapel),
-      `Bobina ${b.CodigoBobina} retirada definitivamente`,
-      () => quitarDeFuera(b.IdBobinaPapel),
-    );
+  };
 
   return (
     <TooltipProvider>
@@ -199,13 +197,15 @@ export default function InventarioBobinasPapel({ usuario }) {
                 </div>
               </TarjetaTipo>
             ))}
-            <TarjetaFueraInventario
-              cantidad={fuera.datos.length}
-              activo={mostrarFuera}
-              onClick={alternarFuera}
-              unidad="bobinas dadas de baja o retiradas"
-              textoVer="Ver bobinas"
-            />
+            {esLider && (
+              <TarjetaFueraInventario
+                cantidad={fuera.datos.length}
+                activo={mostrarFuera}
+                onClick={alternarFuera}
+                unidad="bobinas retiradas de producción"
+                textoVer="Ver bobinas"
+              />
+            )}
           </div>
         </EstadoCatalogo>
 
@@ -267,7 +267,7 @@ export default function InventarioBobinasPapel({ usuario }) {
           </PanelDetalle>
         )}
 
-        {mostrarFuera && (
+        {esLider && mostrarFuera && (
           <PanelFuera titulo="Bobinas fuera de inventario" onCerrar={() => setMostrarFuera(false)}>
             <ContenidoLista
               cargando={fuera.cargando}
@@ -297,8 +297,7 @@ export default function InventarioBobinasPapel({ usuario }) {
                     observacion={b.UltimaObservacion}
                     fechaMovimiento={b.FechaUltimoMovimiento}
                     procesando={accionesFuera.enProceso === b.IdBobinaPapel}
-                    onReingresar={() => reingresar(b)}
-                    onRetirar={() => darDeBaja(b)}
+                    onReingresar={() => setPorReingresar(b)}
                   />
                 ))}
               </div>
@@ -306,6 +305,18 @@ export default function InventarioBobinasPapel({ usuario }) {
           </PanelFuera>
         )}
       </main>
+
+      {esLider && (
+        <DialogReingreso
+          abierto={porReingresar !== null}
+          titulo={porReingresar ? `bobina ${porReingresar.CodigoBobina}` : ""}
+          procesando={
+            porReingresar !== null && accionesFuera.enProceso === porReingresar.IdBobinaPapel
+          }
+          onCancelar={() => setPorReingresar(null)}
+          onConfirmar={reingresar}
+        />
+      )}
 
       {esLider && (
         <ModalEditarBobina

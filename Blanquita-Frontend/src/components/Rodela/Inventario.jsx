@@ -31,7 +31,7 @@ import {
 import { descargarReporteInventarioRodela } from "@/services/Rodela/Reportes";
 import { dateFormatter } from "@/utils/dates";
 import { aCodigo } from "@/utils/handlers";
-import { extraerMensajeError } from "@/utils/validators";
+import { extraerMensajeError, limpiarObservacion } from "@/utils/validators";
 import { useCatalogo } from "@/hooks/useCatalogo";
 import { useDetalleInventario } from "@/hooks/useDetalleInventario";
 import { useEjecutar } from "@/hooks/useEjecutar";
@@ -433,7 +433,7 @@ export default function InventarioRodelas({ usuario }) {
               <Textarea
                 id="motivo-editar-rodela"
                 value={formMotivo}
-                onChange={(e) => setFormMotivo(e.target.value)}
+                onChange={(e) => setFormMotivo(limpiarObservacion(e.target.value))}
                 placeholder="Ej. Error de digitación al registrar el ingreso..."
                 className="min-h-20"
                 maxLength={MOTIVO_CORRECCION_MAX}

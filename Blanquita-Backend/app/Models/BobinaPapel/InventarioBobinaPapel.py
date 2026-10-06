@@ -26,25 +26,16 @@ class VerDetalleInventarioBobinaPapelResponse(BaseModel):
     PesoBrutoKg: Decimal
     PesoNetoKg: Decimal
     Gramaje: Decimal
+    Reingresada: bool
+    FechaUltimoReingreso: Optional[datetime]
 
 
 class ReingresarBobinaAInventarioRequest(BaseModel):
     IdBobinaPapel: int
-    Observacion: Optional[str] = None
+    Observacion: str
 
 
 class ReingresarBobinaAInventarioResponse(BaseModel):
-    IdBobinaPapel: int
-    IdEstadoMateriaPrima: int
-    FechaMovimiento: datetime
-
-
-class DarDeBajaBobinaRequest(BaseModel):
-    IdBobinaPapel: int
-    Observacion: Optional[str] = None
-
-
-class DarDeBajaBobinaResponse(BaseModel):
     IdBobinaPapel: int
     IdEstadoMateriaPrima: int
     FechaMovimiento: datetime

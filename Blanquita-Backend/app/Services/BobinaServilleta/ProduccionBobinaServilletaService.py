@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 
 from app.Repository.BobinaServilleta.ProduccionBobinaServilleta import ProduccionBobinaServilletaRepository
-from app.utils.validators import ValidarTexto
+from app.utils.validators import ValidarTexto, REGLA_CARACTERES_OBSERVACION
 from app.Constants.Cantidades import (
     LONGITUD_MINIMA_DESCRIPCION,
     LONGITUD_MAXIMA_DESCRIPCION,
@@ -78,8 +78,8 @@ class ProduccionBobinaServilletaService:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=(
-                    "El motivo de la pausa es obligatorio y debe tener entre "
-                    f"{LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres"
+                    "El motivo de la pausa es obligatorio, debe tener entre "
+                    f"{LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres, {REGLA_CARACTERES_OBSERVACION}"
                 ),
             )
 
@@ -143,8 +143,8 @@ class ProduccionBobinaServilletaService:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=(
-                    "El motivo de cancelación es obligatorio y debe tener entre "
-                    f"{LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres"
+                    "El motivo de cancelación es obligatorio, debe tener entre "
+                    f"{LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres, {REGLA_CARACTERES_OBSERVACION}"
                 ),
             )
 

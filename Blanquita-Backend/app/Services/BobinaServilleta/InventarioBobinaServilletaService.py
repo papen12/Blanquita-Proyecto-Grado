@@ -8,8 +8,6 @@ from app.Repository.BobinaServilleta.InventarioBobinaServilleta import Inventari
 from app.Models.BobinaServilleta.InventarioBobinaServilleta import(
     ReingresarSubBobinaInventarioRequest,
     ReingresarSubBobinaInventarioResponse,
-    DarDeBajaSubBobinaRequest,
-    DarDeBajaSubBobinaResponse,
     ResumenInventarioBobinaServilletaResponse,
     DetalleInventarioBobinaServilletaRequest,
     DetalleInventarioBobinaServilletaResponse,
@@ -20,7 +18,7 @@ from app.Models.BobinaServilleta.InventarioBobinaServilleta import(
     EditarBobinaServilletaRequest,
     EditarBobinaServilletaResponse
 )
-from app.utils.validators import ValidarTexto
+from app.utils.validators import ValidarTexto, REGLA_CARACTERES_OBSERVACION
 from app.Constants.Cantidades import (
     LONGITUD_MINIMA_DESCRIPCION,
     LONGITUD_MAXIMA_DESCRIPCION,
@@ -33,10 +31,17 @@ class InventarioBobinaServilletaService:
     def ReingresarSubBobinaAInventario(
     self, data: ReingresarSubBobinaInventarioRequest, id_usuario: int
     ) -> ReingresarSubBobinaInventarioResponse:
+        observacion = (data.Observacion or "").strip()
+        if not ValidarTexto(LONGITUD_MINIMA_DESCRIPCION, LONGITUD_MAXIMA_DESCRIPCION, observacion):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"La observación es obligatoria, debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres, {REGLA_CARACTERES_OBSERVACION}",
+            )
+
         params = {
             "p_IdSubBobina": data.IdSubBobina,
             "p_IdUsuario": id_usuario,
-            "p_Observacion": data.Observacion,
+            "p_Observacion": observacion,
         }
 
         resultado = self.repository.ReingresarSubBobinaAInventario(params)
@@ -48,24 +53,6 @@ class InventarioBobinaServilletaService:
             )
 
         return ReingresarSubBobinaInventarioResponse(**resultado)
-    def DarDeBajaSubBobina(
-    self, data: DarDeBajaSubBobinaRequest, id_usuario: int
-) -> DarDeBajaSubBobinaResponse:
-        params = {
-            "p_IdSubBobina": data.IdSubBobina,
-            "p_IdUsuario": id_usuario,
-            "p_Observacion": data.Observacion,
-        }
-
-        resultado = self.repository.DarDeBajaSubBobina(params)
-
-        if resultado is None:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No se pudo dar de baja la sub-bobina."
-            )
-
-        return DarDeBajaSubBobinaResponse(**resultado)
 
     def VerResumenInventarioBobinaServilleta(self) -> list[ResumenInventarioBobinaServilletaResponse]:
         resultados = self.repository.VerResumenInventarioBobinaServilleta()
@@ -110,8 +97,8 @@ class InventarioBobinaServilletaService:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=(
-                    "El motivo de la corrección es obligatorio y debe tener entre "
-                    f"{LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres"
+                    "El motivo de la corrección es obligatorio, debe tener entre "
+                    f"{LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres, {REGLA_CARACTERES_OBSERVACION}"
                 ),
             )
 

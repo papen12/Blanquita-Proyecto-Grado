@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.Models.Usuario.Usuario import PerfilUpdate, UsuarioCreate, UsuarioPerfil
 from app.Repository.Usuario.UsuarioRepository import UsuarioRepository
+from app.utils.validators import ValidarFormularioUsuario
 
 SUPABASE_URL = os.getenv("SUPABASE_URL").rstrip("/")
 SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -13,10 +14,36 @@ SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 TIMEOUT_ADMIN = 15.0
 DOMINIO_SINTETICO = "papelblanquita.invalid"
 
+# (campo, etiqueta para el mensaje, obligatorio)
+CAMPOS_NOMBRE = (
+    ("PrimerNombre", "El primer nombre", True),
+    ("SegundoNombre", "El segundo nombre", False),
+    ("ApellidoPaterno", "El apellido paterno", True),
+    ("ApellidoMaterno", "El apellido materno", False),
+)
+
 
 class UsuarioService:
     def __init__(self, db: Session):
         self.repository = UsuarioRepository(db)
+
+    def _ValidarNombres(self, datos: PerfilUpdate | UsuarioCreate) -> None:
+        for campo, etiqueta, obligatorio in CAMPOS_NOMBRE:
+            valor = (getattr(datos, campo) or "").strip()
+
+            if not valor:
+                if obligatorio:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                        detail=f"{etiqueta} es obligatorio",
+                    )
+                continue
+
+            if not ValidarFormularioUsuario(valor):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail=f"{etiqueta} solo puede tener letras, sin espacios, entre 2 y 15 caracteres",
+                )
 
     def ObtenerPerfil(self, usuario_actual: dict) -> UsuarioPerfil:
         fila = self.repository.ObtenerPerfil(
@@ -32,6 +59,8 @@ class UsuarioService:
         return UsuarioPerfil(**fila, Correo=usuario_actual.get("Correo"))
 
     def EditarPerfil(self, usuario_actual: dict, datos: PerfilUpdate) -> UsuarioPerfil:
+        self._ValidarNombres(datos)
+
         fila = self.repository.EditarPerfil({
             "p_IdUsuario": usuario_actual["IdUsuario"],
             "p_PrimerNombre": datos.PrimerNombre,
@@ -111,6 +140,8 @@ class UsuarioService:
             pass
 
     def CrearUsuario(self, datos: UsuarioCreate) -> dict:
+        self._ValidarNombres(datos)
+
         auth_user_id = self._CrearCuentaAuth(datos.Ci, datos.Clave)
 
         params = {

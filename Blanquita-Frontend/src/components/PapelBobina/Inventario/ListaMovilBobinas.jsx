@@ -2,7 +2,7 @@ import { SquarePen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { dateFormatter } from "@/utils/dates";
-import { CasillaSeleccion } from "@/components/Inventario/comunes";
+import { CasillaSeleccion, BadgeReingresada } from "@/components/Inventario/comunes";
 import { fmt } from "./constantes";
 import { MiniStat } from "./MiniStat";
 
@@ -22,8 +22,11 @@ export function ListaMovilBobinas({ bobinas, tipoSel, marcadas, onToggle, onEdit
             )}
           >
             <div className="flex items-center justify-between gap-2.5">
-              <div className={cn("font-mono text-[15px] font-extrabold", tipoSel.text)}>
-                {b.CodigoBobina}
+              <div className="flex items-center gap-2">
+                <div className={cn("font-mono text-[15px] font-extrabold", tipoSel.text)}>
+                  {b.CodigoBobina}
+                </div>
+                {b.Reingresada && <BadgeReingresada fecha={b.FechaUltimoReingreso} />}
               </div>
               <CasillaSeleccion marcada={on} acento={tipoSel} grande />
             </div>
@@ -33,6 +36,11 @@ export function ListaMovilBobinas({ bobinas, tipoSel, marcadas, onToggle, onEdit
                 {dateFormatter(b.FechaRecepcion)}
               </span>
               <span>{b.NombreProveedor}</span>
+              {b.Reingresada && b.FechaUltimoReingreso && (
+                <span className="font-semibold text-amber-700">
+                  Reingreso: {dateFormatter(b.FechaUltimoReingreso)}
+                </span>
+              )}
             </div>
             <div className="flex gap-2">
               <MiniStat label="Bruto" value={`${fmt(b.PesoBrutoKg)} kg`} />

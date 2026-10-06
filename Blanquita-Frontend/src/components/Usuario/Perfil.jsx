@@ -4,7 +4,6 @@ import {
   UserRoundKey,
   IdCard,
   Phone,
-  Mail,
   ShieldCheck,
   CalendarClock,
   Copy,
@@ -36,8 +35,20 @@ const ESTADO_ESTILO = {
   3: "border-red-300 bg-red-50 text-red-600",
 };
 
+const MIN_NOMBRE = 2;
 const MAX_NOMBRE = 15;
+const NOMBRE_REGEX = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+$/;
+const CARACTERES_NO_PERMITIDOS = /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g;
 const CELULAR_REGEX = /^[67]\d{7}$/;
+
+const CAMPOS_NOMBRE = [
+  { campo: "PrimerNombre", obligatorio: true },
+  { campo: "SegundoNombre", obligatorio: false },
+  { campo: "ApellidoPaterno", obligatorio: true },
+  { campo: "ApellidoMaterno", obligatorio: false },
+];
+
+const limpiarNombre = (valor) => valor.replace(CARACTERES_NO_PERMITIDOS, "");
 
 function iniciales(primerNombre, apellidoPaterno) {
   const a = primerNombre?.trim()?.[0] ?? "";
@@ -65,22 +76,22 @@ function formularioDesde(perfil) {
   };
 }
 
+function errorNombre(valor, obligatorio) {
+  const nombre = norm(valor);
+  if (!nombre) return obligatorio ? "Requerido" : null;
+  if (nombre.length < MIN_NOMBRE) return `Mínimo ${MIN_NOMBRE} caracteres`;
+  if (nombre.length > MAX_NOMBRE) return `Máximo ${MAX_NOMBRE} caracteres`;
+  if (!NOMBRE_REGEX.test(nombre)) return "Solo letras, sin espacios";
+  return null;
+}
+
 function validar(form) {
   const errores = {};
 
-  if (!norm(form.PrimerNombre)) errores.PrimerNombre = "Requerido";
-  else if (norm(form.PrimerNombre).length > MAX_NOMBRE)
-    errores.PrimerNombre = `Máximo ${MAX_NOMBRE} caracteres`;
-
-  if (norm(form.SegundoNombre).length > MAX_NOMBRE)
-    errores.SegundoNombre = `Máximo ${MAX_NOMBRE} caracteres`;
-
-  if (!norm(form.ApellidoPaterno)) errores.ApellidoPaterno = "Requerido";
-  else if (norm(form.ApellidoPaterno).length > MAX_NOMBRE)
-    errores.ApellidoPaterno = `Máximo ${MAX_NOMBRE} caracteres`;
-
-  if (norm(form.ApellidoMaterno).length > MAX_NOMBRE)
-    errores.ApellidoMaterno = `Máximo ${MAX_NOMBRE} caracteres`;
+  for (const { campo, obligatorio } of CAMPOS_NOMBRE) {
+    const error = errorNombre(form[campo], obligatorio);
+    if (error) errores[campo] = error;
+  }
 
   const celular = norm(form.Celular);
   if (celular && !CELULAR_REGEX.test(celular))
@@ -209,6 +220,8 @@ function DialogEditarPerfil({ abierto, onOpenChange, perfil, onGuardado }) {
     });
   };
 
+  const actualizarNombre = (campo) => (valor) => actualizar(campo)(limpiarNombre(valor));
+
   const actualizarCelular = (valor) =>
     actualizar("Celular")(valor.replace(/\D/g, "").slice(0, 8));
 
@@ -246,7 +259,7 @@ function DialogEditarPerfil({ abierto, onOpenChange, perfil, onGuardado }) {
               id="PrimerNombre"
               etiqueta="Primer nombre"
               valor={form.PrimerNombre}
-              onCambio={actualizar("PrimerNombre")}
+              onCambio={actualizarNombre("PrimerNombre")}
               error={errores.PrimerNombre}
               maxLength={MAX_NOMBRE}
               autoComplete="given-name"
@@ -257,7 +270,7 @@ function DialogEditarPerfil({ abierto, onOpenChange, perfil, onGuardado }) {
               etiqueta="Segundo nombre"
               opcional
               valor={form.SegundoNombre}
-              onCambio={actualizar("SegundoNombre")}
+              onCambio={actualizarNombre("SegundoNombre")}
               error={errores.SegundoNombre}
               maxLength={MAX_NOMBRE}
               autoComplete="additional-name"
@@ -270,7 +283,7 @@ function DialogEditarPerfil({ abierto, onOpenChange, perfil, onGuardado }) {
               id="ApellidoPaterno"
               etiqueta="Apellido paterno"
               valor={form.ApellidoPaterno}
-              onCambio={actualizar("ApellidoPaterno")}
+              onCambio={actualizarNombre("ApellidoPaterno")}
               error={errores.ApellidoPaterno}
               maxLength={MAX_NOMBRE}
               autoComplete="family-name"
@@ -281,7 +294,7 @@ function DialogEditarPerfil({ abierto, onOpenChange, perfil, onGuardado }) {
               etiqueta="Apellido materno"
               opcional
               valor={form.ApellidoMaterno}
-              onCambio={actualizar("ApellidoMaterno")}
+              onCambio={actualizarNombre("ApellidoMaterno")}
               error={errores.ApellidoMaterno}
               maxLength={MAX_NOMBRE}
             />
@@ -356,7 +369,7 @@ export default function Perfil() {
 
   return (
     <div className="contenido-con-sidebar mt-20 md:mt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
-      <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-6 pb-28 sm:px-6 lg:max-w-5xl">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-6 pb-28 sm:px-6">
         {cargando && <PerfilSkeleton />}
 
         {!cargando && error && (
@@ -366,7 +379,7 @@ export default function Perfil() {
         )}
 
         {!cargando && !error && perfil && (
-          <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-6 lg:space-y-0">
+          <div className="space-y-6">
             <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
               <div className="relative flex h-full flex-col items-center gap-4 bg-gradient-to-br from-c3 to-c4 p-6 text-white sm:flex-row sm:text-left">
                 <Button
@@ -445,7 +458,7 @@ export default function Perfil() {
               )}
             </TarjetaPerfil>
 
-            <TarjetaPerfil titulo="Contacto">
+            <TarjetaPerfil titulo="Cuenta">
               <Campo
                 icono={Phone}
                 etiqueta="Celular"
@@ -453,15 +466,6 @@ export default function Perfil() {
                 copiable={Boolean(perfil.Celular)}
               />
               <Separator />
-              <Campo
-                icono={Mail}
-                etiqueta="Correo"
-                valor={perfil.Correo ?? "Sin registrar"}
-                copiable={Boolean(perfil.Correo)}
-              />
-            </TarjetaPerfil>
-
-            <TarjetaPerfil titulo="Cuenta">
               <Campo icono={UserRoundKey} etiqueta="Rol" valor={perfil.NombreRol} />
               <Separator />
               <Campo

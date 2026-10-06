@@ -1,8 +1,6 @@
 import {
   ReingresarSubBobinaInventarioRequest,
   ReingresarSubBobinaInventarioResponse,
-  DarDeBajaSubBobinaRequest,
-  DarDeBajaSubBobinaResponse,
   ResumenInventarioBobinaServilletaResponse,
   DetalleInventarioBobinaServilletaResponse,
   ResumenInventarioSubBobinaServilletaResponse,
@@ -22,17 +20,6 @@ export async function reingresarSubBobinaInventario(idSubBobina, observacion) {
   });
 
   return ReingresarSubBobinaInventarioResponse(data);
-}
-
-export async function darDeBajaSubBobina(idSubBobina, observacion) {
-  const payload = DarDeBajaSubBobinaRequest(idSubBobina, observacion);
-
-  const data = await pedirJson("/api/bobinaservilleta/inventario/dardebaja", {
-    method: "POST",
-    body: payload
-  });
-
-  return DarDeBajaSubBobinaResponse(data);
 }
 
 export async function verResumenInventarioBobinaServilleta() {

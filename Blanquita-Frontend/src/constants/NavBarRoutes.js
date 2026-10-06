@@ -8,7 +8,7 @@ import {
   Container,
   CircleUserRound,
   ClipboardList,
-  Combine,
+  Combine,QrCode
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 export const RutasNavBar = [
@@ -125,6 +125,19 @@ export const RutasReportes = [
       { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
       { titulo: "Producción", icono: Factory, ruta: "produccion" },
     ],
+  },
+   {
+    titulo:"Códigos Qr",
+    icono:QrCode,
+    ruta:"qr",
+    subrutas:[
+      {
+        titulo: "Bobina Papel",
+        icono: toiletRoll,
+        esIconoLab: true,
+        ruta: "bobinapapel",
+      }
+    ]
   },
   {
     titulo: "Volver a la Planta",

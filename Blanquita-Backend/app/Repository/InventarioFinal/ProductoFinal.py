@@ -24,29 +24,6 @@ class ProductoFinalRepository:
         """
         return self.caller.LlamarFuncion(sql, params)
 
-
-    def AjustePositivoInventarioProductoTerminado(self, params: dict) -> dict | None:
-        sql = """
-            SELECT * FROM "AjustePositivoInventarioProductoTerminado"(
-                :p_IdPresentacion,
-                :p_IdUsuario,
-                :p_Cantidad,
-                :p_Observacion
-            )
-        """
-        return self.caller.LlamarUnRegistro(sql, params)
-
-    def AjusteNegativoInventarioProductoTerminado(self, params: dict) -> dict | None:
-        sql = """
-            SELECT * FROM "AjusteNegativoInventarioProductoTerminado"(
-                :p_IdPresentacion,
-                :p_IdUsuario,
-                :p_Cantidad,
-                :p_Observacion
-            )
-        """
-        return self.caller.LlamarUnRegistro(sql, params)
-
     def CorregirInventarioProductoTerminado(self, params: dict) -> dict | None:
         sql = """
             SELECT * FROM "CorregirInventarioProductoTerminado"(

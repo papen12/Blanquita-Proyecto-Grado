@@ -49,3 +49,8 @@ export const aEntero = (valor) => {
 
 export const numeroONulo = (valor) =>
   valor === null || valor === undefined || valor === "" ? null : Number(valor);
+
+const NO_PERMITIDOS_OBSERVACION = /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,;:()"\/#-]/g;
+
+export const limpiarObservacion = (texto) =>
+  texto.replace(/\s/g, " ").replace(NO_PERMITIDOS_OBSERVACION, "");

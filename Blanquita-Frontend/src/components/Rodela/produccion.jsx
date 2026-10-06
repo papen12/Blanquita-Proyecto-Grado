@@ -23,7 +23,7 @@ import { ObservacionesRodela } from "@/constants/OperadorConfig";
 import { MOTIVO_CORRECCION_MIN, MOTIVO_CORRECCION_MAX } from "@/constants/Values";
 import { dateFormatter } from "@/utils/dates";
 import { alternarMotivoEnTexto } from "@/utils/handlers";
-import { extraerMensajeError } from "@/utils/validators";
+import { extraerMensajeError, limpiarObservacion } from "@/utils/validators";
 import Header from "@/components/layout/Header";
 
 const INTERVALO_REFRESCO_MS = 30_000;
@@ -289,7 +289,7 @@ export default function ProduccionRodela({ usuario }) {
               <Textarea
                 id="motivo-reingreso"
                 value={formMotivo}
-                onChange={(e) => setFormMotivo(e.target.value)}
+                onChange={(e) => setFormMotivo(limpiarObservacion(e.target.value))}
                 placeholder="Ej. Se escaneó la rodela equivocada al enviar a producción..."
                 className="min-h-20"
                 maxLength={MOTIVO_CORRECCION_MAX}

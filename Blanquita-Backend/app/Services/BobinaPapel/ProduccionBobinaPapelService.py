@@ -22,7 +22,7 @@ from app.Models.BobinaPapel.ProduccionBobinaPapel import (
     VerPausasProduccionBobinaTuboActivasRequest,
     VerPausasProduccionBobinaTuboActivasResponse,
 )
-from app.utils.validators import EsCantidadValida,ValidarTexto
+from app.utils.validators import EsCantidadValida,ValidarTexto, REGLA_CARACTERES_OBSERVACION
 from app.Constants.Cantidades import (
     CANTIDAD_INGRESO_LOGS,
     LONGITUD_MAXIMA_DESCRIPCION,
@@ -117,7 +117,7 @@ class ProduccionBobinaPapelService:
         if not ValidarTexto(LONGITUD_MINIMA_DESCRIPCION, LONGITUD_MAXIMA_DESCRIPCION, motivo):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail=f"El motivo de la pausa es obligatorio y debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres",
+                detail=f"El motivo de la pausa es obligatorio, debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres, {REGLA_CARACTERES_OBSERVACION}",
             )
 
         params = {
@@ -200,7 +200,7 @@ class ProduccionBobinaPapelService:
         if not ValidarTexto(LONGITUD_MINIMA_DESCRIPCION, LONGITUD_MAXIMA_DESCRIPCION, motivo):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail=f"El motivo de cancelación es obligatorio y debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres",
+                detail=f"El motivo de cancelación es obligatorio, debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres, {REGLA_CARACTERES_OBSERVACION}",
             )
         params = {
             "p_id_produccion": data.IdProduccionBobinaTubo,

@@ -17,21 +17,10 @@ class AbrirBobinaServilletaResponse(BaseModel):
 
 class ReingresarSubBobinaInventarioRequest(BaseModel):
     IdSubBobina: int
-    Observacion: str | None = None
+    Observacion: str
 
 
 class ReingresarSubBobinaInventarioResponse(BaseModel):
-    IdSubBobina: int
-    IdEstadoMateriaPrima: int
-    FechaMovimiento: datetime
-
-
-class DarDeBajaSubBobinaRequest(BaseModel):
-    IdSubBobina: int
-    Observacion: str | None = None
-
-
-class DarDeBajaSubBobinaResponse(BaseModel):
     IdSubBobina: int
     IdEstadoMateriaPrima: int
     FechaMovimiento: datetime
@@ -74,6 +63,8 @@ class DetalleInventarioSubBobinaServilletaRequest(BaseModel):
 class DetalleInventarioSubBobinaServilletaResponse(BaseModel):
     IdSubBobinaServilleta: int
     CodigoUnidadOrigen: str
+    Reingresada: bool
+    FechaUltimoReingreso: datetime | None
 
 
 

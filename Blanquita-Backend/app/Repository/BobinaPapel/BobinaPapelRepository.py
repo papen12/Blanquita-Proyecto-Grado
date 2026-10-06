@@ -1,9 +1,12 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.Repository.DbCaller import DbCaller
+from app.Schemas.BobinaPapel import TipoBobina
 
 
 class BobinaPapelRepository:
     def __init__(self, db: Session):
+        self.db = db
         self.caller = DbCaller(db)
 
     def InsertarBobinasPapel(self, params: dict) -> dict | None:
@@ -18,12 +21,11 @@ class BobinaPapelRepository:
         return self.caller.LlamarUnRegistro(sql, params)
 
     def ObtenerTipoBobinaPapel(self) -> list[dict]:
-        sql = """
-            SELECT "IdTipoBobina", "NombreTipoBobina"
-            FROM "TipoBobina"
-            ORDER BY "NombreTipoBobina"
-        """
-        return self.caller.LlamarFuncion(sql, {})
+        consulta = (
+            select(TipoBobina.IdTipoBobina, TipoBobina.NombreTipoBobina)
+            .order_by(TipoBobina.NombreTipoBobina)
+        )
+        return [dict(fila) for fila in self.db.execute(consulta).mappings()]
 
     def EditarBobinaPapel(self, params: dict) -> dict | None:
         sql = """

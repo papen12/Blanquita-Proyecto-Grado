@@ -18,7 +18,9 @@ export const VerDetalleInventarioBobinaPapelResponse = (data) => ({
   NombreProveedor: data.NombreProveedor,
   PesoBrutoKg: data.PesoBrutoKg,
   PesoNetoKg: data.PesoNetoKg,
-  Gramaje: data.Gramaje
+  Gramaje: data.Gramaje,
+  Reingresada: data.Reingresada ?? false,
+  FechaUltimoReingreso: data.FechaUltimoReingreso ?? null
 });
 
 export const ReingresarBobinaAInventarioRequest = (idBobinaPapel, observacion) => ({
@@ -27,17 +29,6 @@ export const ReingresarBobinaAInventarioRequest = (idBobinaPapel, observacion) =
 });
 
 export const ReingresarBobinaAInventarioResponse = (data) => ({
-  IdBobinaPapel: data.IdBobinaPapel,
-  IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
-  FechaMovimiento: data.FechaMovimiento
-});
-
-export const DarDeBajaBobinaRequest = (idBobinaPapel, observacion) => ({
-  IdBobinaPapel: idBobinaPapel,
-  Observacion: observacion ?? null
-});
-
-export const DarDeBajaBobinaResponse = (data) => ({
   IdBobinaPapel: data.IdBobinaPapel,
   IdEstadoMateriaPrima: data.IdEstadoMateriaPrima,
   FechaMovimiento: data.FechaMovimiento

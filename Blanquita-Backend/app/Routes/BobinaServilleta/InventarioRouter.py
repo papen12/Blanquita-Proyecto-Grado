@@ -10,8 +10,6 @@ from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 from app.Models.BobinaServilleta.InventarioBobinaServilleta import(
     ReingresarSubBobinaInventarioRequest,
     ReingresarSubBobinaInventarioResponse,
-    DarDeBajaSubBobinaRequest,
-    DarDeBajaSubBobinaResponse,
     ResumenInventarioBobinaServilletaResponse,
     DetalleInventarioBobinaServilletaRequest,
     DetalleInventarioBobinaServilletaResponse,
@@ -40,22 +38,10 @@ def inventario_bobina_servilleta_service(db: Session = Depends(get_db)) -> Inven
 )
 def ReingresarSubBobina(
     data: ReingresarSubBobinaInventarioRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: InventarioBobinaServilletaService = Depends(inventario_bobina_servilleta_service)
 ):
     return service.ReingresarSubBobinaAInventario(data, usuario_actual["IdUsuario"])
-
-@InventarioBobinaServilletaRouter.post(
-    "/dardebaja",
-    response_model=DarDeBajaSubBobinaResponse,
-    status_code=200
-)
-def DarDeBajaServilleta(
-    data: DarDeBajaSubBobinaRequest,
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
-    service: InventarioBobinaServilletaService = Depends(inventario_bobina_servilleta_service)
-):
-    return service.DarDeBajaSubBobina(data, usuario_actual["IdUsuario"])
 
 @InventarioBobinaServilletaRouter.get(
     "/resumen",
@@ -111,7 +97,7 @@ def VerDetalleSubBobina(
     status_code=200
 )
 def VerSubBobinaFueraInventario(
-    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: InventarioBobinaServilletaService = Depends(inventario_bobina_servilleta_service)
 ):
     return service.VerSubBobinasServilletaFueraInventario()

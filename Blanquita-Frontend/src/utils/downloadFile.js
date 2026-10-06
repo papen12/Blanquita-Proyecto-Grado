@@ -25,3 +25,23 @@ export async function descargarReportePDF(url, nombrePorDefecto) {
 
   descargarArchivo(blob, obtenerNombreArchivo(response, nombrePorDefecto));
 }
+
+export async function imprimirPDF(url) {
+  const response = await pedir(url);
+  const blob = await response.blob();
+  const { default: printJS } = await import("print-js");
+  const urlLocal = window.URL.createObjectURL(blob);
+
+  try {
+    await new Promise((resolve, reject) => {
+      printJS({
+        printable: urlLocal,
+        type: "pdf",
+        onLoadingEnd: resolve,
+        onError: () => reject(new Error("No se pudo abrir la impresión del PDF")),
+      });
+    });
+  } finally {
+    window.URL.revokeObjectURL(urlLocal);
+  }
+}

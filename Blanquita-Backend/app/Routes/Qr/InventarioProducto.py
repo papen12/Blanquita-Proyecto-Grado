@@ -1,38 +1,52 @@
 from fastapi import APIRouter, Depends, Response
 
-from app.Auth.Dependencies import require_role
+from app.Auth.Dependencies import require_role, get_generado_por
 from app.Services.Qr.QrService import QrService
-from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
-
+from app.Services.Qr.BobinaPapel import CartelesBobinaPapel
+from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION
 qrRouter = APIRouter(
-    prefix="/scan",
+    prefix="/qr",
     tags=["Qr - Carteles de Escaneo"],
 )
 
-RUTA_INICIO = "/scan/inicio"
-TITULO_INICIO = "Inventario de Producto Terminado"
-SUBTITULO_INICIO = "Escanee para registrar ingresos y salidas"
-ARCHIVO_INICIO = "QR-Inventario-Inicio.pdf"
-
 
 @qrRouter.get(
-    "/inicio",
+    "/producto/inventario",
     status_code=200,
     response_class=Response,
     responses={200: {"content": {"application/pdf": {}}}},
-    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR]))],
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION]))],
 )
-def ObtenerCartelInicio() -> Response:
+def QrPtInventario(generado_por: str | None = Depends(get_generado_por)) -> Response:
     contenido = QrService.ObtenerCartel(
-        RUTA_INICIO,
-        TITULO_INICIO,
-        SUBTITULO_INICIO,
+        "/producto/inventario",
+        "Inventario de Producto Terminado",
+        "Escanee para ver el inventario de producto terminado",
+        generado_por,
     )
     return Response(
         content=contenido,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f'attachment; filename="{ARCHIVO_INICIO}"',
-            "Cache-Control": "private, max-age=86400",
+            "Content-Disposition": 'attachment; filename="QR-ProductoTerminado-Inventario.pdf"',
+            "Cache-Control": "no-store",
+        },
+    )
+#Rutas bobina-papel
+@qrRouter.get(
+    "/bobina-papel/inventario",
+    status_code=200,
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+    dependencies=[Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION]))],
+)
+def QrBpInventario(generado_por: str | None = Depends(get_generado_por)) -> Response:
+    contenido = CartelesBobinaPapel.Inventario(generado_por)
+    return Response(
+        content=contenido,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="QR-BobinaPapel-Inventario.pdf"',
+            "Cache-Control": "no-store",
         },
     )
