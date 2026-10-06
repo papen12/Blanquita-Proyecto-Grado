@@ -53,7 +53,7 @@ export default function BottomBar({ idRol, subRuta, idOpcionSelect }) {
   }, [avisoQR]);
 
   const alDetectar = (valor) => {
-    const { ruta, error } = resolverRutaQR(valor, window.location.origin);
+    const { ruta, error } = resolverRutaQR(valor, window.location.origin, rutaBase);
 
     setEscaneando(false);
 
