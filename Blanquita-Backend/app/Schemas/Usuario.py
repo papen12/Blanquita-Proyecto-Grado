@@ -1,0 +1,32 @@
+from datetime import datetime
+from uuid import UUID
+
+from sqlalchemy import DateTime, Text
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.Config.supabase import Base
+
+
+class Rol(Base):
+    __tablename__ = "Rol"
+
+    IdRol: Mapped[int] = mapped_column(primary_key=True)
+    NombreRol: Mapped[str] = mapped_column(Text)
+    Descripcion: Mapped[str | None] = mapped_column(Text)
+
+
+class Usuario(Base):
+    __tablename__ = "Usuario"
+
+    IdUsuario: Mapped[int] = mapped_column(primary_key=True)
+    AuthUserId: Mapped[UUID]
+    IdRol: Mapped[int]
+    IdEstadoUsuario: Mapped[int]
+    Ci: Mapped[str] = mapped_column(Text)
+    PrimerNombre: Mapped[str] = mapped_column(Text)
+    SegundoNombre: Mapped[str | None] = mapped_column(Text)
+    ApellidoPaterno: Mapped[str] = mapped_column(Text)
+    ApellidoMaterno: Mapped[str | None] = mapped_column(Text)
+    Celular: Mapped[str | None] = mapped_column(Text)
+    IsAdmin: Mapped[bool]
+    FechaRegistro: Mapped[datetime] = mapped_column(DateTime(timezone=True))

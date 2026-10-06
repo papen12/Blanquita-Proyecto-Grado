@@ -6,6 +6,10 @@ import {
   descargarReporteProduccionServilletaPorPeriodo,
 } from "@/services/BobinaServilleta/Reportes";
 import { TIPOS_BOBINA_SERVILLETA, CODIGO_UNIDAD } from "./filtros";
+import { EstadosProduccion } from "@/constants/Estados";
+import { ArrayFilter } from "@/utils/handlers";
+
+const ESTADOS_SERVILLETA = ArrayFilter([1, 2, 3, 4], EstadosProduccion);
 
 const COLUMNAS = [
   { titulo: "Tipo", valor: (p) => p.NombreTipoBobinaServilleta },
@@ -37,6 +41,7 @@ export default function ProduccionReporteServilleta({ usuario }) {
       descargarDetalle={(id) => descargarReporteDetalleProduccionServilleta(id, true)}
       columnas={COLUMNAS}
       tarjeta={TARJETA}
+      estados={ESTADOS_SERVILLETA}
     />
   );
 }

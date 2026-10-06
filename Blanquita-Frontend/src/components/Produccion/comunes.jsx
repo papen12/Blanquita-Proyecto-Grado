@@ -7,6 +7,7 @@ import {
   Clock,
   Layers,
   Loader2,
+  ArrowLeftRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,12 @@ const ACCIONES = {
     icono: Ban,
     variant: "outline",
     clase: "border-red-300 font-bold text-red-600 hover:bg-red-50",
+  },
+  cambiarLinea: {
+    texto: "Cambiar línea",
+    icono: ArrowLeftRight,
+    variant: "outline",
+    clase: "border-c3/30 font-bold text-c3 hover:bg-c4/8",
   },
 };
 

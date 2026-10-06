@@ -254,12 +254,14 @@ CREATE TABLE "ProduccionBobinaTubo" (
   "IdBobina_1" INTEGER NOT NULL REFERENCES "BobinaPapel"("IdBobinaPapel") ON DELETE CASCADE,
   "IdBobina_2" INTEGER NOT NULL REFERENCES "BobinaPapel"("IdBobinaPapel") ON DELETE CASCADE,
   "IdTurno" INTEGER NOT NULL REFERENCES "Turno"("IdTurno") ON DELETE CASCADE,
+  "IdProducto" INTEGER NOT NULL,
   "FechaInicioProduccion" TIMESTAMPTZ NOT NULL,
   "FechaFinProduccion" TIMESTAMPTZ,
   "CantidadLogsActual" INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX "idx_prodbobinatubo_turno" ON "ProduccionBobinaTubo"("IdTurno");
 CREATE INDEX "idx_prodbobinatubo_estado" ON "ProduccionBobinaTubo"("IdEstadoProduccion");
+CREATE INDEX "idx_prodbobinatubo_producto" ON "ProduccionBobinaTubo"("IdProducto");
 
 CREATE TABLE "ProduccionServilleta" (
   "IdProduccionServilleta" SERIAL PRIMARY KEY,
@@ -300,6 +302,10 @@ CREATE TABLE "Producto" (
   "IdProducto" SERIAL PRIMARY KEY,
   "NombreProducto" TEXT NOT NULL
 );
+
+ALTER TABLE "ProduccionBobinaTubo"
+ADD CONSTRAINT "fk_prodbobinatubo_producto"
+FOREIGN KEY ("IdProducto") REFERENCES "Producto"("IdProducto") ON DELETE RESTRICT;
 
 CREATE TABLE "PresentacionProducto" (
   "IdPresentacion" SERIAL PRIMARY KEY,

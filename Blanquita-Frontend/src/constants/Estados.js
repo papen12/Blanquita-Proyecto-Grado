@@ -49,5 +49,9 @@ export const EstadosProduccion=
   {
     "IdEstadoProduccion": 4,
     "NombreEstadoProduccion": "Cancelada"
+  },
+  {
+    "IdEstadoProduccion": 5,
+    "NombreEstadoProduccion": "Cambio de línea"
   }
 ]

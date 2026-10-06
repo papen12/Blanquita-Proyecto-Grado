@@ -7,6 +7,7 @@ from pydantic import BaseModel,Field
 class IniciarProduccionBobinaTuboRequest(BaseModel):
     IdBobina1: int
     IdBobina2: int
+    IdProducto: Optional[int] = None
 
 
 class IniciarProduccionBobinaTuboResponse(BaseModel):
@@ -14,6 +15,23 @@ class IniciarProduccionBobinaTuboResponse(BaseModel):
     FechaInicioProduccion: datetime
     IdTurno: int
     NombreTurno: str
+    IdProducto: int
+    NombreProducto: str
+
+
+class CambiarLineaProduccionBobinaTuboRequest(BaseModel):
+    IdProduccionBobinaTubo: int
+    IdProducto: int
+
+
+class CambiarLineaProduccionBobinaTuboResponse(BaseModel):
+    IdProduccionAnterior: int
+    IdProduccionBobinaTubo: int
+    FechaInicioProduccion: datetime
+    IdTurno: int
+    NombreTurno: str
+    IdProducto: int
+    NombreProducto: str
 
 
 class PausarProduccionBobinaTuboRequest(BaseModel):
@@ -69,12 +87,15 @@ class CancelarProduccionBobinaTuboResponse(BaseModel):
 
 class VerProduccionBobinaTuboRequest(BaseModel):
     IdTipoBobina: Optional[int] = None
+    IdProducto: Optional[int] = None
 
 
 class VerProduccionBobinaTuboResponse(BaseModel):
     IdProduccionBobinaTubo: int
     IdTipoBobina: int
     NombreTipoBobina: str
+    IdProducto: int
+    NombreProducto: str
     NombreEstadoProduccion: str
     CodigoBobina1: str
     CodigoBobina2: str
@@ -85,11 +106,14 @@ class VerProduccionBobinaTuboResponse(BaseModel):
 
 class VerPausasProduccionBobinaTuboActivasRequest(BaseModel):
     FiltroIdTipoBobina: Optional[int] = None
+    FiltroIdProducto: Optional[int] = None
 
 
 class VerPausasProduccionBobinaTuboActivasResponse(BaseModel):
     IdPausaProduccionBobinaTubo: int
     IdProduccionBobinaTubo: int
+    IdProducto: int
+    NombreProducto: str
     CodigoBobina1: str
     CodigoBobina2: str
     FechaHoraPausa: datetime

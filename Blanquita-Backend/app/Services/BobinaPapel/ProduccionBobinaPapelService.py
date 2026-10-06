@@ -7,6 +7,8 @@ from app.Repository.BobinaPapel.ProduccionBobinaPapel import (
 from app.Models.BobinaPapel.ProduccionBobinaPapel import (
     IniciarProduccionBobinaTuboRequest,
     IniciarProduccionBobinaTuboResponse,
+    CambiarLineaProduccionBobinaTuboRequest,
+    CambiarLineaProduccionBobinaTuboResponse,
     FinalizarProduccionBobinaTuboRequest,
     FinalizarProduccionBobinaTuboResponse,
     PausarProduccionBobinaTuboRequest,
@@ -41,6 +43,7 @@ class ProduccionBobinaPapelService:
             "p_IdBobina1": data.IdBobina1,
             "p_IdBobina2": data.IdBobina2,
             "p_IdUsuario": id_usuario,
+            "p_IdProducto": data.IdProducto,
         }
 
         try:
@@ -109,6 +112,25 @@ class ProduccionBobinaPapelService:
             )
 
         return FinalizarProduccionBobinaTuboResponse(**resultado)
+
+    def CambiarLineaProduccion(
+        self, data: CambiarLineaProduccionBobinaTuboRequest, id_usuario: int
+    ) -> CambiarLineaProduccionBobinaTuboResponse:
+        params = {
+            "p_IdProduccionBobinaTubo": data.IdProduccionBobinaTubo,
+            "p_IdProducto": data.IdProducto,
+            "p_IdUsuario": id_usuario,
+        }
+
+        resultado = self.repository.CambiarLineaProduccionBobinaTubo(params)
+
+        if not resultado:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo cambiar la línea de la producción de bobina tubo",
+            )
+
+        return CambiarLineaProduccionBobinaTuboResponse(**resultado)
 
     def PausarProduccion(
         self, data: PausarProduccionBobinaTuboRequest, id_usuario: int
@@ -302,6 +324,7 @@ class ProduccionBobinaPapelService:
     ) -> list[VerProduccionBobinaTuboResponse]:
         params = {
             "p_IdTipoBobina": data.IdTipoBobina,
+            "p_IdProducto": data.IdProducto,
         }
 
         resultados = self.repository.VerProduccionBobinaTubo(params)
@@ -315,6 +338,7 @@ class ProduccionBobinaPapelService:
     ) -> list[VerPausasProduccionBobinaTuboActivasResponse]:
         params = {
             "p_FiltroIdTipoBobina": data.FiltroIdTipoBobina,
+            "p_FiltroIdProducto": data.FiltroIdProducto,
         }
 
         resultados = self.repository.VerPausasProduccionBobinaTuboActivas(params)

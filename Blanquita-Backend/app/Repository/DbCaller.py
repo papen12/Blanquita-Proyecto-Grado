@@ -1,4 +1,4 @@
-from sqlalchemy import text
+from sqlalchemy import Select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
@@ -29,6 +29,16 @@ class DbCaller:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error ejecutando operación en base de datos",
+            )
+
+    def Consultar(self, consulta: Select) -> list[dict]:
+        try:
+            return [dict(fila) for fila in self.db.execute(consulta).mappings().all()]
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error ejecutando consulta en base de datos",
             )
 
     def LlamarUnRegistro(self, consulta: str, parametros: dict | None = None, commit: bool = True) -> dict | None:

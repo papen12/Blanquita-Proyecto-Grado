@@ -49,13 +49,15 @@ INSERT INTO "TipoMovimientoMateriaPrima" ("NombreMovimiento", "AplicaA", "Descri
 ('Retiro por falla operativa', 'Todos', 'Retiro de materia prima ya cargada en producción que no pudo procesarse; pasa a "Fuera de Inventario"'),
 ('Reingreso a inventario', 'Todos', 'Materia prima "Fuera de Inventario" regresa a "En almacén" para recontarse'),
 ('Producción terminada', 'Todos', 'Registra el cierre de una producción.'),
-('Corrección de registro', 'Todos', 'Corrección de datos registrados por error (código, pesos, gramaje). No cambia el estado de la materia prima; la observación guarda el valor anterior, el nuevo y el motivo.');
+('Corrección de registro', 'Todos', 'Corrección de datos registrados por error (código, pesos, gramaje). No cambia el estado de la materia prima; la observación guarda el valor anterior, el nuevo y el motivo.'),
+('Cambio de línea', 'Bobina Papel', 'La producción cambia de producto con las mismas bobinas; la bobina sigue En producción. La observación indica el producto anterior, el nuevo y las producciones involucradas.');
 
 INSERT INTO "EstadoProduccion" ("NombreEstadoProduccion", "DescripcionEstadoProduccion") VALUES
 ('En Producción', 'Proceso de producción activo y en curso'),
 ('Pausa', 'Producción detenida temporalmente (motivo libre: empalme, falta de pegamento, falta de personal, falla de maquinaria, limpieza, etc.)'),
 ('Finalizado', 'Proceso de producción concluido'),
-('Cancelada', 'Producción interrumpida de forma definitiva por falla; no se reanuda con el mismo par de bobinas');
+('Cancelada', 'Producción interrumpida de forma definitiva por falla; no se reanuda con el mismo par de bobinas'),
+('Cambio de línea', 'Producción cerrada por cambio de producto; las bobinas continúan en producción en una nueva producción');
 
 INSERT INTO "Producto" ("NombreProducto") VALUES
 ('Luxury'),

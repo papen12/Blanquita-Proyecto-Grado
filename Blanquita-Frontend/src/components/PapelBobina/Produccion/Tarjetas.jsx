@@ -1,5 +1,13 @@
 import { TarjetaProduccion } from "@/components/Produccion/comunes";
 
+function EtiquetaProducto({ nombre }) {
+  return (
+    <span className="w-fit rounded-full bg-c4/10 px-2.5 py-0.5 text-xs font-bold text-c3">
+      {nombre}
+    </span>
+  );
+}
+
 function LogsRegistrados({ cantidad }) {
   return (
     <div className="rounded-lg bg-slate-50 px-3 py-2.5">
@@ -11,7 +19,7 @@ function LogsRegistrados({ cantidad }) {
   );
 }
 
-export function CardActiva({ p, onInsertar, onPausar, onFinalizar }) {
+export function CardActiva({ p, onInsertar, onPausar, onFinalizar, onCambiarLinea }) {
   return (
     <TarjetaProduccion
       produccion={p}
@@ -20,6 +28,7 @@ export function CardActiva({ p, onInsertar, onPausar, onFinalizar }) {
           <div className="text-[17px] font-extrabold text-slate-900">
             {p.NombreTipoBobina}
           </div>
+          <EtiquetaProducto nombre={p.NombreProducto} />
           <div className="font-mono text-sm font-bold text-c3">
             {p.CodigoBobina1} + {p.CodigoBobina2}
           </div>
@@ -29,6 +38,7 @@ export function CardActiva({ p, onInsertar, onPausar, onFinalizar }) {
         { tipo: "insertar", onClick: onInsertar },
         { tipo: "pausar", onClick: onPausar },
         { tipo: "finalizar", onClick: onFinalizar },
+        ...(onCambiarLinea ? [{ tipo: "cambiarLinea", onClick: onCambiarLinea }] : []),
       ]}
     >
       <LogsRegistrados cantidad={p.CantidadLogsActual} />
@@ -42,9 +52,12 @@ export function CardPausada({ p, procesando, onInsertar, onReanudar, onCancelar 
       produccion={p}
       pausada
       encabezado={
-        <div className="font-mono text-[15px] font-extrabold text-slate-900">
-          {p.CodigoBobina1} + {p.CodigoBobina2}
-        </div>
+        <>
+          <div className="font-mono text-[15px] font-extrabold text-slate-900">
+            {p.CodigoBobina1} + {p.CodigoBobina2}
+          </div>
+          <EtiquetaProducto nombre={p.NombreProducto} />
+        </>
       }
       acciones={[
         { tipo: "insertar", onClick: onInsertar },

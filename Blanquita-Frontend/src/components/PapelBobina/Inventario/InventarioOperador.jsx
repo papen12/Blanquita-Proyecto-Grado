@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Cylinder } from "lucide-react";
 import { toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { obtenerProductos } from "../../../services/Inventario/Inventario";
+import { useOpciones } from "@/hooks/useOpciones";
+import { PILDORA_FILTRO } from "@/constants/Acentos";
 import {
   verResumenInventarioBobinaPapel,
   verDetalleInventarioBobinaPapel,
@@ -37,9 +41,18 @@ import { TablaBobinas } from "./TablaBobinas";
 import { ListaMovilBobinas } from "./ListaMovilBobinas";
 import ModalEditarBobina from "./ModalEditarBobina";
 import Header from "@/components/layout/Header";
-import { Roles } from "@/constants/Values";
+import {
+  Roles,
+  ID_TIPO_BOBINA_HIGIENICO,
+  IDS_PRODUCTO_BOBINA_HIGIENICO,
+} from "@/constants/Values";
 
 const sinDatos = async () => [];
+
+const cargarProductosHigienico = async () =>
+  (await obtenerProductos()).filter((p) =>
+    IDS_PRODUCTO_BOBINA_HIGIENICO.includes(p.IdProducto),
+  );
 
 export default function InventarioBobinasPapel({ usuario }) {
   const esLider = usuario?.IdRol === Roles.Encargado;
@@ -65,6 +78,15 @@ export default function InventarioBobinasPapel({ usuario }) {
   const requeridas = esServilleta ? 1 : 2;
   const { marcadas, setMarcadas } = detalle;
   const listas = marcadas.length === requeridas;
+
+  const productosHigienico = useOpciones(cargarProductosHigienico);
+  const [idProducto, setIdProducto] = useState(null);
+  const esHigienico = tipoSel?.IdTipoBobina === ID_TIPO_BOBINA_HIGIENICO;
+  const faltaProducto = esHigienico && idProducto === null;
+
+  useEffect(() => {
+    setIdProducto(null);
+  }, [detalle.sel]);
 
   const totalBobinas = tipos.reduce((s, t) => s + t.CantidadBobinas, 0);
   const totalPesoFmt = fmt(tipos.reduce((s, t) => s + Number(t.PesoNetoTotalKg || 0), 0));
@@ -98,7 +120,7 @@ export default function InventarioBobinasPapel({ usuario }) {
   const quitarChip = (codigo) => setMarcadas((prev) => prev.filter((c) => c !== codigo));
 
   const enviarProduccion = () => {
-    if (!listas || esServilleta) return;
+    if (!listas || esServilleta || faltaProducto) return;
 
     const bobina1 = detalle.datos.find((b) => b.CodigoBobina === marcadas[0]);
     const bobina2 = detalle.datos.find((b) => b.CodigoBobina === marcadas[1]);
@@ -106,11 +128,17 @@ export default function InventarioBobinasPapel({ usuario }) {
 
     envio.ejecutar(
       "envio",
-      () => iniciarProduccion(bobina1.IdBobinaPapel, bobina2.IdBobinaPapel),
-      `${marcadas.join(" + ")} → En producción`,
+      () =>
+        iniciarProduccion(
+          bobina1.IdBobinaPapel,
+          bobina2.IdBobinaPapel,
+          esHigienico ? idProducto : null,
+        ),
+      (res) => `${marcadas.join(" + ")} → En producción · ${res.NombreProducto}`,
       () => {
         detalle.setDatos((prev) => prev.filter((b) => !marcadas.includes(b.CodigoBobina)));
         setMarcadas([]);
+        setIdProducto(null);
         resumen.recargar();
       },
     );
@@ -247,6 +275,29 @@ export default function InventarioBobinasPapel({ usuario }) {
               </div>
             </ContenidoLista>
 
+            {marcadas.length > 0 && esHigienico && (
+              <div className="flex flex-col gap-2 border-t border-slate-200 bg-white px-5 py-4">
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                  Producto a elaborar
+                </span>
+                <ToggleGroup
+                  value={idProducto === null ? [] : [String(idProducto)]}
+                  className="flex flex-wrap justify-start gap-2"
+                >
+                  {productosHigienico.map((p) => (
+                    <ToggleGroupItem
+                      key={p.IdProducto}
+                      value={String(p.IdProducto)}
+                      onClick={() => setIdProducto(p.IdProducto)}
+                      className={PILDORA_FILTRO}
+                    >
+                      {p.NombreProducto}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </div>
+            )}
+
             {marcadas.length > 0 && (
               <BarraSeleccion
                 chips={marcadas.map((codigo) => ({
@@ -255,9 +306,13 @@ export default function InventarioBobinasPapel({ usuario }) {
                   onQuitar: () => quitarChip(codigo),
                 }))}
                 estado={
-                  listas ? "Listo para enviar" : `Selecciona ${requeridas - marcadas.length} más`
+                  !listas
+                    ? `Selecciona ${requeridas - marcadas.length} más`
+                    : faltaProducto
+                      ? "Selecciona el producto"
+                      : "Listo para enviar"
                 }
-                listo={listas}
+                listo={listas && !faltaProducto}
                 enviando={envio.enProceso === "envio"}
                 onEnviar={enviarProduccion}
                 textoAccion="Enviar a producción"
