@@ -29,6 +29,8 @@ from app.Routes.InventarioFinal.Reporte import ProductoFinalReporteRouter
 
 from app.Routes.Proveedor.Proveedor import ProveedorRouter
 
+from app.Routes.Catalogo.CatalogoRouter import CatalogoRouter
+
 from app.Routes.Qr.InventarioProducto import qrRouter
 
 from slowapi.errors import RateLimitExceeded
@@ -108,6 +110,9 @@ app.include_router(ProductoFinalReporteRouter)
 
 #ROUTERS PROVEEDOR
 app.include_router(ProveedorRouter)
+
+#ROUTERS CATALOGO (LINEAS Y PRODUCTOS)
+app.include_router(CatalogoRouter)
 
 #ROUTERS GENERADORES DE QR
 app.include_router(qrRouter)
