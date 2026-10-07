@@ -8,7 +8,7 @@ import {
   Container,
   CircleUserRound,
   ClipboardList,
-  Combine,QrCode,UserShield,Users
+  Combine,QrCode,UserShield,Users,Cylinder
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 import { Roles } from "@/constants/Values";
@@ -174,6 +174,12 @@ export const RutasAdmin = [
     icono: Users,
     ruta: "usuarios",
     descripcion: "Registrar usuarios, cambiar su estado y restablecer claves",
+  },
+  {
+    titulo: "Tipos de Bobina Papel",
+    icono: Cylinder,
+    ruta: "tipos-bobina-papel",
+    descripcion: "Crear tipos de bobina papel y editar sus medidas y tara",
   },
   {
     titulo: "Volver a la Planta",

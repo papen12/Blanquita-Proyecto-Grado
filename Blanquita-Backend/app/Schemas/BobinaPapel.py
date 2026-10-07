@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Date, Numeric, Text
+from sqlalchemy import Date, Numeric, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.Config.supabase import Base
@@ -12,6 +12,9 @@ class TipoBobina(Base):
 
     IdTipoBobina: Mapped[int] = mapped_column(primary_key=True)
     NombreTipoBobina: Mapped[str] = mapped_column(Text)
+    DiametroMm: Mapped[Decimal] = mapped_column(Numeric, server_default=text("1210"))
+    Formato: Mapped[Decimal] = mapped_column(Numeric, server_default=text("2760"))
+    TaraKg: Mapped[Decimal] = mapped_column(Numeric, server_default=text("38"))
 
 
 class LoteBobina(Base):
