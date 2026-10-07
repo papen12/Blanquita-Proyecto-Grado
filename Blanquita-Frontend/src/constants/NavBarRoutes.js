@@ -162,7 +162,6 @@ export const RutasReportes = [
 
 
 
-// Las entradas con "descripcion" aparecen como acceso directo en /admin/inicio.
 export const RutasAdmin = [
   {
     titulo: "Inicio",
@@ -176,10 +175,16 @@ export const RutasAdmin = [
     descripcion: "Registrar usuarios, cambiar su estado y restablecer claves",
   },
   {
-    titulo: "Tipos de Bobina Papel",
+    titulo: "Bobina Papel",
     icono: Cylinder,
     ruta: "tipos-bobina-papel",
     descripcion: "Crear tipos de bobina papel y editar sus medidas y tara",
+  },
+  {
+    titulo: "Bobina Servilleta",
+    icono: SquareStack,
+    ruta: "tipos-bobina-servilleta",
+    descripcion: "Crear tipos de bobina servilleta y editar su diámetro, crepado y resistencia",
   },
   {
     titulo: "Volver a la Planta",
@@ -188,7 +193,6 @@ export const RutasAdmin = [
   },
 ];
 
-// Base de las rutas según la sección del menú.
 export function basePathSeccion(seccion, prefijo) {
   if (seccion === "reportes") return `${prefijo}/reportes`;
   if (seccion === "admin") return "admin";
