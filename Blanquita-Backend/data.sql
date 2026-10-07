@@ -59,14 +59,14 @@ INSERT INTO "EstadoProduccion" ("NombreEstadoProduccion", "DescripcionEstadoProd
 ('Cancelada', 'Producción interrumpida de forma definitiva por falla; no se reanuda con el mismo par de bobinas'),
 ('Cambio de línea', 'Producción cerrada por cambio de producto; las bobinas continúan en producción en una nueva producción');
 
-INSERT INTO "Producto" ("NombreProducto") VALUES
-('Luxury'),
-('EcoPack'),
-('Servilleta'),
-('Mega Rollo'),
-('Economico'),
-('Merma'),
-('Toalla');
+INSERT INTO "Producto" ("NombreProducto", "SiglasProducto") VALUES
+('Luxury', 'LUX'),
+('EcoPack', 'ECO'),
+('Servilleta', 'SRV'),
+('Mega Rollo', 'MRO'),
+('Economico', 'ECN'),
+('Merma', 'MER'),
+('Toalla', 'TOA');
 
 INSERT INTO "PresentacionProducto" ("IdProducto", "TipoContenedor", "CantidadRollosUnidades", "CantidadPorUnidadTerminada", "CodigoPresentacion") VALUES
 ((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Luxury'), 'Jaba', 6, 6, 'LUX-J06'),

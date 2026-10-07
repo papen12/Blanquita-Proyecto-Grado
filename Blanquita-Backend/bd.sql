@@ -300,7 +300,11 @@ CREATE INDEX "idx_pausaservilleta_fecha" ON "PausaProduccionServilleta"("FechaHo
 
 CREATE TABLE "Producto" (
   "IdProducto" SERIAL PRIMARY KEY,
-  "NombreProducto" TEXT NOT NULL
+  "NombreProducto" TEXT NOT NULL,
+  "SiglasProducto" TEXT NOT NULL,
+  CONSTRAINT "uq_producto_nombre" UNIQUE ("NombreProducto"),
+  CONSTRAINT "uq_producto_siglas" UNIQUE ("SiglasProducto"),
+  CONSTRAINT "ck_producto_siglas" CHECK ("SiglasProducto" ~ '^[A-Z]{3}$')
 );
 
 ALTER TABLE "ProduccionBobinaTubo"

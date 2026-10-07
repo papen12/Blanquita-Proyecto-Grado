@@ -15,8 +15,6 @@ from app.Repository.Catalogo.CatalogoRepository import CatalogoRepository
 from app.Schemas.Producto import PresentacionProducto, Producto
 
 PATRON_NOMBRE_LINEA = r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 -]+$"
-PATRON_TIPO_CONTENEDOR = r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$"
-PATRON_CODIGO_PRESENTACION = r"^[A-Z0-9-]+$"
 
 
 def _limpiar(texto: str) -> str:
@@ -27,51 +25,6 @@ class CatalogoService:
     def __init__(self, db: Session):
         self.repository = CatalogoRepository(db)
 
-    def _NombreLineaValido(self, nombre: str) -> str:
-        nombre = _limpiar(nombre)
-
-        if not re.fullmatch(PATRON_NOMBRE_LINEA, nombre):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="El nombre de la línea solo puede tener letras, números, espacios y guiones",
-            )
-
-        if self.repository.NombreLineaEnUso(nombre):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"Ya existe una línea llamada {nombre}",
-            )
-
-        return nombre
-
-    def _TipoContenedorValido(self, tipo: str) -> str:
-        tipo = _limpiar(tipo)
-
-        if not re.fullmatch(PATRON_TIPO_CONTENEDOR, tipo):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="El tipo de contenedor solo puede tener letras y espacios",
-            )
-
-        return tipo.capitalize()
-
-    def _CodigoValido(self, codigo: str) -> str:
-        codigo = codigo.strip().upper()
-
-        if not re.fullmatch(PATRON_CODIGO_PRESENTACION, codigo):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="El código solo puede tener letras sin tilde, números y guiones",
-            )
-
-        if self.repository.CodigoEnUso(codigo):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"El código {codigo} ya está registrado",
-            )
-
-        return codigo
-
     def ListarLineas(self) -> list[LineaItem]:
         return [LineaItem(**fila) for fila in self.repository.ListarLineas()]
 
@@ -79,49 +32,72 @@ class CatalogoService:
         return [PresentacionItem(**fila) for fila in self.repository.ListarPresentaciones()]
 
     def CrearLinea(self, datos: CrearLineaRequest, id_admin: int) -> LineaResponse:
-        nombre = self._NombreLineaValido(datos.NombreProducto)
+        nombre = _limpiar(datos.NombreProducto)
+
+        if not re.fullmatch(PATRON_NOMBRE_LINEA, nombre):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="El nombre de la línea solo puede tener letras, números, espacios y guiones",
+            )
+
+        siglas = datos.SiglasProducto.upper()
+
+        if self.repository.NombreLineaEnUso(nombre):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Ya existe una línea llamada {nombre}",
+            )
+
+        linea_con_siglas = self.repository.LineaConSiglas(siglas)
+        if linea_con_siglas:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Las siglas {siglas} ya las usa la línea {linea_con_siglas}",
+            )
 
         creada = self.repository.CrearLinea(
-            Producto(NombreProducto=nombre),
-            lambda l: f"Crear línea de producción · #{l.IdProducto} {l.NombreProducto}",
+            Producto(NombreProducto=nombre, SiglasProducto=siglas),
+            lambda l: f"Crear línea de producción · #{l.IdProducto} {l.NombreProducto} ({l.SiglasProducto})",
             id_admin,
         )
-        return LineaResponse(IdProducto=creada.IdProducto, NombreProducto=creada.NombreProducto)
+        return LineaResponse(
+            IdProducto=creada.IdProducto,
+            NombreProducto=creada.NombreProducto,
+            SiglasProducto=creada.SiglasProducto,
+        )
 
     def CrearPresentacion(
         self, datos: CrearPresentacionRequest, id_admin: int
     ) -> PresentacionResponse:
-        tipo_contenedor = self._TipoContenedorValido(datos.TipoContenedor)
-        codigo = self._CodigoValido(datos.CodigoPresentacion)
+        linea = self.repository.ObtenerLinea(datos.IdProducto)
+        if linea is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="La línea de producción no existe",
+            )
 
-        linea_creada = datos.IdProducto is None
-        if linea_creada:
-            linea = Producto(NombreProducto=self._NombreLineaValido(datos.NombreLineaNueva))
-        else:
-            linea = self.repository.ObtenerLinea(datos.IdProducto)
-            if linea is None:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="La línea de producción no existe",
-                )
+        codigo = f"{linea.SiglasProducto}-{datos.TipoContenedor[0]}{datos.CantidadRollosUnidades:02d}"
+
+        if self.repository.CodigoEnUso(codigo):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"El producto {codigo} ya existe",
+            )
 
         presentacion = PresentacionProducto(
-            TipoContenedor=tipo_contenedor,
+            IdProducto=linea.IdProducto,
+            TipoContenedor=datos.TipoContenedor,
             CantidadRollosUnidades=datos.CantidadRollosUnidades,
             CantidadPorUnidadTerminada=datos.CantidadPorUnidadTerminada,
             CodigoPresentacion=codigo,
         )
+        observacion = (
+            f"{codigo} ({datos.TipoContenedor}, {datos.CantidadRollosUnidades} "
+            f"{datos.TipoCantidad.lower()}, {datos.CantidadPorUnidadTerminada} por unidad terminada) "
+            f"en línea #{linea.IdProducto} {linea.NombreProducto}"
+        )
 
-        def observacion(l: Producto, p: PresentacionProducto) -> str:
-            texto = (
-                f"Crear producto · #{p.IdPresentacion} {p.CodigoPresentacion} "
-                f"({p.TipoContenedor}, {p.CantidadRollosUnidades} rollos/unidades, "
-                f"{p.CantidadPorUnidadTerminada} por unidad terminada) "
-                f"en línea #{l.IdProducto} {l.NombreProducto}"
-            )
-            return texto + " (línea nueva)" if linea_creada else texto
-
-        creada = self.repository.CrearPresentacion(linea, presentacion, observacion, id_admin)
+        creada = self.repository.CrearPresentacion(presentacion, observacion, id_admin)
 
         return PresentacionResponse(
             IdPresentacion=creada.IdPresentacion,
@@ -131,5 +107,4 @@ class CatalogoService:
             CantidadPorUnidadTerminada=creada.CantidadPorUnidadTerminada,
             CodigoPresentacion=creada.CodigoPresentacion,
             NombreProducto=linea.NombreProducto,
-            LineaCreada=linea_creada,
         )

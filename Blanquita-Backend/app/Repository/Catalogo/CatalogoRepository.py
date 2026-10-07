@@ -18,6 +18,7 @@ class CatalogoRepository:
             select(
                 Producto.IdProducto,
                 Producto.NombreProducto,
+                Producto.SiglasProducto,
                 func.count(PresentacionProducto.IdPresentacion).label("CantidadPresentaciones"),
             )
             .outerjoin(PresentacionProducto, PresentacionProducto.IdProducto == Producto.IdProducto)
@@ -54,6 +55,12 @@ class CatalogoRepository:
         )
         return bool(self.caller.Consultar(consulta.limit(1)))
 
+    def LineaConSiglas(self, siglas: str) -> str | None:
+        """Nombre de la línea que ya usa esas siglas, si hay alguna."""
+        consulta = select(Producto.NombreProducto).where(Producto.SiglasProducto == siglas)
+        filas = self.caller.Consultar(consulta.limit(1))
+        return filas[0]["NombreProducto"] if filas else None
+
     def ObtenerLinea(self, id_producto: int) -> Producto | None:
         try:
             return self.db.get(Producto, id_producto)
@@ -73,6 +80,12 @@ class CatalogoRepository:
             self.db.commit()
             self.db.refresh(linea)
             return linea
+        except IntegrityError:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="El nombre o las siglas ya están en uso por otra línea",
+            )
         except SQLAlchemyError:
             self.db.rollback()
             raise HTTPException(
@@ -81,30 +94,22 @@ class CatalogoRepository:
             )
 
     def CrearPresentacion(
-        self,
-        linea: Producto,
-        presentacion: PresentacionProducto,
-        observacion,
-        id_admin: int,
+        self, presentacion: PresentacionProducto, observacion: str, id_admin: int
     ) -> PresentacionProducto:
-        """Crea la línea (si es nueva), la presentación y su inventario en cero en una sola transacción.
-        `observacion` recibe la línea y la presentación ya insertadas."""
+        """Crea la presentación y su inventario en cero en una sola transacción."""
         try:
-            if linea.IdProducto is None:
-                self.db.add(linea)
-                self.db.flush()
-
-            presentacion.IdProducto = linea.IdProducto
             self.db.add(presentacion)
             self.db.flush()
-
             self.db.add(
                 InventarioProductoTerminado(
                     IdPresentacion=presentacion.IdPresentacion, CantidadActual=0
                 )
             )
             self.db.add(
-                HistorialAdmin(IdUsuario=id_admin, Observacion=observacion(linea, presentacion))
+                HistorialAdmin(
+                    IdUsuario=id_admin,
+                    Observacion=f"Crear producto · #{presentacion.IdPresentacion} {observacion}",
+                )
             )
             self.db.commit()
             self.db.refresh(presentacion)

@@ -11,6 +11,7 @@ class Producto(Base):
 
     IdProducto: Mapped[int] = mapped_column(primary_key=True)
     NombreProducto: Mapped[str] = mapped_column(Text)
+    SiglasProducto: Mapped[str] = mapped_column(Text)
 
 
 class PresentacionProducto(Base):

@@ -187,6 +187,12 @@ export const RutasAdmin = [
     descripcion: "Crear tipos de bobina servilleta y editar su diámetro, crepado y resistencia",
   },
   {
+    titulo: "Líneas y Productos",
+    icono: Boxes,
+    ruta: "catalogo",
+    descripcion: "Crear líneas de producción y sus productos con su código",
+  },
+  {
     titulo: "Volver a la Planta",
     icono: Factory,
     ruta: "",
