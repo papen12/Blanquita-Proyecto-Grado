@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, Text
+from sqlalchemy import DateTime, Text, false, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.Config.supabase import Base
@@ -27,14 +27,16 @@ class Usuario(Base):
     __tablename__ = "Usuario"
 
     IdUsuario: Mapped[int] = mapped_column(primary_key=True)
-    AuthUserId: Mapped[UUID]
+    AuthUserId: Mapped[UUID] = mapped_column(unique=True)
     IdRol: Mapped[int]
     IdEstadoUsuario: Mapped[int]
-    Ci: Mapped[str] = mapped_column(Text)
+    Ci: Mapped[str] = mapped_column(Text, unique=True)
     PrimerNombre: Mapped[str] = mapped_column(Text)
     SegundoNombre: Mapped[str | None] = mapped_column(Text)
     ApellidoPaterno: Mapped[str] = mapped_column(Text)
     ApellidoMaterno: Mapped[str | None] = mapped_column(Text)
     Celular: Mapped[str | None] = mapped_column(Text)
-    IsAdmin: Mapped[bool]
-    FechaRegistro: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    IsAdmin: Mapped[bool] = mapped_column(server_default=false())
+    FechaRegistro: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

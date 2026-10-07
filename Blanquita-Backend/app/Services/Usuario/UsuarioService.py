@@ -1,4 +1,5 @@
 import os
+from uuid import UUID
 
 import httpx
 from fastapi import HTTPException, status
@@ -11,7 +12,9 @@ from app.Models.Usuario.Usuario import (
     UsuarioCreate,
     UsuarioListaItem,
     UsuarioPerfil,
+    UsuarioResponse,
 )
+from app.Schemas.Usuario import Usuario
 from app.Repository.Usuario.UsuarioRepository import UsuarioRepository
 from app.utils.validators import ValidarFormularioUsuario
 from app.Auth.Security import ValidarClaveNueva
@@ -21,6 +24,12 @@ SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 TIMEOUT_ADMIN = 15.0
 DOMINIO_SINTETICO = "papelblanquita.invalid"
+ESTADO_USUARIO_ACTIVO = 1
+
+
+def _texto_opcional(valor: str | None) -> str | None:
+    texto = (valor or "").strip()
+    return texto or None
 
 # (campo, etiqueta para el mensaje, obligatorio)
 CAMPOS_NOMBRE = (
@@ -157,51 +166,72 @@ class UsuarioService:
         except httpx.RequestError:
             pass
 
-    def CrearUsuario(self, datos: UsuarioCreate) -> dict:
+    def CrearUsuario(self, datos: UsuarioCreate, id_admin: int) -> UsuarioResponse:
         self._ValidarNombres(datos)
 
-        error_clave = ValidarClaveNueva(
-            datos.Clave,
-            datos.Ci,
-            [datos.PrimerNombre, datos.SegundoNombre, datos.ApellidoPaterno, datos.ApellidoMaterno],
-        )
+        ci = datos.Ci.strip()
+        nombres = [
+            _texto_opcional(datos.PrimerNombre),
+            _texto_opcional(datos.SegundoNombre),
+            _texto_opcional(datos.ApellidoPaterno),
+            _texto_opcional(datos.ApellidoMaterno),
+        ]
+
+        error_clave = ValidarClaveNueva(datos.Clave, ci, nombres)
         if error_clave:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=error_clave,
             )
 
-        auth_user_id = self._CrearCuentaAuth(datos.Ci, datos.Clave)
+        rol = self.repository.ObtenerRol(datos.IdRol)
+        if rol is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="El rol indicado no existe",
+            )
 
-        params = {
-            "p_AuthUserId": auth_user_id,
-            "p_IdRol": datos.IdRol,
-            "p_Ci": datos.Ci,
-            "p_PrimerNombre": datos.PrimerNombre,
-            "p_ApellidoPaterno": datos.ApellidoPaterno,
-            "p_Celular": datos.Celular,
-            "p_SegundoNombre": datos.SegundoNombre,
-            "p_ApellidoMaterno": datos.ApellidoMaterno,
-            "p_IsAdmin": datos.IsAdmin,
-        }
+        if self.repository.ExisteCi(ci):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Ya existe un usuario registrado con el CI {ci}",
+            )
+
+        auth_user_id = self._CrearCuentaAuth(ci, datos.Clave)
+
+        usuario = Usuario(
+            AuthUserId=UUID(auth_user_id),
+            IdRol=datos.IdRol,
+            IdEstadoUsuario=ESTADO_USUARIO_ACTIVO,
+            Ci=ci,
+            PrimerNombre=nombres[0],
+            SegundoNombre=nombres[1],
+            ApellidoPaterno=nombres[2],
+            ApellidoMaterno=nombres[3],
+            Celular=datos.Celular.strip(),
+            IsAdmin=datos.IsAdmin,
+        )
+        nombre_completo = " ".join(n for n in nombres if n)
+        observacion = (
+            f"Crear usuario · CI {ci} ({nombre_completo}), rol {rol['NombreRol']}"
+            + (", administrador" if datos.IsAdmin else "")
+        )
 
         try:
-            usuario = self.repository.CrearUsuario(params)
-        except HTTPException:
-            self._EliminarCuentaAuth(auth_user_id)
-            raise
+            usuario = self.repository.CrearUsuario(usuario, observacion, id_admin)
         except Exception:
             self._EliminarCuentaAuth(auth_user_id)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No se pudo registrar el usuario"
-            )
+            raise
 
-        if not usuario:
-            self._EliminarCuentaAuth(auth_user_id)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No se pudo registrar el usuario"
-            )
-
-        return usuario
+        return UsuarioResponse(
+            IdUsuario=usuario.IdUsuario,
+            AuthUserId=usuario.AuthUserId,
+            Ci=usuario.Ci,
+            IdRol=usuario.IdRol,
+            NombreRol=rol["NombreRol"],
+            IdEstadoUsuario=usuario.IdEstadoUsuario,
+            NombreCompleto=nombre_completo,
+            Celular=usuario.Celular,
+            IsAdmin=usuario.IsAdmin,
+            FechaRegistro=usuario.FechaRegistro,
+        )

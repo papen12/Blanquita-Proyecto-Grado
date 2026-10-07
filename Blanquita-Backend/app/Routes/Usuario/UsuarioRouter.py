@@ -31,7 +31,7 @@ def CrearUsuario(
     service: UsuarioService = Depends(get_usuario_service),
     usuario_actual: dict = Depends(require_admin_db),
 ):
-    return service.CrearUsuario(datos)
+    return service.CrearUsuario(datos, usuario_actual["IdUsuario"])
 
 @UsuarioRouter.get(
     "/listar",

@@ -456,3 +456,11 @@ CREATE TABLE "CancelacionProduccionServilleta" (
   "MotivoCancelacion" TEXT
 );
 CREATE INDEX "idx_cancelservilleta_produccion" ON "CancelacionProduccionServilleta"("IdProduccionServilleta");
+
+CREATE TABLE "HistorialAdmin" (
+  "IdHistorialAdmin" SERIAL PRIMARY KEY,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE RESTRICT,
+  "Observacion" TEXT NOT NULL,
+  "FechaMovimiento" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX "idx_historialadmin_fecha" ON "HistorialAdmin"("FechaMovimiento" DESC);
