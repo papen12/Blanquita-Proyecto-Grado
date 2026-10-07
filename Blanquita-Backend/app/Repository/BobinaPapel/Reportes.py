@@ -1,9 +1,11 @@
-from datetime import timedelta
-
 from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session, aliased
 
 from app.Repository.DbCaller import DbCaller
+from app.Repository.Consultas import (
+    filtro_rango as _filtro_rango,
+    nombre_operador as _nombre_operador,
+)
 from app.Schemas.BobinaPapel import BobinaPapel, LoteBobina, TipoBobina
 from app.Schemas.Produccion import (
     CancelacionProduccionBobinaTubo,
@@ -17,25 +19,6 @@ from app.Schemas.Produccion import (
 from app.Schemas.Producto import Producto
 from app.Schemas.Proveedor import Proveedor
 from app.Schemas.Usuario import Rol, Usuario
-
-
-def _nombre_operador(usuario):
-    return usuario.PrimerNombre + " " + usuario.ApellidoPaterno
-
-
-ZONA_HORARIA = "America/La_Paz"
-
-
-def _filtro_rango(columna, fecha_inicio, fecha_fin):
-    # Compara contra la hora local de Bolivia, no la de la conexión, para que
-    # "un día" vaya de 00:00 a 23:59 en planta.
-    columna = func.timezone(ZONA_HORARIA, columna)
-    condiciones = []
-    if fecha_inicio is not None:
-        condiciones.append(columna >= fecha_inicio)
-    if fecha_fin is not None:
-        condiciones.append(columna < fecha_fin + timedelta(days=1))
-    return condiciones
 
 
 class ReporteBobinaPapelRepository:

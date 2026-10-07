@@ -264,6 +264,7 @@ class VerProduccionesServilletaRequest(BaseModel):
     CodigoBobina: Optional[str] = None
     Operador: Optional[str] = None
     IdEstadoProduccion: Optional[int] = None
+    IdsEstadoProduccion: Optional[list[int]] = None
     Pagina: int = 1
     TamanoPagina: int = 50
 

@@ -366,6 +366,7 @@ def CatalogoProduccionServilleta(
     CodigoBobina: str | None = None,
     Operador: str | None = None,
     IdEstadoProduccion: int | None = None,
+    IdsEstadoProduccion: list[int] | None = Query(default=None),
     Pagina: int = 1,
     TamanoPagina: int = 50,
     usuario_actual: dict = Depends(
@@ -382,6 +383,7 @@ def CatalogoProduccionServilleta(
             CodigoBobina=CodigoBobina,
             Operador=Operador,
             IdEstadoProduccion=IdEstadoProduccion,
+            IdsEstadoProduccion=IdsEstadoProduccion,
             Pagina=Pagina,
             TamanoPagina=TamanoPagina,
         )

@@ -14,8 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BotonDescarga } from "@/components/layout/BotonDescarga";
-import { dateFormatter, hoyISO } from "@/utils/dates";
+import { dateFormatter } from "@/utils/dates";
 
 const GRID = "grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3";
 const VACIO = "rounded-2xl bg-white p-10 text-center text-sm text-slate-400 ring-1 ring-slate-200";
@@ -234,18 +233,4 @@ export function ListaProducciones({
   }
 
   return <div className={GRID}>{elementos.map(renderizar)}</div>;
-}
-
-export function BotonReporteDia({ descargar }) {
-  return (
-    <BotonDescarga
-      texto="Reporte del día"
-      ayuda="PDF con todas las producciones de hoy, incluyendo pausas y cancelaciones"
-      exito="Reporte del día descargado"
-      descargar={() => {
-        const hoy = hoyISO();
-        return descargar(hoy, hoy, true);
-      }}
-    />
-  );
 }

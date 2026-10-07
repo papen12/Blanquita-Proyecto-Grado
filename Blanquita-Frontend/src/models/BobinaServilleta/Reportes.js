@@ -69,6 +69,7 @@ export const VerProduccionesServilletaRequest = (filtros = {}) => ({
   CodigoBobina: filtros.CodigoBobina ?? null,
   Operador: filtros.Operador ?? null,
   IdEstadoProduccion: filtros.IdEstadoProduccion ?? null,
+  IdsEstadoProduccion: filtros.IdsEstadoProduccion ?? null,
   Pagina: filtros.Pagina ?? 1,
   TamanoPagina: filtros.TamanoPagina ?? 50
 });

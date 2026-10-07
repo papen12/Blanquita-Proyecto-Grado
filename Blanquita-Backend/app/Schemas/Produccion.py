@@ -69,6 +69,39 @@ class MovimientoOperadorLogs(Base):
     Observacion: Mapped[str | None] = mapped_column(Text)
 
 
+class ProduccionServilleta(Base):
+    __tablename__ = "ProduccionServilleta"
+
+    IdProduccionServilleta: Mapped[int] = mapped_column(primary_key=True)
+    IdEstadoProduccion: Mapped[int]
+    IdUsuario: Mapped[int]
+    IdSubBobina: Mapped[int]
+    IdTurno: Mapped[int]
+    FechaInicioProduccion: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    FechaFinProduccion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class PausaProduccionServilleta(Base):
+    __tablename__ = "PausaProduccionServilleta"
+
+    IdPausaProduccionServilleta: Mapped[int] = mapped_column(primary_key=True)
+    IdProduccionServilleta: Mapped[int]
+    IdUsuario: Mapped[int]
+    FechaHoraPausa: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    MotivoPausaProduccion: Mapped[str | None] = mapped_column(Text)
+    FechaHoraReanudacion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class CancelacionProduccionServilleta(Base):
+    __tablename__ = "CancelacionProduccionServilleta"
+
+    IdCancelacionProduccionServilleta: Mapped[int] = mapped_column(primary_key=True)
+    IdProduccionServilleta: Mapped[int]
+    IdUsuario: Mapped[int]
+    FechaHoraCancelacion: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    MotivoCancelacion: Mapped[str | None] = mapped_column(Text)
+
+
 class PausaProduccionBobinaTubo(Base):
     __tablename__ = "PausaProduccionBobinaTubo"
 
