@@ -79,21 +79,6 @@ export async function corregirInventarioProductoTerminado(idPresentacion, cantid
   return CorreccionProductoTerminadoResponse(data);
 }
 
-export async function aumentarInventarioProductoTerminado(idPresentacion, cantidad, observacion) {
-  const payload = CorreccionProductoTerminadoRequest({
-    IdPresentacion: idPresentacion,
-    Cantidad: cantidad,
-    Observacion: observacion
-  });
-
-  const data = await pedirJson("/api/productofinal/aumento", {
-    method: "POST",
-    body: payload
-  });
-
-  return CorreccionProductoTerminadoResponse(data);
-}
-
 export async function verInventarioProductoTerminado(idProducto) {
   const data = await pedirJson(
     conQueryParams("/api/productofinal/inventario/ver", { IdProducto: idProducto })

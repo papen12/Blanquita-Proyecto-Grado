@@ -3,7 +3,6 @@ import {
   X,
   Loader2,
   PackageMinus,
-  PackagePlus,
   ClipboardMinus,
   ClipboardPlus,
   ListChecks,
@@ -22,13 +21,11 @@ import {
 } from "@/components/ui/dialog";
 import {
   corregirInventarioProductoTerminado,
-  aumentarInventarioProductoTerminado,
   ajustePositivoInventarioProductoTerminado,
   ajusteNegativoInventarioProductoTerminado,
 } from "../../services/Inventario/Inventario";
 import {
   MotivosCorreccionProductoTerminado,
-  MotivosAumentoProductoTerminado,
   MotivosAjustePositivoProductoTerminado,
   MotivosAjusteNegativoProductoTerminado,
 } from "@/constants/OperadorConfig";
@@ -74,20 +71,6 @@ const TIPOS = {
     exito: "Corrección registrada",
     cantidadMaxima: CANTIDAD_MAXIMA_CORRECCION,
     clases: CLASES_RESTA,
-  },
-  aumento: {
-    signo: 1,
-    tono: "ingreso",
-    Icono: PackagePlus,
-    motivos: MotivosAumentoProductoTerminado,
-    registrar: aumentarInventarioProductoTerminado,
-    titulo: "Aumento",
-    nombre: "aumento",
-    accion: "aumentar",
-    confirmacion: (cantidad) => `Se sumarán ${cantidad} unidades al inventario.`,
-    exito: "Aumento registrado",
-    cantidadMaxima: CANTIDAD_MAXIMA_CORRECCION,
-    clases: CLASES_SUMA,
   },
   ajustePositivo: {
     signo: 1,

@@ -171,12 +171,6 @@ export const MotivosCorreccionProductoTerminado = [
   "Producto registrado por error",
 ];
 
-export const MotivosAumentoProductoTerminado = [
-  "Cantidad ingresada menor a la real",
-  "Ingreso no registrado",
-  "Presentación equivocada",
-];
-
 export const MotivosAjustePositivoProductoTerminado = [
   "Conteo físico mayor al registrado",
   "Producto encontrado en otra ubicación",
