@@ -8,9 +8,24 @@ import {
   Container,
   CircleUserRound,
   ClipboardList,
-  Combine,QrCode
+  Combine,QrCode,UserShield,Users
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
+import { Roles } from "@/constants/Values";
+
+export function rutaDeItem(item, basePath, prefijo) {
+  if (item.absoluta) return item.ruta;
+  if (item.ruta === "") return `${prefijo}/inicio`;
+  return `${basePath}/${item.ruta}`;
+}
+
+export function rutasVisibles(rutas, idRol, esAdmin) {
+  return rutas.filter(
+    (item) =>
+      (!item.isLider || idRol === Roles.Encargado) && (!item.soloAdmin || esAdmin),
+  );
+}
+
 export const RutasNavBar = [
   {
     titulo: "Inicio",
@@ -75,6 +90,13 @@ export const RutasNavBar = [
     isLider: true,
   },
   {
+    titulo: "Administrador",
+    icono: UserShield,
+    ruta: "admin/inicio",
+    absoluta: true,
+    soloAdmin: true,
+  },
+  {
     titulo: "Perfil",
     icono: CircleUserRound,
     ruta: "perfil",
@@ -137,3 +159,14 @@ export const RutasReportes = [
     ruta: "",
   },
 ];
+
+
+
+export const RutasAdmin=
+[
+  {
+    titulo:"Usuarios",
+    icono:Users,
+    ruta:"/usuarios"
+  }
+]

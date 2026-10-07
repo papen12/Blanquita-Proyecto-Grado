@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.Auth.Security import LONGITUD_MAXIMA, LONGITUD_MINIMA
+
 
 class UsuarioCreate(BaseModel):
     IdRol: int = Field(..., gt=0)
@@ -12,7 +14,7 @@ class UsuarioCreate(BaseModel):
     ApellidoPaterno: str = Field(..., min_length=1, max_length=15)
     ApellidoMaterno: str | None = Field(default=None, max_length=15)
     Celular: str = Field(..., pattern=r"^[67]\d{7}$")
-    Clave: str = Field(..., min_length=8, max_length=64)
+    Clave: str = Field(..., min_length=LONGITUD_MINIMA, max_length=LONGITUD_MAXIMA)
     IsAdmin: bool = False
 
 
