@@ -96,6 +96,7 @@ def ObtenerCatalogoProduccion(
     CodigoBobina: str | None = None,
     Operador: str | None = None,
     IdEstadoProduccion: int | None = None,
+    IdsEstadoProduccion: list[int] | None = Query(default=None),
     Pagina: int = 1,
     TamanoPagina: int = 50,
     service: ReporteBobinaPapelService = Depends(reporte_bobina_papel_service),
@@ -109,6 +110,7 @@ def ObtenerCatalogoProduccion(
             CodigoBobina=CodigoBobina,
             Operador=Operador,
             IdEstadoProduccion=IdEstadoProduccion,
+            IdsEstadoProduccion=IdsEstadoProduccion,
             Pagina=Pagina,
             TamanoPagina=TamanoPagina,
         )

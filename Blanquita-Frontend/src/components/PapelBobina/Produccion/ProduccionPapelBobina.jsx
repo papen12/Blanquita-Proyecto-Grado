@@ -26,7 +26,6 @@ import {
 } from "../../../services/BobinaPapel/Produccion";
 import { ObtenerTiposPapelBobina } from "../../../services/BobinaPapel/BobinaPapel";
 import { obtenerProductos } from "../../../services/Inventario/Inventario";
-import { descargarReporteProduccionPorPeriodo } from "../../../services/BobinaPapel/Reportes";
 import { movimientosOperador, ObservacionesInsertarLogs } from "../../../constants/OperadorConfig";
 import {
   Roles,
@@ -42,7 +41,6 @@ import {
   ResumenProduccion,
   TabsProduccion,
   ListaProducciones,
-  BotonReporteDia,
 } from "@/components/Produccion/comunes";
 import {
   DialogoPausar,
@@ -51,6 +49,7 @@ import {
 } from "@/components/Produccion/Dialogos";
 import Header from "../../layout/Header";
 import { CardActiva, CardPausada } from "./Tarjetas";
+import ProduccionesConcluidas from "./Concluidas";
 
 const ID_TIPO_INGRESO = 1;
 const ID_TIPO_DESCUENTO = 2;
@@ -102,6 +101,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
   });
 
   const esEncargado = usuario?.IdRol === Roles.Encargado;
+  const [totalConcluidas, setTotalConcluidas] = useState(0);
 
   const [cambioLinea, setCambioLinea] = useState(null);
   const [nuevoProducto, setNuevoProducto] = useState(null);
@@ -264,11 +264,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
   return (
     <TooltipProvider>
     <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
-      <Header titulo={"Producción"} subtitulo={"Producción de Bobina Tubo"}>
-        {usuario?.IdRol === Roles.Encargado && (
-          <BotonReporteDia descargar={descargarReporteProduccionPorPeriodo} />
-        )}
-      </Header>
+      <Header titulo={"Producción"} subtitulo={"Producción de Bobina Tubo"} />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
         <TabsProduccion
@@ -276,8 +272,16 @@ export default function ProduccionBobinaTubo({ usuario }) {
           onCambio={setVista}
           totalActivas={activasFiltradas.length}
           totalPausadas={pausadasFiltradas.length}
+          mostrarConcluidas={esEncargado}
+          totalConcluidas={totalConcluidas}
         />
 
+        {vista === "concluidas" && esEncargado && (
+          <ProduccionesConcluidas onTotal={setTotalConcluidas} />
+        )}
+
+        {vista !== "concluidas" && (
+        <>
         {tiposBobina.length > 0 && (
           <div className="mb-5 flex flex-col gap-1.5">
             <span className="text-xs font-bold uppercase tracking-wide text-slate-600">
@@ -368,6 +372,8 @@ export default function ProduccionBobinaTubo({ usuario }) {
             )}
           </div>
         </div>
+        </>
+        )}
 
         {vista === "activas" && (
           <ListaProducciones

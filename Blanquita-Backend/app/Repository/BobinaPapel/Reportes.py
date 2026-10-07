@@ -23,7 +23,13 @@ def _nombre_operador(usuario):
     return usuario.PrimerNombre + " " + usuario.ApellidoPaterno
 
 
+ZONA_HORARIA = "America/La_Paz"
+
+
 def _filtro_rango(columna, fecha_inicio, fecha_fin):
+    # Compara contra la hora local de Bolivia, no la de la conexión, para que
+    # "un día" vaya de 00:00 a 23:59 en planta.
+    columna = func.timezone(ZONA_HORARIA, columna)
     condiciones = []
     if fecha_inicio is not None:
         condiciones.append(columna >= fecha_inicio)
@@ -52,7 +58,19 @@ class ReporteBobinaPapelRepository:
         pb = ProduccionBobinaTubo
         b1 = aliased(BobinaPapel)
         b2 = aliased(BobinaPapel)
+        misma_cargada = aliased(ProduccionBobinaTubo)
         fecha_referencia = func.coalesce(pb.FechaFinProduccion, pb.FechaInicioProduccion)
+
+        cantidad_cargada = (
+            select(func.count())
+            .where(
+                misma_cargada.IdBobina_1 == pb.IdBobina_1,
+                misma_cargada.IdBobina_2 == pb.IdBobina_2,
+            )
+            .correlate(pb)
+            .scalar_subquery()
+            .label("CantidadCargada")
+        )
 
         consulta = (
             select(
@@ -70,6 +88,7 @@ class ReporteBobinaPapelRepository:
                 pb.FechaFinProduccion,
                 (pb.FechaFinProduccion - pb.FechaInicioProduccion).label("DuracionTotal"),
                 pb.CantidadLogsActual,
+                cantidad_cargada,
             )
             .join(b1, b1.IdBobinaPapel == pb.IdBobina_1)
             .join(b2, b2.IdBobinaPapel == pb.IdBobina_2)
@@ -85,6 +104,11 @@ class ReporteBobinaPapelRepository:
             )
             .order_by(fecha_referencia.desc())
         )
+
+        if params.get("p_IdsEstadoProduccion"):
+            consulta = consulta.where(
+                pb.IdEstadoProduccion.in_(params["p_IdsEstadoProduccion"])
+            )
 
         if params.get("p_IdTurno") is not None:
             consulta = consulta.where(pb.IdTurno == params["p_IdTurno"])

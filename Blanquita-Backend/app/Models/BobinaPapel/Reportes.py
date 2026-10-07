@@ -48,6 +48,7 @@ class VerProduccionesBobinaTuboRequest(BaseModel):
     CodigoBobina: Optional[str] = None
     Operador: Optional[str] = None
     IdEstadoProduccion: Optional[int] = None
+    IdsEstadoProduccion: Optional[list[int]] = None
     Pagina: int = 1
     TamanoPagina: int = 50
 
@@ -67,6 +68,7 @@ class ProduccionBobinaTuboCatalogoResponse(BaseModel):
     FechaFinProduccion: Optional[datetime]
     DuracionTotal: Optional[timedelta]
     CantidadLogsActual: int
+    CantidadCargada: int = 1
 
 
 class VerProduccionesBobinaTuboResponse(BaseModel):

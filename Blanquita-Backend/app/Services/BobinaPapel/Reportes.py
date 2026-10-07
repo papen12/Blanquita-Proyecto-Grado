@@ -125,6 +125,7 @@ class ReporteBobinaPapelService:
             "p_CodigoBobina": data.CodigoBobina,
             "p_Operador": data.Operador,
             "p_IdEstadoProduccion": data.IdEstadoProduccion,
+            "p_IdsEstadoProduccion": data.IdsEstadoProduccion or None,
         }
 
         try:

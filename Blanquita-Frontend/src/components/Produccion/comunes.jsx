@@ -149,10 +149,22 @@ export function TarjetaProduccion({
   );
 }
 
-export function TabsProduccion({ vista, onCambio, totalActivas, totalPausadas }) {
+export function TabsProduccion({
+  vista,
+  onCambio,
+  totalActivas,
+  totalPausadas,
+  mostrarConcluidas = false,
+  totalConcluidas = 0,
+}) {
   return (
     <Tabs value={vista} onValueChange={onCambio} className="mb-5">
-      <TabsList className="grid w-full grid-cols-2 sm:w-80">
+      <TabsList
+        className={cn(
+          "grid w-full",
+          mostrarConcluidas ? "grid-cols-3 sm:w-[30rem]" : "grid-cols-2 sm:w-80",
+        )}
+      >
         <TabsTrigger value="activas" className="gap-1.5 font-bold">
           <Layers size={15} strokeWidth={2.75} />
           Activas
@@ -171,6 +183,17 @@ export function TabsProduccion({ vista, onCambio, totalActivas, totalPausadas })
             </Badge>
           )}
         </TabsTrigger>
+        {mostrarConcluidas && (
+          <TabsTrigger value="concluidas" className="gap-1.5 font-bold">
+            <CheckCircle2 size={15} strokeWidth={2.75} />
+            Concluidas
+            {totalConcluidas > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 min-w-5 justify-center px-1.5">
+                {totalConcluidas}
+              </Badge>
+            )}
+          </TabsTrigger>
+        )}
       </TabsList>
     </Tabs>
   );
