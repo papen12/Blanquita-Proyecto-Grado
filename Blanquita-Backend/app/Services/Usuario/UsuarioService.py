@@ -4,9 +4,17 @@ import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.Models.Usuario.Usuario import PerfilUpdate, UsuarioCreate, UsuarioPerfil
+from app.Models.Usuario.Usuario import (
+    ListarUsuariosRequest,
+    ListarUsuariosResponse,
+    PerfilUpdate,
+    UsuarioCreate,
+    UsuarioListaItem,
+    UsuarioPerfil,
+)
 from app.Repository.Usuario.UsuarioRepository import UsuarioRepository
 from app.utils.validators import ValidarFormularioUsuario
+from app.Auth.Security import ValidarClaveNueva
 
 SUPABASE_URL = os.getenv("SUPABASE_URL").rstrip("/")
 SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -44,6 +52,16 @@ class UsuarioService:
                     status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                     detail=f"{etiqueta} solo puede tener letras, sin espacios, entre 2 y 15 caracteres",
                 )
+
+    def ListarUsuarios(self, data: ListarUsuariosRequest) -> ListarUsuariosResponse:
+        total, filas = self.repository.ListarUsuarios(data.model_dump())
+
+        return ListarUsuariosResponse(
+            Total=total,
+            Pagina=data.Pagina,
+            TamanoPagina=data.TamanoPagina,
+            Usuarios=[UsuarioListaItem(**fila) for fila in filas],
+        )
 
     def ObtenerPerfil(self, usuario_actual: dict) -> UsuarioPerfil:
         fila = self.repository.ObtenerPerfil(
@@ -141,6 +159,17 @@ class UsuarioService:
 
     def CrearUsuario(self, datos: UsuarioCreate) -> dict:
         self._ValidarNombres(datos)
+
+        error_clave = ValidarClaveNueva(
+            datos.Clave,
+            datos.Ci,
+            [datos.PrimerNombre, datos.SegundoNombre, datos.ApellidoPaterno, datos.ApellidoMaterno],
+        )
+        if error_clave:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=error_clave,
+            )
 
         auth_user_id = self._CrearCuentaAuth(datos.Ci, datos.Clave)
 

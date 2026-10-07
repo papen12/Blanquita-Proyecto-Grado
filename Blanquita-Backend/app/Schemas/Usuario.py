@@ -15,6 +15,14 @@ class Rol(Base):
     Descripcion: Mapped[str | None] = mapped_column(Text)
 
 
+class EstadoUsuario(Base):
+    __tablename__ = "EstadoUsuario"
+
+    IdEstadoUsuario: Mapped[int] = mapped_column(primary_key=True)
+    NombreEstadoUsuario: Mapped[str] = mapped_column(Text)
+    DescripcionEstadoUsuario: Mapped[str | None] = mapped_column(Text)
+
+
 class Usuario(Base):
     __tablename__ = "Usuario"
 

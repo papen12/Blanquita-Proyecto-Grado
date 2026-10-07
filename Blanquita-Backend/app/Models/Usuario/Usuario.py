@@ -33,6 +33,36 @@ class UsuarioResponse(BaseModel):
     FechaRegistro: datetime = Field(..., validation_alias="FechaRegistroOut")
 
 
+class ListarUsuariosRequest(BaseModel):
+    IdEstadoUsuario: int | None = None
+    IdRol: int | None = None
+    Busqueda: str | None = Field(default=None, max_length=50)
+    Pagina: int = Field(default=1, ge=1)
+    TamanoPagina: int = Field(default=20, ge=1, le=100)
+
+
+class UsuarioListaItem(BaseModel):
+    IdUsuario: int
+    Ci: str
+    PrimerNombre: str
+    SegundoNombre: str | None = None
+    ApellidoPaterno: str
+    ApellidoMaterno: str | None = None
+    Celular: str | None = None
+    FechaRegistro: datetime
+    IdRol: int
+    NombreRol: str
+    IdEstadoUsuario: int
+    NombreEstadoUsuario: str
+
+
+class ListarUsuariosResponse(BaseModel):
+    Total: int
+    Pagina: int
+    TamanoPagina: int
+    Usuarios: list[UsuarioListaItem]
+
+
 class PerfilUpdate(BaseModel):
     PrimerNombre: str = Field(..., min_length=1, max_length=15)
     SegundoNombre: str | None = Field(default=None, max_length=15)
