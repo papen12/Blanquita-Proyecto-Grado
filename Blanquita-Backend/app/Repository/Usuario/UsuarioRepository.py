@@ -90,6 +90,65 @@ class UsuarioRepository:
         '''
         return self.caller.LlamarUnRegistro(consulta, params)
 
+    def ObtenerUsuarioBloqueado(self, id_usuario: int) -> Usuario | None:
+        """Lee el usuario con FOR UPDATE; el bloqueo dura hasta el commit/rollback."""
+        try:
+            return self.db.execute(
+                select(Usuario).where(Usuario.IdUsuario == id_usuario).with_for_update()
+            ).scalar_one_or_none()
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error ejecutando consulta en base de datos",
+            )
+
+    def NombresEstadosUsuario(self) -> dict[int, str]:
+        filas = self.caller.Consultar(
+            select(EstadoUsuario.IdEstadoUsuario, EstadoUsuario.NombreEstadoUsuario)
+        )
+        return {f["IdEstadoUsuario"]: f["NombreEstadoUsuario"] for f in filas}
+
+    def CambiarEstado(
+        self, usuario: Usuario, id_estado: int, observacion: str, id_admin: int
+    ) -> None:
+        """Actualiza el estado y registra el historial en la misma transacción."""
+        try:
+            usuario.IdEstadoUsuario = id_estado
+            self.db.add(HistorialAdmin(IdUsuario=id_admin, Observacion=observacion))
+            self.db.commit()
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo cambiar el estado del usuario",
+            )
+
+    def AgregarHistorial(self, id_admin: int, observacion: str) -> None:
+        """Deja el registro pendiente en la transacción; se guarda con Confirmar()."""
+        try:
+            self.db.add(HistorialAdmin(IdUsuario=id_admin, Observacion=observacion))
+            self.db.flush()
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo registrar el historial",
+            )
+
+    def Confirmar(self) -> None:
+        try:
+            self.db.commit()
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo registrar el historial",
+            )
+
+    def Revertir(self) -> None:
+        self.db.rollback()
+
     def ObtenerRol(self, id_rol: int) -> dict | None:
         filas = self.caller.Consultar(
             select(Rol.IdRol, Rol.NombreRol).where(Rol.IdRol == id_rol)

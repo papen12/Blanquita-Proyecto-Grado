@@ -63,6 +63,33 @@ class ListarUsuariosResponse(BaseModel):
     Usuarios: list[UsuarioListaItem]
 
 
+class CambiarEstadoUsuarioRequest(BaseModel):
+    IdUsuario: int = Field(..., gt=0)
+    IdEstadoUsuario: int = Field(..., gt=0)
+    Motivo: str
+
+
+class CambiarEstadoUsuarioResponse(BaseModel):
+    IdUsuario: int
+    Ci: str
+    NombreCompleto: str
+    IdEstadoAnterior: int
+    NombreEstadoAnterior: str
+    IdEstadoUsuario: int
+    NombreEstadoUsuario: str
+
+
+class RestablecerClaveRequest(BaseModel):
+    IdUsuario: int = Field(..., gt=0)
+    ClaveNueva: str = Field(..., min_length=LONGITUD_MINIMA, max_length=LONGITUD_MAXIMA)
+
+
+class RestablecerClaveResponse(BaseModel):
+    IdUsuario: int
+    Ci: str
+    NombreCompleto: str
+
+
 class PerfilUpdate(BaseModel):
     PrimerNombre: str = Field(..., min_length=1, max_length=15)
     SegundoNombre: str | None = Field(default=None, max_length=15)

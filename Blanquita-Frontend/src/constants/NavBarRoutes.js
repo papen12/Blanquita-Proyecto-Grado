@@ -162,11 +162,35 @@ export const RutasReportes = [
 
 
 
-export const RutasAdmin=
-[
+// Las entradas con "descripcion" aparecen como acceso directo en /admin/inicio.
+export const RutasAdmin = [
   {
-    titulo:"Usuarios",
-    icono:Users,
-    ruta:"/usuarios"
-  }
-]
+    titulo: "Inicio",
+    icono: Home,
+    ruta: "inicio",
+  },
+  {
+    titulo: "Usuarios",
+    icono: Users,
+    ruta: "usuarios",
+    descripcion: "Registrar usuarios, cambiar su estado y restablecer claves",
+  },
+  {
+    titulo: "Volver a la Planta",
+    icono: Factory,
+    ruta: "",
+  },
+];
+
+// Base de las rutas según la sección del menú.
+export function basePathSeccion(seccion, prefijo) {
+  if (seccion === "reportes") return `${prefijo}/reportes`;
+  if (seccion === "admin") return "admin";
+  return prefijo;
+}
+
+export function rutasSeccion(seccion) {
+  if (seccion === "reportes") return RutasReportes;
+  if (seccion === "admin") return RutasAdmin;
+  return RutasNavBar;
+}

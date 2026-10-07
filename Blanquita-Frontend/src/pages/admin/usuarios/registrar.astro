@@ -1,9 +1,9 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import Layout from '../../../layouts/Layout.astro';
 const { usuario } = Astro.locals;
 import NavBar from '@/components/layout/NavBar';
 import SideBar from '@/components/layout/SideBar';
-import InicioAdmin from '@/components/Admin/InicioAdmin';
+import RegistrarUsuario from '@/components/Admin/Usuarios/RegistrarUsuario';
 ---
 
 <Layout>
@@ -13,5 +13,5 @@ import InicioAdmin from '@/components/Admin/InicioAdmin';
 	<div class="hidden md:block">
 		<SideBar client:media="(min-width: 768px)" idRol={usuario.IdRol} esAdmin={usuario.IsAdmin} seccion="admin" />
 	</div>
-	<InicioAdmin client:load />
+	<RegistrarUsuario client:load />
 </Layout>

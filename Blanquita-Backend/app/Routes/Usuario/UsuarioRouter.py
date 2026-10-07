@@ -4,9 +4,13 @@ from sqlalchemy.orm import Session
 from app.Auth.Dependencies import get_current_user, require_admin_db
 from app.Config.supabase import get_db
 from app.Models.Usuario.Usuario import (
+    CambiarEstadoUsuarioRequest,
+    CambiarEstadoUsuarioResponse,
     ListarUsuariosRequest,
     ListarUsuariosResponse,
     PerfilUpdate,
+    RestablecerClaveRequest,
+    RestablecerClaveResponse,
     UsuarioCreate,
     UsuarioPerfil,
     UsuarioResponse,
@@ -55,6 +59,28 @@ def ListarUsuarios(
             TamanoPagina=TamanoPagina,
         )
     )
+
+@UsuarioRouter.patch(
+    "/estado",
+    response_model=CambiarEstadoUsuarioResponse,
+)
+def CambiarEstadoUsuario(
+    datos: CambiarEstadoUsuarioRequest,
+    service: UsuarioService = Depends(get_usuario_service),
+    usuario_actual: dict = Depends(require_admin_db),
+):
+    return service.CambiarEstadoUsuario(datos, usuario_actual["IdUsuario"])
+
+@UsuarioRouter.patch(
+    "/clave",
+    response_model=RestablecerClaveResponse,
+)
+def RestablecerClave(
+    datos: RestablecerClaveRequest,
+    service: UsuarioService = Depends(get_usuario_service),
+    usuario_actual: dict = Depends(require_admin_db),
+):
+    return service.RestablecerClave(datos, usuario_actual["IdUsuario"])
 
 @UsuarioRouter.get(
     "/ver",

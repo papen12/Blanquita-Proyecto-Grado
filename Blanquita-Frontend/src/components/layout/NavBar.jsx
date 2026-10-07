@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
-  RutasNavBar,
-  RutasReportes,
+  basePathSeccion,
+  rutasSeccion,
   rutaDeItem,
   rutasVisibles,
 } from "@/constants/NavBarRoutes";
@@ -132,9 +132,8 @@ function ItemNavMovil({ item, basePath, prefijo, alNavegar }) {
 
 export default function NavBar({ idRol, esAdmin = false, seccion }) {
   const prefijo = PREFIJO_POR_ROL[idRol];
-  const enReportes = seccion === "reportes";
-  const basePath = enReportes ? `${prefijo}/reportes` : prefijo;
-  const rutas = rutasVisibles(enReportes ? RutasReportes : RutasNavBar, idRol, esAdmin);
+  const basePath = basePathSeccion(seccion, prefijo);
+  const rutas = rutasVisibles(rutasSeccion(seccion), idRol, esAdmin);
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   return (

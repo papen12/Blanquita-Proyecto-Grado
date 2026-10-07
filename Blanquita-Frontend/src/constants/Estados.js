@@ -55,3 +55,18 @@ export const EstadosProduccion=
     "NombreEstadoProduccion": "Cambio de línea"
   }
 ]
+
+export const EstadosUsuario = [
+  { IdEstadoUsuario: 1, NombreEstadoUsuario: "Activo" },
+  { IdEstadoUsuario: 2, NombreEstadoUsuario: "Inactivo" },
+  { IdEstadoUsuario: 3, NombreEstadoUsuario: "Suspendido" },
+];
+
+export const ID_ESTADO_USUARIO_SUSPENDIDO = 3;
+
+// Igual que en el backend: Inactivo es reversible, Suspendido es definitivo.
+export const TransicionesEstadoUsuario = {
+  1: [2, 3],
+  2: [1, 3],
+  3: [],
+};

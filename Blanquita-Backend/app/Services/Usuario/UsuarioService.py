@@ -6,9 +6,13 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.Models.Usuario.Usuario import (
+    CambiarEstadoUsuarioRequest,
+    CambiarEstadoUsuarioResponse,
     ListarUsuariosRequest,
     ListarUsuariosResponse,
     PerfilUpdate,
+    RestablecerClaveRequest,
+    RestablecerClaveResponse,
     UsuarioCreate,
     UsuarioListaItem,
     UsuarioPerfil,
@@ -16,20 +20,42 @@ from app.Models.Usuario.Usuario import (
 )
 from app.Schemas.Usuario import Usuario
 from app.Repository.Usuario.UsuarioRepository import UsuarioRepository
-from app.utils.validators import ValidarFormularioUsuario
+from app.utils.validators import (
+    ValidarFormularioUsuario,
+    ValidarTexto,
+    REGLA_CARACTERES_OBSERVACION,
+)
 from app.Auth.Security import ValidarClaveNueva
+from app.Constants.Cantidades import LONGITUD_MINIMA_DESCRIPCION, LONGITUD_MAXIMA_DESCRIPCION
+from app.Constants.Estados import (
+    ESTADO_USUARIO_ACTIVO,
+    ESTADO_USUARIO_SUSPENDIDO,
+    TRANSICIONES_ESTADO_USUARIO,
+)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL").rstrip("/")
 SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 TIMEOUT_ADMIN = 15.0
 DOMINIO_SINTETICO = "papelblanquita.invalid"
-ESTADO_USUARIO_ACTIVO = 1
 
 
 def _texto_opcional(valor: str | None) -> str | None:
     texto = (valor or "").strip()
     return texto or None
+
+
+def _nombres(usuario: Usuario) -> list[str | None]:
+    return [
+        usuario.PrimerNombre,
+        usuario.SegundoNombre,
+        usuario.ApellidoPaterno,
+        usuario.ApellidoMaterno,
+    ]
+
+
+def _nombre_completo(usuario: Usuario) -> str:
+    return " ".join(n for n in _nombres(usuario) if n)
 
 # (campo, etiqueta para el mensaje, obligatorio)
 CAMPOS_NOMBRE = (
@@ -70,6 +96,117 @@ class UsuarioService:
             Pagina=data.Pagina,
             TamanoPagina=data.TamanoPagina,
             Usuarios=[UsuarioListaItem(**fila) for fila in filas],
+        )
+
+    def CambiarEstadoUsuario(
+        self, data: CambiarEstadoUsuarioRequest, id_admin: int
+    ) -> CambiarEstadoUsuarioResponse:
+        motivo = (data.Motivo or "").strip()
+        if not ValidarTexto(LONGITUD_MINIMA_DESCRIPCION, LONGITUD_MAXIMA_DESCRIPCION, motivo):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=(
+                    "El motivo es obligatorio, debe tener entre "
+                    f"{LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres, "
+                    f"{REGLA_CARACTERES_OBSERVACION}"
+                ),
+            )
+
+        if data.IdUsuario == id_admin:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="No puede cambiar el estado de su propio usuario",
+            )
+
+        estados = self.repository.NombresEstadosUsuario()
+        if data.IdEstadoUsuario not in estados:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="El estado indicado no existe",
+            )
+
+        usuario = self.repository.ObtenerUsuarioBloqueado(data.IdUsuario)
+        if usuario is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="El usuario no existe",
+            )
+
+        anterior = usuario.IdEstadoUsuario
+        if anterior == data.IdEstadoUsuario:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"El usuario ya se encuentra {estados[anterior]}",
+            )
+
+        if data.IdEstadoUsuario not in TRANSICIONES_ESTADO_USUARIO.get(anterior, set()):
+            detalle = (
+                "El usuario está Suspendido de forma definitiva, su estado no puede cambiarse"
+                if anterior == ESTADO_USUARIO_SUSPENDIDO
+                else f"No se permite pasar de {estados[anterior]} a {estados[data.IdEstadoUsuario]}"
+            )
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detalle)
+
+        nombre_completo = _nombre_completo(usuario)
+        observacion = (
+            f"Cambio de estado · Usuario CI {usuario.Ci} ({nombre_completo}): "
+            f"{estados[anterior]} → {estados[data.IdEstadoUsuario]}. Motivo: {motivo}"
+        )
+
+        self.repository.CambiarEstado(usuario, data.IdEstadoUsuario, observacion, id_admin)
+
+        return CambiarEstadoUsuarioResponse(
+            IdUsuario=usuario.IdUsuario,
+            Ci=usuario.Ci,
+            NombreCompleto=nombre_completo,
+            IdEstadoAnterior=anterior,
+            NombreEstadoAnterior=estados[anterior],
+            IdEstadoUsuario=data.IdEstadoUsuario,
+            NombreEstadoUsuario=estados[data.IdEstadoUsuario],
+        )
+
+    def RestablecerClave(
+        self, data: RestablecerClaveRequest, id_admin: int
+    ) -> RestablecerClaveResponse:
+        usuario = self.repository.ObtenerUsuarioBloqueado(data.IdUsuario)
+        if usuario is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="El usuario no existe",
+            )
+
+        if usuario.IdEstadoUsuario == ESTADO_USUARIO_SUSPENDIDO:
+            self.repository.Revertir()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="El usuario está Suspendido de forma definitiva, no se puede restablecer su clave",
+            )
+
+        error_clave = ValidarClaveNueva(data.ClaveNueva, usuario.Ci, _nombres(usuario))
+        if error_clave:
+            self.repository.Revertir()
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=error_clave,
+            )
+
+        nombre_completo = _nombre_completo(usuario)
+        self.repository.AgregarHistorial(
+            id_admin, f"Restablecer clave · Usuario CI {usuario.Ci} ({nombre_completo})"
+        )
+
+        try:
+            self._ActualizarClaveAuth(str(usuario.AuthUserId), data.ClaveNueva)
+        except Exception:
+            self.repository.Revertir()
+            raise
+
+        self.repository.Confirmar()
+
+        return RestablecerClaveResponse(
+            IdUsuario=usuario.IdUsuario,
+            Ci=usuario.Ci,
+            NombreCompleto=nombre_completo,
         )
 
     def ObtenerPerfil(self, usuario_actual: dict) -> UsuarioPerfil:
@@ -155,6 +292,38 @@ class UsuarioService:
             )
 
         return auth_user_id
+
+    def _ActualizarClaveAuth(self, auth_user_id: str, clave: str) -> None:
+        try:
+            respuesta = httpx.put(
+                f"{SUPABASE_URL}/auth/v1/admin/users/{auth_user_id}",
+                headers=self._CabecerasAdmin(),
+                json={"password": clave},
+                timeout=TIMEOUT_ADMIN,
+            )
+        except httpx.RequestError:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Servicio de autenticación no disponible"
+            )
+
+        if respuesta.status_code == 404:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="El usuario no tiene una cuenta de acceso registrada"
+            )
+
+        if respuesta.status_code == 422:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="El servicio de autenticación rechazó la clave, elija otra"
+            )
+
+        if respuesta.status_code >= 400:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="No se pudo restablecer la clave"
+            )
 
     def _EliminarCuentaAuth(self, auth_user_id: str) -> None:
         try:

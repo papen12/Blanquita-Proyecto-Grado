@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Icon, ChevronDown, ChevronLeft, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  RutasNavBar,
-  RutasReportes,
+  basePathSeccion,
+  rutasSeccion,
   rutaDeItem,
   rutasVisibles,
 } from "@/constants/NavBarRoutes";
@@ -114,9 +114,8 @@ function GrupoColapsable({ item, basePath }) {
 
 export default function SideBar({ idRol, esAdmin = false, seccion }) {
   const prefijo = PREFIJO_POR_ROL[idRol];
-  const enReportes = seccion === "reportes";
-  const basePath = enReportes ? `${prefijo}/reportes` : prefijo;
-  const rutas = rutasVisibles(enReportes ? RutasReportes : RutasNavBar, idRol, esAdmin);
+  const basePath = basePathSeccion(seccion, prefijo);
+  const rutas = rutasVisibles(rutasSeccion(seccion), idRol, esAdmin);
 
   const [abierto, setAbierto] = useState(true);
 

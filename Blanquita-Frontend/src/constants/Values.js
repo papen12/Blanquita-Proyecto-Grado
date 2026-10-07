@@ -49,3 +49,11 @@ export const MOTIVO_CORRECCION_MIN = 5;
 export const MOTIVO_CORRECCION_MAX = 150;
 
 export const AjusteMax=500
+
+export const RolesUsuario = [
+  { IdRol: 1, NombreRol: "Operador" },
+  { IdRol: 2, NombreRol: "Líder de Inventario y Producción" },
+];
+
+export const CLAVE_MIN = 8;
+export const CLAVE_MAX = 12;
