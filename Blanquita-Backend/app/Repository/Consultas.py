@@ -10,8 +10,7 @@ def nombre_operador(usuario):
 
 
 def filtro_rango(columna, fecha_inicio, fecha_fin):
-    # Compara contra la hora local de Bolivia, no la de la conexión, para que
-    # "un día" vaya de 00:00 a 23:59 en planta.
+    
     columna = func.timezone(ZONA_HORARIA, columna)
     condiciones = []
     if fecha_inicio is not None:
