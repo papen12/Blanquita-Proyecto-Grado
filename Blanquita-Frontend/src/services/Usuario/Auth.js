@@ -7,7 +7,9 @@ import {
 } from "../../models/Usuario/Auth";
 import { pedirJson } from "@/utils/api";
 
-const BACKEND_URL = import.meta.env.BACKEND_URL;
+const BACKEND_URL = (
+  import.meta.env.PROD ? import.meta.env.BACKEND_URL_DEPLOY : import.meta.env.BACKEND_URL
+).replace(/\/+$/, "");
 
 export async function login(ci, clave, ip, userAgent) {
   const headers = {};
