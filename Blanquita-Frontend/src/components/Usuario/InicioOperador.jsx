@@ -158,7 +158,7 @@ export default function InicioOperador({ usuario }) {
               key={a.id}
               value={a.id}
               onClick={() => seleccionar(a.id)}
-              className="h-auto gap-1.5 rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+              className="h-auto gap-1.5 rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 bg-white hover:border-slate-300 hover:bg-white hover:text-slate-600 aria-pressed:border-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white aria-pressed:hover:border-slate-900 aria-pressed:hover:bg-slate-900 aria-pressed:hover:text-white"
             >
               <IconoArea area={a} />
               {a.titulo}

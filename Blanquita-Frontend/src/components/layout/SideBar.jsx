@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { Icon, ChevronDown, ChevronLeft, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { RutasNavBar, RutasReportes } from "@/constants/NavBarRoutes";
-import { PREFIJO_POR_ROL, Roles } from "@/constants/Values";
+import {
+  basePathSeccion,
+  rutasSeccion,
+  rutaDeItem,
+  rutasVisibles,
+} from "@/constants/NavBarRoutes";
+import { PREFIJO_POR_ROL } from "@/constants/Values";
 import { cerrarSesion } from "@/lib/logout-client";
 import {
   SidebarProvider,
@@ -46,8 +51,7 @@ function IconoItem({ item, size = 22 }) {
 }
 
 function EntradaSimple({ item, basePath, prefijo }) {
-  const rutaCompleta =
-    item.ruta === "" ? `${prefijo}/inicio` : `${basePath}/${item.ruta}`;
+  const rutaCompleta = rutaDeItem(item, basePath, prefijo);
 
   return (
     <SidebarMenuItem>
@@ -108,13 +112,10 @@ function GrupoColapsable({ item, basePath }) {
   );
 }
 
-export default function SideBar({ idRol, seccion }) {
+export default function SideBar({ idRol, esAdmin = false, seccion }) {
   const prefijo = PREFIJO_POR_ROL[idRol];
-  const enReportes = seccion === "reportes";
-  const basePath = enReportes ? `${prefijo}/reportes` : prefijo;
-  const rutas = enReportes
-    ? RutasReportes
-    : RutasNavBar.filter((item) => !item.isLider || idRol === Roles.Encargado);
+  const basePath = basePathSeccion(seccion, prefijo);
+  const rutas = rutasVisibles(rutasSeccion(seccion), idRol, esAdmin);
 
   const [abierto, setAbierto] = useState(true);
 

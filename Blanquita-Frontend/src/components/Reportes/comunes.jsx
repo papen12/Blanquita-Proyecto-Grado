@@ -46,6 +46,7 @@ export const ESTADOS_PRODUCCION = {
   Pausa: "border-amber-300 bg-amber-50 text-amber-700",
   Finalizado: "border-emerald-300 bg-emerald-50 text-emerald-700",
   Cancelada: "border-red-300 bg-red-50 text-red-600",
+  "Cambio de línea": "border-violet-300 bg-violet-50 text-violet-700",
 };
 
 const AYUDA_SIN_RANGO =

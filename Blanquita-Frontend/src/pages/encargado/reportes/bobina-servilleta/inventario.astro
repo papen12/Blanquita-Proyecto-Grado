@@ -8,10 +8,10 @@ import ServilletaBobinaReportes from '@/components/Reportes/BobinaServilleta/Bob
 
 <Layout>
 	<div class="md:hidden">
-		<NavBar client:media="(max-width: 767.98px)" idRol={usuario.IdRol} seccion="reportes" />
+		<NavBar client:media="(max-width: 767.98px)" idRol={usuario.IdRol} esAdmin={usuario.IsAdmin} seccion="reportes" />
 	</div>
 	<div class="hidden md:block">
-		<SideBar client:media="(min-width: 768px)" idRol={usuario.IdRol} seccion="reportes" />
+		<SideBar client:media="(min-width: 768px)" idRol={usuario.IdRol} esAdmin={usuario.IsAdmin} seccion="reportes" />
 	</div>
 	<ServilletaBobinaReportes client:load usuario={usuario} />
 </Layout>

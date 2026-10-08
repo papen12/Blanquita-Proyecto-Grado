@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -37,8 +38,13 @@ from app.Models.BobinaPapel.Reportes import (
     ReporteHistorialMovimientosBobinaRequest,
     ReporteHistorialMovimientosBobinaResponse,
     MovimientoBobinaResponse,
+    ProduccionCargadaResponse,
+    ResumenProductoPeriodoResponse,
 )
 from app.Repository.BobinaPapel.Reportes import ReporteBobinaPapelRepository
+
+ESTADO_CANCELADA = "Cancelada"
+ESTADOS_CERRADOS_RESUMEN = {"Finalizado", "Cambio de línea"}
 
 
 class ReporteBobinaPapelService:
@@ -115,10 +121,11 @@ class ReporteBobinaPapelService:
             "p_FechaInicio": data.FechaInicio,
             "p_FechaFin": data.FechaFin,
             "p_IdTurno": data.IdTurno,
-            "p_IdsTipoBobina": data.IdsTipoBobina or None,
+            "p_IdsProducto": data.IdsProducto or None,
             "p_CodigoBobina": data.CodigoBobina,
             "p_Operador": data.Operador,
             "p_IdEstadoProduccion": data.IdEstadoProduccion,
+            "p_IdsEstadoProduccion": data.IdsEstadoProduccion or None,
         }
 
         try:
@@ -161,6 +168,44 @@ class ReporteBobinaPapelService:
         return [
             MovimientoOperadorLogsResponse(**fila_movimiento)
             for fila_movimiento in filas_movimientos
+        ]
+
+    def _ObtenerCargada(self, fila: dict) -> list[ProduccionCargadaResponse]:
+        filas_cargada = self.repository.ProduccionesDeCargada(
+            {"p_IdBobina1": fila["IdBobina1"], "p_IdBobina2": fila["IdBobina2"]}
+        )
+        return [ProduccionCargadaResponse(**f) for f in filas_cargada]
+
+    def _ResumenPorProducto(
+        self, producciones: list[ProduccionBobinaTuboCatalogoResponse]
+    ) -> list[ResumenProductoPeriodoResponse]:
+        resumen: dict[str, dict] = {}
+        for p in producciones:
+            datos = resumen.setdefault(
+                p.NombreProducto,
+                {"CantidadProducciones": 0, "TotalLogs": 0, "CantidadCanceladas": 0},
+            )
+            if p.NombreEstadoProduccion in ESTADOS_CERRADOS_RESUMEN:
+                datos["CantidadProducciones"] += 1
+                datos["TotalLogs"] += p.CantidadLogsActual
+            elif p.NombreEstadoProduccion == ESTADO_CANCELADA:
+                datos["CantidadCanceladas"] += 1
+
+        return [
+            ResumenProductoPeriodoResponse(
+                NombreProducto=nombre,
+                CantidadProducciones=datos["CantidadProducciones"],
+                TotalLogs=datos["TotalLogs"],
+                PromedioLogs=(
+                    (Decimal(datos["TotalLogs"]) / datos["CantidadProducciones"]).quantize(
+                        Decimal("0.01"), rounding=ROUND_HALF_UP
+                    )
+                    if datos["CantidadProducciones"]
+                    else None
+                ),
+                CantidadCanceladas=datos["CantidadCanceladas"],
+            )
+            for nombre, datos in sorted(resumen.items())
         ]
 
     def ReporteDetalleProduccion(
@@ -219,6 +264,7 @@ class ReporteBobinaPapelService:
 
         return ReporteProduccionBobinaTuboDetalleResponse(
             **fila,
+            Cargada=self._ObtenerCargada(fila),
             Pausas=pausas,
             TotalTiempoPausado=total_tiempo_pausado,
             Movimientos=movimientos,
@@ -404,6 +450,7 @@ class ReporteBobinaPapelService:
 
         return ReporteCancelacionProduccionBobinaTuboResponse(
             **fila,
+            Cargada=self._ObtenerCargada(fila),
             Pausas=pausas,
             TotalTiempoPausado=total_tiempo_pausado,
             Movimientos=movimientos,
@@ -419,7 +466,7 @@ class ReporteBobinaPapelService:
                     "p_FechaInicio": data.FechaInicio,
                     "p_FechaFin": data.FechaFin,
                     "p_IdTurno": None,
-                    "p_IdsTipoBobina": None,
+                    "p_IdsProducto": None,
                     "p_CodigoBobina": None,
                     "p_Operador": None,
                     "p_IdEstadoProduccion": None,
@@ -452,27 +499,28 @@ class ReporteBobinaPapelService:
                 detail="No se pudieron obtener las pausas del período",
             )
 
-        pausas_por_motivo: dict[str, dict] = {}
+        pausas_por_motivo: dict[tuple[str, str], dict] = {}
         for fila_pausa in filas_pausas:
-            motivo = fila_pausa["MotivoPausaProduccion"] or "Sin motivo especificado"
+            clave = (
+                fila_pausa["NombreProducto"],
+                fila_pausa["MotivoPausaProduccion"] or "Sin motivo especificado",
+            )
             duracion = fila_pausa["DuracionPausa"] or timedelta()
 
-            if motivo not in pausas_por_motivo:
-                pausas_por_motivo[motivo] = {
-                    "CantidadPausas": 0,
-                    "TiempoTotal": timedelta(),
-                }
-
-            pausas_por_motivo[motivo]["CantidadPausas"] += 1
-            pausas_por_motivo[motivo]["TiempoTotal"] += duracion
+            datos = pausas_por_motivo.setdefault(
+                clave, {"CantidadPausas": 0, "TiempoTotal": timedelta()}
+            )
+            datos["CantidadPausas"] += 1
+            datos["TiempoTotal"] += duracion
 
         pausas_agrupadas = [
             PausaPorMotivoResponse(
+                NombreProducto=producto,
                 Motivo=motivo,
                 CantidadPausas=datos["CantidadPausas"],
                 TiempoTotal=datos["TiempoTotal"],
             )
-            for motivo, datos in pausas_por_motivo.items()
+            for (producto, motivo), datos in sorted(pausas_por_motivo.items())
         ]
         total_tiempo_pausado = sum(
             (p.TiempoTotal for p in pausas_agrupadas), timedelta()
@@ -505,6 +553,7 @@ class ReporteBobinaPapelService:
             PeriodoFin=data.FechaFin,
             TotalProducciones=len(producciones),
             TotalLogs=total_logs,
+            ResumenPorProducto=self._ResumenPorProducto(producciones),
             Producciones=producciones,
             PausasPorMotivo=pausas_agrupadas,
             TotalPausas=len(filas_pausas),

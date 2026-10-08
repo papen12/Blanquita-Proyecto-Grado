@@ -22,11 +22,18 @@ import {
   finalizarProduccion,
   cancelarProduccion,
   insertarMovimientoLog,
+  cambiarLineaProduccion,
 } from "../../../services/BobinaPapel/Produccion";
 import { ObtenerTiposPapelBobina } from "../../../services/BobinaPapel/BobinaPapel";
-import { descargarReporteProduccionPorPeriodo } from "../../../services/BobinaPapel/Reportes";
+import { obtenerProductos } from "../../../services/Inventario/Inventario";
 import { movimientosOperador, ObservacionesInsertarLogs } from "../../../constants/OperadorConfig";
-import { Roles } from "@/constants/Values";
+import {
+  Roles,
+  ID_TIPO_BOBINA_HIGIENICO,
+  IDS_PRODUCTO_BOBINA_HIGIENICO,
+  CANTIDAD_MAXIMA_LOGS,
+} from "@/constants/Values";
+import { PILDORA_FILTRO } from "@/constants/Acentos";
 import { alternarMotivoEnTexto } from "@/utils/handlers";
 import { extraerMensajeError, limpiarObservacion } from "@/utils/validators";
 import { useProduccion } from "@/hooks/useProduccion";
@@ -34,7 +41,6 @@ import {
   ResumenProduccion,
   TabsProduccion,
   ListaProducciones,
-  BotonReporteDia,
 } from "@/components/Produccion/comunes";
 import {
   DialogoPausar,
@@ -43,6 +49,7 @@ import {
 } from "@/components/Produccion/Dialogos";
 import Header from "../../layout/Header";
 import { CardActiva, CardPausada } from "./Tarjetas";
+import ProduccionesConcluidas from "./Concluidas";
 
 const ID_TIPO_INGRESO = 1;
 const ID_TIPO_DESCUENTO = 2;
@@ -59,9 +66,19 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
   const [tiposBobina, setTiposBobina] = useState([]);
   const [filtroTipo, setFiltroTipo] = useState("");
+  const [productosHigienico, setProductosHigienico] = useState([]);
+  const [filtroProducto, setFiltroProducto] = useState("");
   const [buscarCodigoBobina, setBuscarCodigoBobina] = useState("");
 
   const idTipoFiltro = filtroTipo === "" ? undefined : Number(filtroTipo);
+  const idProductoFiltro = filtroProducto === "" ? undefined : Number(filtroProducto);
+  const permiteFiltroProducto =
+    filtroTipo === "" || Number(filtroTipo) === ID_TIPO_BOBINA_HIGIENICO;
+
+  const cambiarFiltroTipo = (valor) => {
+    setFiltroTipo(valor);
+    if (valor !== "" && Number(valor) !== ID_TIPO_BOBINA_HIGIENICO) setFiltroProducto("");
+  };
 
   const {
     activas,
@@ -73,15 +90,54 @@ export default function ProduccionBobinaTubo({ usuario }) {
     procesandoId,
     reanudar,
   } = useProduccion({
-    verActivas: () => verProduccionBobinaTubo(idTipoFiltro),
-    verPausadas: () => verPausasProduccionBobinaTuboActivas(idTipoFiltro),
+    verActivas: () => verProduccionBobinaTubo(idTipoFiltro, idProductoFiltro),
+    verPausadas: () => verPausasProduccionBobinaTuboActivas(idTipoFiltro, idProductoFiltro),
     idDe: (p) => p.IdProduccionBobinaTubo,
     pausar: pausarProduccion,
     cancelar: cancelarProduccion,
     finalizar: finalizarProduccion,
     reanudar: reanudarProduccion,
-    dependencias: [filtroTipo],
+    dependencias: [filtroTipo, filtroProducto],
   });
+
+  const esEncargado = usuario?.IdRol === Roles.Encargado;
+  const [totalConcluidas, setTotalConcluidas] = useState(0);
+
+  const [cambioLinea, setCambioLinea] = useState(null);
+  const [nuevoProducto, setNuevoProducto] = useState(null);
+  const [errorCambioLinea, setErrorCambioLinea] = useState("");
+  const [enviandoCambioLinea, setEnviandoCambioLinea] = useState(false);
+
+  const productosDisponibles = cambioLinea
+    ? productosHigienico.filter((p) => p.IdProducto !== cambioLinea.IdProducto)
+    : [];
+
+  const abrirCambioLinea = (produccion) => {
+    setNuevoProducto(null);
+    setErrorCambioLinea("");
+    setCambioLinea(produccion);
+  };
+
+  const confirmarCambioLinea = async () => {
+    if (nuevoProducto === null) {
+      setErrorCambioLinea("Selecciona el nuevo producto.");
+      return;
+    }
+    setEnviandoCambioLinea(true);
+    setErrorCambioLinea("");
+    try {
+      const res = await cambiarLineaProduccion(cambioLinea.IdProduccionBobinaTubo, nuevoProducto);
+      toast.success(
+        `${codigosDe(cambioLinea)} · ${cambioLinea.NombreProducto} → ${res.NombreProducto}`,
+      );
+      setCambioLinea(null);
+      activas.recargar();
+    } catch (e) {
+      setErrorCambioLinea(extraerMensajeError(e, e.message));
+    } finally {
+      setEnviandoCambioLinea(false);
+    }
+  };
 
   const [modalInsertar, setModalInsertar] = useState({ open: false, produccion: null });
   const [formTipoMovimiento, setFormTipoMovimiento] = useState("");
@@ -94,6 +150,13 @@ export default function ProduccionBobinaTubo({ usuario }) {
     ObtenerTiposPapelBobina()
       .then(setTiposBobina)
       .catch(() => setTiposBobina([]));
+    obtenerProductos()
+      .then((data) =>
+        setProductosHigienico(
+          data.filter((p) => IDS_PRODUCTO_BOBINA_HIGIENICO.includes(p.IdProducto)),
+        ),
+      )
+      .catch(() => setProductosHigienico([]));
   }, []);
 
   const requiereObservacion =
@@ -134,6 +197,10 @@ export default function ProduccionBobinaTubo({ usuario }) {
     const cantidad = Number(formCantidadLogs);
     if (!formCantidadLogs || cantidad <= 0) {
       setErrorInsertar("Ingresa una cantidad de logs válida.");
+      return;
+    }
+    if (cantidad > CANTIDAD_MAXIMA_LOGS) {
+      setErrorInsertar(`La cantidad máxima por registro es de ${CANTIDAD_MAXIMA_LOGS} logs.`);
       return;
     }
     if (esDescuento && cantidad > logsActuales) {
@@ -197,11 +264,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
   return (
     <TooltipProvider>
     <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
-      <Header titulo={"Producción"} subtitulo={"Producción de Bobina Tubo"}>
-        {usuario?.IdRol === Roles.Encargado && (
-          <BotonReporteDia descargar={descargarReporteProduccionPorPeriodo} />
-        )}
-      </Header>
+      <Header titulo={"Producción"} subtitulo={"Producción de Bobina Tubo"} />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
         <TabsProduccion
@@ -209,8 +272,16 @@ export default function ProduccionBobinaTubo({ usuario }) {
           onCambio={setVista}
           totalActivas={activasFiltradas.length}
           totalPausadas={pausadasFiltradas.length}
+          mostrarConcluidas={esEncargado}
+          totalConcluidas={totalConcluidas}
         />
 
+        {vista === "concluidas" && esEncargado && (
+          <ProduccionesConcluidas onTotal={setTotalConcluidas} />
+        )}
+
+        {vista !== "concluidas" && (
+        <>
         {tiposBobina.length > 0 && (
           <div className="mb-5 flex flex-col gap-1.5">
             <span className="text-xs font-bold uppercase tracking-wide text-slate-600">
@@ -223,8 +294,8 @@ export default function ProduccionBobinaTubo({ usuario }) {
             >
               <ToggleGroupItem
                 value="todos"
-                onClick={() => setFiltroTipo("")}
-                className="h-auto rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+                onClick={() => cambiarFiltroTipo("")}
+                className={PILDORA_FILTRO}
               >
                 Todos
               </ToggleGroupItem>
@@ -232,10 +303,40 @@ export default function ProduccionBobinaTubo({ usuario }) {
                 <ToggleGroupItem
                   key={t.IdTipoBobina}
                   value={String(t.IdTipoBobina)}
-                  onClick={() => setFiltroTipo(String(t.IdTipoBobina))}
-                  className="h-auto rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+                  onClick={() => cambiarFiltroTipo(String(t.IdTipoBobina))}
+                  className={PILDORA_FILTRO}
                 >
                   {t.NombreTipoBobina}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+        )}
+
+        {permiteFiltroProducto && productosHigienico.length > 0 && (
+          <div className="mb-5 flex flex-col gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-600">
+              Filtrar por producto
+            </span>
+            <ToggleGroup
+              value={filtroProducto ? [filtroProducto] : ["todos"]}
+              className="flex w-full flex-wrap justify-start gap-2"
+            >
+              <ToggleGroupItem
+                value="todos"
+                onClick={() => setFiltroProducto("")}
+                className={PILDORA_FILTRO}
+              >
+                Todos
+              </ToggleGroupItem>
+              {productosHigienico.map((p) => (
+                <ToggleGroupItem
+                  key={p.IdProducto}
+                  value={String(p.IdProducto)}
+                  onClick={() => setFiltroProducto(String(p.IdProducto))}
+                  className={PILDORA_FILTRO}
+                >
+                  {p.NombreProducto}
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
@@ -271,6 +372,8 @@ export default function ProduccionBobinaTubo({ usuario }) {
             )}
           </div>
         </div>
+        </>
+        )}
 
         {vista === "activas" && (
           <ListaProducciones
@@ -286,6 +389,11 @@ export default function ProduccionBobinaTubo({ usuario }) {
                 onInsertar={() => abrirInsertar(p)}
                 onPausar={() => pausa.abrir(p)}
                 onFinalizar={() => finalizacion.abrir(p)}
+                onCambiarLinea={
+                  esEncargado && p.IdTipoBobina === ID_TIPO_BOBINA_HIGIENICO
+                    ? () => abrirCambioLinea(p)
+                    : undefined
+                }
               />
             )}
           />
@@ -343,7 +451,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
                     key={m.IdTipoMovimientoOperadorLogs}
                     value={m.NombreMovimiento}
                     onClick={() => seleccionarTipoMovimiento(m.IdTipoMovimientoOperadorLogs)}
-                    className="h-auto rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+                    className="h-auto rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 bg-white hover:border-slate-300 hover:bg-white hover:text-slate-600 aria-pressed:border-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white aria-pressed:hover:border-slate-900 aria-pressed:hover:bg-slate-900 aria-pressed:hover:text-white"
                   >
                     {m.NombreMovimiento}
                   </ToggleGroupItem>
@@ -362,9 +470,12 @@ export default function ProduccionBobinaTubo({ usuario }) {
                 placeholder="0"
                 type="number"
                 min={1}
-                max={esDescuento ? logsActuales : undefined}
+                max={esDescuento ? Math.min(logsActuales, CANTIDAD_MAXIMA_LOGS) : CANTIDAD_MAXIMA_LOGS}
                 className="h-11"
               />
+              <span className="text-xs text-slate-500">
+                Máximo {CANTIDAD_MAXIMA_LOGS} logs por registro
+              </span>
               {esDescuento && (
                 <span
                   className={`text-xs font-semibold ${
@@ -393,7 +504,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
                           key={motivo}
                           value={motivo}
                           onClick={() => alternarMotivoObservacion(motivo)}
-                          className="h-full w-full whitespace-normal rounded-xl border-2 border-slate-200 px-3 py-2 text-left text-[12.5px] font-bold leading-snug text-slate-600 data-[state=on]:border-c3/40 data-[state=on]:bg-c4/10 data-[state=on]:text-c3"
+                          className="h-full w-full whitespace-normal rounded-xl border-2 border-slate-200 px-3 py-2 text-left text-[12.5px] font-bold leading-snug text-slate-600 bg-white hover:border-slate-300 hover:bg-white hover:text-slate-600 aria-pressed:border-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white aria-pressed:hover:border-slate-900 aria-pressed:hover:bg-slate-900 aria-pressed:hover:text-white"
                         >
                           {motivo}
                         </ToggleGroupItem>
@@ -434,6 +545,68 @@ export default function ProduccionBobinaTubo({ usuario }) {
                 <Loader2 size={16} className="animate-spin" />
               ) : (
                 "Registrar movimiento"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={cambioLinea !== null}
+        onOpenChange={(open) => {
+          if (!open && !enviandoCambioLinea) setCambioLinea(null);
+        }}
+      >
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Cambiar línea de producción</DialogTitle>
+          </DialogHeader>
+          {cambioLinea && (
+            <div className="flex flex-col gap-4">
+              <ResumenProduccion titulo={codigosDe(cambioLinea)} produccion={cambioLinea} />
+              <p className="text-sm text-slate-600">
+                La producción actual de{" "}
+                <strong className="text-slate-900">{cambioLinea.NombreProducto}</strong> se cerrará
+                con {cambioLinea.CantidadLogsActual} logs y se iniciará una nueva con las mismas
+                bobinas. El contador de logs empieza en 0.
+              </p>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                  Nuevo producto
+                </Label>
+                <ToggleGroup
+                  value={nuevoProducto === null ? [] : [String(nuevoProducto)]}
+                  className="flex w-full flex-wrap justify-start gap-2"
+                >
+                  {productosDisponibles.map((p) => (
+                    <ToggleGroupItem
+                      key={p.IdProducto}
+                      value={String(p.IdProducto)}
+                      onClick={() => setNuevoProducto(p.IdProducto)}
+                      className={PILDORA_FILTRO}
+                    >
+                      {p.NombreProducto}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </div>
+              {errorCambioLinea && (
+                <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
+                  {errorCambioLinea}
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              onClick={confirmarCambioLinea}
+              disabled={enviandoCambioLinea || nuevoProducto === null}
+              className="h-11 bg-gradient-to-r from-c3 to-c4 font-bold hover:opacity-90"
+            >
+              {enviandoCambioLinea ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                "Cambiar línea"
               )}
             </Button>
           </DialogFooter>

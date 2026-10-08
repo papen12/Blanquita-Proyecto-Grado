@@ -12,6 +12,8 @@ from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 from app.Models.BobinaPapel.ProduccionBobinaPapel import (
     IniciarProduccionBobinaTuboRequest,
     IniciarProduccionBobinaTuboResponse,
+    CambiarLineaProduccionBobinaTuboRequest,
+    CambiarLineaProduccionBobinaTuboResponse,
     FinalizarProduccionBobinaTuboRequest,
     FinalizarProduccionBobinaTuboResponse,
     PausarProduccionBobinaTuboRequest,
@@ -53,6 +55,19 @@ def IniciarProduccion(
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.IniciarProduccionBobinaTubo(data, usuario_actual["IdUsuario"])
+
+
+@ProduccionBobinaPapelRouter.post(
+    "/cambiarlinea",
+    response_model=CambiarLineaProduccionBobinaTuboResponse,
+    status_code=201,
+)
+def CambiarLineaProduccion(
+    data: CambiarLineaProduccionBobinaTuboRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+    service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
+):
+    return service.CambiarLineaProduccion(data, usuario_actual["IdUsuario"])
 
 
 @ProduccionBobinaPapelRouter.post(
@@ -132,10 +147,11 @@ def InsertarMovimientoLog(
 )
 def VerProduccionBobinaTubo(
     IdTipoBobina: int | None = None,
+    IdProducto: int | None = None,
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.VerProduccionBobinaTubo(
-        VerProduccionBobinaTuboRequest(IdTipoBobina=IdTipoBobina)
+        VerProduccionBobinaTuboRequest(IdTipoBobina=IdTipoBobina, IdProducto=IdProducto)
     )
 
 
@@ -149,10 +165,12 @@ def VerProduccionBobinaTubo(
 )
 def VerPausasProduccionBobinaTuboActivas(
     FiltroIdTipoBobina: int | None = None,
+    FiltroIdProducto: int | None = None,
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.VerPausasActivas(
         VerPausasProduccionBobinaTuboActivasRequest(
-            FiltroIdTipoBobina=FiltroIdTipoBobina
+            FiltroIdTipoBobina=FiltroIdTipoBobina,
+            FiltroIdProducto=FiltroIdProducto,
         )
     )

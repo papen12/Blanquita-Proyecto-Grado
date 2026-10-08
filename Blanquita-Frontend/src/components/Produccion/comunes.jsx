@@ -7,14 +7,14 @@ import {
   Clock,
   Layers,
   Loader2,
+  ArrowLeftRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BotonDescarga } from "@/components/layout/BotonDescarga";
-import { dateFormatter, hoyISO } from "@/utils/dates";
+import { dateFormatter } from "@/utils/dates";
 
 const GRID = "grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3";
 const VACIO = "rounded-2xl bg-white p-10 text-center text-sm text-slate-400 ring-1 ring-slate-200";
@@ -65,6 +65,12 @@ const ACCIONES = {
     icono: Ban,
     variant: "outline",
     clase: "border-red-300 font-bold text-red-600 hover:bg-red-50",
+  },
+  cambiarLinea: {
+    texto: "Cambiar línea",
+    icono: ArrowLeftRight,
+    variant: "outline",
+    clase: "border-c3/30 font-bold text-c3 hover:bg-c4/8",
   },
 };
 
@@ -142,10 +148,22 @@ export function TarjetaProduccion({
   );
 }
 
-export function TabsProduccion({ vista, onCambio, totalActivas, totalPausadas }) {
+export function TabsProduccion({
+  vista,
+  onCambio,
+  totalActivas,
+  totalPausadas,
+  mostrarConcluidas = false,
+  totalConcluidas = 0,
+}) {
   return (
     <Tabs value={vista} onValueChange={onCambio} className="mb-5">
-      <TabsList className="grid w-full grid-cols-2 sm:w-80">
+      <TabsList
+        className={cn(
+          "grid w-full",
+          mostrarConcluidas ? "grid-cols-3 sm:w-[30rem]" : "grid-cols-2 sm:w-80",
+        )}
+      >
         <TabsTrigger value="activas" className="gap-1.5 font-bold">
           <Layers size={15} strokeWidth={2.75} />
           Activas
@@ -164,6 +182,17 @@ export function TabsProduccion({ vista, onCambio, totalActivas, totalPausadas })
             </Badge>
           )}
         </TabsTrigger>
+        {mostrarConcluidas && (
+          <TabsTrigger value="concluidas" className="gap-1.5 font-bold">
+            <CheckCircle2 size={15} strokeWidth={2.75} />
+            Concluidas
+            {totalConcluidas > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 min-w-5 justify-center px-1.5">
+                {totalConcluidas}
+              </Badge>
+            )}
+          </TabsTrigger>
+        )}
       </TabsList>
     </Tabs>
   );
@@ -204,18 +233,4 @@ export function ListaProducciones({
   }
 
   return <div className={GRID}>{elementos.map(renderizar)}</div>;
-}
-
-export function BotonReporteDia({ descargar }) {
-  return (
-    <BotonDescarga
-      texto="Reporte del día"
-      ayuda="PDF con todas las producciones de hoy, incluyendo pausas y cancelaciones"
-      exito="Reporte del día descargado"
-      descargar={() => {
-        const hoy = hoyISO();
-        return descargar(hoy, hoy, true);
-      }}
-    />
-  );
 }

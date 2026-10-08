@@ -1,16 +1,34 @@
-export const IniciarProduccionBobinaTuboRequest = (idBobina1, idBobina2) => ({
+export const IniciarProduccionBobinaTuboRequest = (idBobina1, idBobina2, idProducto) => ({
   IdBobina1: idBobina1,
-  IdBobina2: idBobina2
+  IdBobina2: idBobina2,
+  IdProducto: idProducto ?? null
 });
 
 export const IniciarProduccionBobinaTuboResponse = (data) => ({
   IdProduccionBobinaTubo: data.IdProduccionBobinaTubo,
   FechaInicioProduccion: data.FechaInicioProduccion,
   IdTurno: data.IdTurno,
-  NombreTurno: data.NombreTurno
+  NombreTurno: data.NombreTurno,
+  IdProducto: data.IdProducto,
+  NombreProducto: data.NombreProducto
 });
 
-export const PausarProduccionBobinaTuboRequest = (idProduccionBobinaTubo, motivoPausaProduccion) => ({
+export const CambiarLineaProduccionBobinaTuboRequest = (idProduccionBobinaTubo, idProducto) => ({
+  IdProduccionBobinaTubo: idProduccionBobinaTubo,
+  IdProducto: idProducto
+});
+
+export const CambiarLineaProduccionBobinaTuboResponse = (data) => ({
+  IdProduccionAnterior: data.IdProduccionAnterior,
+  IdProduccionBobinaTubo: data.IdProduccionBobinaTubo,
+  FechaInicioProduccion: data.FechaInicioProduccion,
+  IdTurno: data.IdTurno,
+  NombreTurno: data.NombreTurno,
+  IdProducto: data.IdProducto,
+  NombreProducto: data.NombreProducto
+});
+
+export const PausarProduccionBobinaTuboRequest =(idProduccionBobinaTubo, motivoPausaProduccion) => ({
   IdProduccionBobinaTubo: idProduccionBobinaTubo,
   MotivoPausaProduccion: motivoPausaProduccion ?? null
 });
@@ -69,6 +87,8 @@ export const VerProduccionBobinaTuboResponse = (data) => ({
   IdProduccionBobinaTubo: data.IdProduccionBobinaTubo,
   IdTipoBobina: data.IdTipoBobina,
   NombreTipoBobina: data.NombreTipoBobina,
+  IdProducto: data.IdProducto,
+  NombreProducto: data.NombreProducto,
   NombreEstadoProduccion: data.NombreEstadoProduccion,
   CodigoBobina1: data.CodigoBobina1,
   CodigoBobina2: data.CodigoBobina2,
@@ -84,6 +104,8 @@ export const VerPausasProduccionBobinaTuboActivasRequest = (filtroIdTipoBobina) 
 export const VerPausasProduccionBobinaTuboActivasResponse = (data) => ({
   IdPausaProduccionBobinaTubo: data.IdPausaProduccionBobinaTubo,
   IdProduccionBobinaTubo: data.IdProduccionBobinaTubo,
+  IdProducto: data.IdProducto,
+  NombreProducto: data.NombreProducto,
   CodigoBobina1: data.CodigoBobina1,
   CodigoBobina2: data.CodigoBobina2,
   FechaHoraPausa: data.FechaHoraPausa,

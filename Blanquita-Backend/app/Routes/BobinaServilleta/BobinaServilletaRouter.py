@@ -5,8 +5,9 @@ from app.Config.supabase import get_db
 from typing import List
 
 from app.Services.BobinaServilleta.BobinaServilletaService import BobinaServilletaService
+from app.Services.BobinaServilleta.TipoBobinaServilletaService import TipoBobinaServilletaService
 
-from app.Auth.Dependencies import require_role
+from app.Auth.Dependencies import require_admin_db, require_role
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION,ROL_OPERADOR
 
 from app.Models.BobinaServilleta.BobinaServilleta import (
@@ -14,10 +15,19 @@ from app.Models.BobinaServilleta.BobinaServilleta import (
     IngresoBobinaServilletaRequest,
     TipoBobinaServilletaIngreso
 )
+from app.Models.BobinaServilleta.TipoBobinaServilleta import (
+    CrearTipoBobinaServilletaRequest,
+    EditarTipoBobinaServilletaRequest,
+    TipoBobinaServilletaItem,
+    TipoBobinaServilletaResponse,
+)
 
 BobinaServilletaRouter=APIRouter(prefix="/bobinaservilleta",tags=["Bobina Servilleta - CRUD e Ingreso"])
 
 def bobina_servilleta_service(db: Session = Depends(get_db))->BobinaServilletaService: return BobinaServilletaService(db)
+
+def tipo_bobina_servilleta_service(db: Session = Depends(get_db)) -> TipoBobinaServilletaService:
+    return TipoBobinaServilletaService(db)
 
 @BobinaServilletaRouter.post(
     "/cargarlote",
@@ -41,3 +51,39 @@ def ObtenerTiposBobinaServilleta(
     service: BobinaServilletaService = Depends(bobina_servilleta_service)
 ):
     return service.ObtenerTiposBobinaServilleta()
+
+
+@BobinaServilletaRouter.get(
+    "/tipos/listar",
+    response_model=List[TipoBobinaServilletaItem],
+    status_code=200,
+)
+def ListarTiposBobinaServilleta(
+    usuario_actual: dict = Depends(require_admin_db),
+    service: TipoBobinaServilletaService = Depends(tipo_bobina_servilleta_service),
+):
+    return service.ListarTipos()
+
+@BobinaServilletaRouter.post(
+    "/tipos/crear",
+    response_model=TipoBobinaServilletaResponse,
+    status_code=201,
+)
+def CrearTipoBobinaServilleta(
+    data: CrearTipoBobinaServilletaRequest,
+    usuario_actual: dict = Depends(require_admin_db),
+    service: TipoBobinaServilletaService = Depends(tipo_bobina_servilleta_service),
+):
+    return service.CrearTipo(data, usuario_actual["IdUsuario"])
+
+@BobinaServilletaRouter.put(
+    "/tipos/editar",
+    response_model=TipoBobinaServilletaResponse,
+    status_code=200,
+)
+def EditarTipoBobinaServilleta(
+    data: EditarTipoBobinaServilletaRequest,
+    usuario_actual: dict = Depends(require_admin_db),
+    service: TipoBobinaServilletaService = Depends(tipo_bobina_servilleta_service),
+):
+    return service.EditarTipo(data, usuario_actual["IdUsuario"])

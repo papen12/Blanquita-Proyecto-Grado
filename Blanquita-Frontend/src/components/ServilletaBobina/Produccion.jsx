@@ -8,7 +8,6 @@ import {
   finalizarProduccionServilleta,
   cancelarProduccionServilleta,
 } from "../../services/BobinaServilleta/Produccion";
-import { descargarReporteProduccionServilletaPorPeriodo } from "../../services/BobinaServilleta/Reportes";
 import { ObservacionServilleta } from "@/constants/OperadorConfig";
 import { Roles } from "@/constants/Values";
 import { useProduccion } from "@/hooks/useProduccion";
@@ -16,8 +15,8 @@ import {
   TarjetaProduccion,
   TabsProduccion,
   ListaProducciones,
-  BotonReporteDia,
 } from "@/components/Produccion/comunes";
+import ConcluidasServilleta from "./Concluidas";
 import {
   DialogoPausar,
   DialogoCancelar,
@@ -40,6 +39,8 @@ function EncabezadoSubBobina({ p }) {
 
 export default function ProduccionBobinaServilleta({ usuario }) {
   const [vista, setVista] = useState("activas");
+  const esEncargado = usuario?.IdRol === Roles.Encargado;
+  const [totalConcluidas, setTotalConcluidas] = useState(0);
 
   const {
     activas,
@@ -62,11 +63,7 @@ export default function ProduccionBobinaServilleta({ usuario }) {
   return (
     <TooltipProvider>
     <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
-      <Header titulo="Producción" subtitulo="Producción de Bobinas de Servilleta">
-        {usuario?.IdRol === Roles.Encargado && (
-          <BotonReporteDia descargar={descargarReporteProduccionServilletaPorPeriodo} />
-        )}
-      </Header>
+      <Header titulo="Producción" subtitulo="Producción de Bobinas de Servilleta" />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
         <TabsProduccion
@@ -74,7 +71,13 @@ export default function ProduccionBobinaServilleta({ usuario }) {
           onCambio={setVista}
           totalActivas={activas.datos.length}
           totalPausadas={pausadas.datos.length}
+          mostrarConcluidas={esEncargado}
+          totalConcluidas={totalConcluidas}
         />
+
+        {vista === "concluidas" && esEncargado && (
+          <ConcluidasServilleta onTotal={setTotalConcluidas} />
+        )}
 
         {vista === "activas" && (
           <ListaProducciones

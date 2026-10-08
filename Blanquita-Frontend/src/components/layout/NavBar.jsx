@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { RutasNavBar, RutasReportes } from "@/constants/NavBarRoutes";
+import {
+  basePathSeccion,
+  rutasSeccion,
+  rutaDeItem,
+  rutasVisibles,
+} from "@/constants/NavBarRoutes";
 import { Icon, Menu, ChevronDown, LogOut } from "lucide-react";
 import { cerrarSesion } from "@/lib/logout-client";
 import {
@@ -23,7 +28,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { PREFIJO_POR_ROL, Roles } from "@/constants/Values";
+import { PREFIJO_POR_ROL } from "@/constants/Values";
 
 function IconoItem({ item, size = 18 }) {
   if (item.esIconoLab) {
@@ -34,8 +39,7 @@ function IconoItem({ item, size = 18 }) {
 }
 
 function ItemNav({ item, basePath, prefijo }) {
-  const rutaCompleta =
-    item.ruta === "" ? `${prefijo}/inicio` : `${basePath}/${item.ruta}`;
+  const rutaCompleta = rutaDeItem(item, basePath, prefijo);
 
   if (item.subrutas) {
     return (
@@ -79,8 +83,7 @@ function ItemNav({ item, basePath, prefijo }) {
 }
 
 function ItemNavMovil({ item, basePath, prefijo, alNavegar }) {
-  const rutaCompleta =
-    item.ruta === "" ? `${prefijo}/inicio` : `${basePath}/${item.ruta}`;
+  const rutaCompleta = rutaDeItem(item, basePath, prefijo);
 
   if (!item.subrutas) {
     return (
@@ -127,13 +130,10 @@ function ItemNavMovil({ item, basePath, prefijo, alNavegar }) {
   );
 }
 
-export default function NavBar({ idRol, seccion }) {
+export default function NavBar({ idRol, esAdmin = false, seccion }) {
   const prefijo = PREFIJO_POR_ROL[idRol];
-  const enReportes = seccion === "reportes";
-  const basePath = enReportes ? `${prefijo}/reportes` : prefijo;
-  const rutas = enReportes
-    ? RutasReportes
-    : RutasNavBar.filter((item) => !item.isLider || idRol === Roles.Encargado);
+  const basePath = basePathSeccion(seccion, prefijo);
+  const rutas = rutasVisibles(rutasSeccion(seccion), idRol, esAdmin);
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   return (

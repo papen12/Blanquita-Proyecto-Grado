@@ -6,10 +6,11 @@ export const VerProduccionesBobinaTuboRequest = (filtros = {}) => ({
   FechaInicio: filtros.FechaInicio ?? null,
   FechaFin: filtros.FechaFin ?? null,
   IdTurno: filtros.IdTurno ?? null,
-  IdsTipoBobina: filtros.IdsTipoBobina ?? null,
+  IdsProducto: filtros.IdsProducto ?? null,
   CodigoBobina: filtros.CodigoBobina ?? null,
   Operador: filtros.Operador ?? null,
   IdEstadoProduccion: filtros.IdEstadoProduccion ?? null,
+  IdsEstadoProduccion: filtros.IdsEstadoProduccion ?? null,
   Pagina: filtros.Pagina ?? 1,
   TamanoPagina: filtros.TamanoPagina ?? 50
 });
@@ -21,13 +22,15 @@ export const ProduccionBobinaTuboCatalogoResponse = (data) => ({
   Operador: data.Operador,
   Ci: data.Ci,
   NombreRol: data.NombreRol,
-  TipoBobina: data.TipoBobina,
+  IdProducto: data.IdProducto,
+  NombreProducto: data.NombreProducto,
   CodigoBobina1: data.CodigoBobina1,
   CodigoBobina2: data.CodigoBobina2,
   FechaInicioProduccion: data.FechaInicioProduccion,
   FechaFinProduccion: data.FechaFinProduccion ?? null,
   DuracionTotal: data.DuracionTotal ?? null,
-  CantidadLogsActual: data.CantidadLogsActual
+  CantidadLogsActual: data.CantidadLogsActual,
+  CantidadCargada: data.CantidadCargada ?? 1
 });
 
 export const VerProduccionesBobinaTuboResponse = (data) => ({

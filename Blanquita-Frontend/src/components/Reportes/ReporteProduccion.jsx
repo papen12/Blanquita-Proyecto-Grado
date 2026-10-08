@@ -62,6 +62,7 @@ export default function ReporteProduccion({
   columnasFinales = [],
   anchoAccion,
   tarjeta,
+  estados = EstadosProduccion,
 }) {
   const reporte = useReporte(
     consultar,
@@ -142,7 +143,7 @@ export default function ReporteProduccion({
             reporte={reporte}
             campo="IdEstadoProduccion"
             etiqueta="Estado"
-            opciones={EstadosProduccion}
+            opciones={estados}
             campoEtiqueta="NombreEstadoProduccion"
             placeholder="Todos los estados"
           />

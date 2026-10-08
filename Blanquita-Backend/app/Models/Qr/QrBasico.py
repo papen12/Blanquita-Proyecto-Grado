@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from reportlab.lib.colors import black, white
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import cm
+from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas
 
 
@@ -21,6 +22,7 @@ class QrCartel:
     MARGEN_TITULO = 2.2 * cm
     MARGEN_SUBTITULO = 1.6 * cm
     MARGEN_PIE = 1.5 * cm
+    MARGEN_LATERAL = 1.5 * cm
     TAMANIO_TITULO = 30
     TAMANIO_SUBTITULO = 15
     TAMANIO_PIE = 9
@@ -89,11 +91,18 @@ class QrCartel:
 
         lienzo.setFillColor(black)
 
-        lienzo.setFont(self.FUENTE_TITULO, self.TAMANIO_TITULO)
+        titulo = self.parametros.titulo.upper()
+        anchoTitulo = stringWidth(titulo, self.FUENTE_TITULO, self.TAMANIO_TITULO)
+        anchoDisponible = anchoHoja - 2 * self.MARGEN_LATERAL
+        tamanioTitulo = min(
+            self.TAMANIO_TITULO, self.TAMANIO_TITULO * anchoDisponible / anchoTitulo
+        )
+
+        lienzo.setFont(self.FUENTE_TITULO, tamanioTitulo)
         lienzo.drawCentredString(
             centroX,
             centroY + self.LADO_QR / 2 + self.MARGEN_TITULO,
-            self.parametros.titulo.upper(),
+            titulo,
         )
 
         lienzo.setFont(self.FUENTE_SUBTITULO, self.TAMANIO_SUBTITULO)

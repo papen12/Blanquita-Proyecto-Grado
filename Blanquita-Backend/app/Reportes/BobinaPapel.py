@@ -45,6 +45,60 @@ def _seccion_movimientos_logs(reporte: Reporte, movimientos) -> None:
         reporte.parrafo("Esta producción no registró movimientos de logs.")
 
 
+def _seccion_cargada(reporte: Reporte, data) -> None:
+    reporte.titulo_seccion(f"Producciones de la cargada ({len(data.Cargada)})")
+    reporte.parrafo(
+        "Producciones realizadas con el mismo par de bobinas, en orden de inicio. "
+        "Cada cambio de línea cierra una producción e inicia la siguiente."
+    )
+    reporte.tabla(
+        columnas=[
+            (
+                "Producción",
+                lambda c: f"#{c.IdProduccionBobinaTubo}"
+                + (" (este reporte)" if c.IdProduccionBobinaTubo == data.IdProduccionBobinaTubo else ""),
+            ),
+            ("Producto", "NombreProducto"),
+            ("Estado", "NombreEstadoProduccion"),
+            ("Turno", "NombreTurno"),
+            ("Operador", "Operador"),
+            ("Inicio", "FechaInicioProduccion"),
+            ("Fin", "FechaFinProduccion"),
+            ("Duración", lambda c: _formatear_duracion(c.DuracionTotal)),
+            ("Logs", "CantidadLogsActual"),
+        ],
+        filas=data.Cargada,
+        fila_total=[
+            "TOTAL",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            sum(c.CantidadLogsActual for c in data.Cargada),
+        ],
+    )
+
+
+def _filas_datos_generales(data, etiqueta_operador: str) -> list[dict]:
+    return [
+        {"campo": "Producto", "valor": data.NombreProducto},
+        {"campo": "Tipo de bobina", "valor": data.TipoBobina},
+        {"campo": etiqueta_operador, "valor": data.Operador},
+        {"campo": "CI", "valor": data.Ci},
+        {"campo": "Rol", "valor": data.NombreRol},
+        {"campo": "Fecha inicio", "valor": data.FechaInicioProduccion},
+        {"campo": "Fecha fin", "valor": data.FechaFinProduccion},
+        {"campo": "Duración total", "valor": _formatear_duracion(data.DuracionTotal)},
+        {
+            "campo": "Cantidad de logs",
+            "valor": f"{data.CantidadLogsActual:,}".replace(",", "."),
+        },
+    ]
+
+
 def construir_reporte_inventario_bobina_papel(
     data: ReporteInventarioBobinaPapelResponse,
     generado_por: str | None = None,
@@ -112,7 +166,7 @@ def construir_reporte_detalle_produccion_bobina_papel(
 ) -> bytes:
     reporte = Reporte(
         titulo="Detalle de producción - Bobina de papel",
-        subtitulo=f"Producción #{data.IdProduccionBobinaTubo} - {data.TipoBobina}",
+        subtitulo=f"Producción #{data.IdProduccionBobinaTubo} - {data.NombreProducto}",
         filtros={"Estado": data.NombreEstadoProduccion, "Turno": data.NombreTurno},
         generado_en=datetime.now(ZONA_BOLIVIA),
         generado_por=generado_por,
@@ -121,18 +175,7 @@ def construir_reporte_detalle_produccion_bobina_papel(
     reporte.titulo_seccion("Datos generales")
     reporte.tabla(
         columnas=[("Campo", "campo"), ("Valor", "valor")],
-        filas=[
-            {"campo": "Operador", "valor": data.Operador},
-            {"campo": "CI", "valor": data.Ci},
-            {"campo": "Rol", "valor": data.NombreRol},
-            {"campo": "Fecha inicio", "valor": data.FechaInicioProduccion},
-            {"campo": "Fecha fin", "valor": data.FechaFinProduccion},
-            {"campo": "Duración total", "valor": _formatear_duracion(data.DuracionTotal)},
-            {
-                "campo": "Cantidad de logs",
-                "valor": f"{data.CantidadLogsActual:,}".replace(",", "."),
-            },
-        ],
+        filas=_filas_datos_generales(data, "Operador"),
     )
 
     reporte.titulo_seccion("Bobinas utilizadas")
@@ -164,6 +207,8 @@ def construir_reporte_detalle_produccion_bobina_papel(
             },
         ],
     )
+
+    _seccion_cargada(reporte, data)
 
     if data.Pausas is not None:
         reporte.titulo_seccion(f"Pausas ({len(data.Pausas)})")
@@ -316,7 +361,7 @@ def construir_reporte_cancelacion_produccion_bobina_papel(
 ) -> bytes:
     reporte = Reporte(
         titulo="Producción cancelada - Bobina de papel",
-        subtitulo=f"Producción #{data.IdProduccionBobinaTubo} - {data.TipoBobina}",
+        subtitulo=f"Producción #{data.IdProduccionBobinaTubo} - {data.NombreProducto}",
         filtros={"Turno": data.NombreTurno, "Cancelada por": data.Cancelacion.Operador},
         generado_en=datetime.now(ZONA_BOLIVIA),
         generado_por=generado_por,
@@ -337,18 +382,7 @@ def construir_reporte_cancelacion_produccion_bobina_papel(
     reporte.titulo_seccion("Datos generales")
     reporte.tabla(
         columnas=[("Campo", "campo"), ("Valor", "valor")],
-        filas=[
-            {"campo": "Operador de producción", "valor": data.Operador},
-            {"campo": "CI", "valor": data.Ci},
-            {"campo": "Rol", "valor": data.NombreRol},
-            {"campo": "Fecha inicio", "valor": data.FechaInicioProduccion},
-            {"campo": "Fecha fin", "valor": data.FechaFinProduccion},
-            {"campo": "Duración total", "valor": _formatear_duracion(data.DuracionTotal)},
-            {
-                "campo": "Cantidad de logs",
-                "valor": f"{data.CantidadLogsActual:,}".replace(",", "."),
-            },
-        ],
+        filas=_filas_datos_generales(data, "Operador de producción"),
     )
 
     reporte.titulo_seccion("Bobinas utilizadas")
@@ -380,6 +414,8 @@ def construir_reporte_cancelacion_produccion_bobina_papel(
             },
         ],
     )
+
+    _seccion_cargada(reporte, data)
 
     reporte.titulo_seccion(f"Pausas ({len(data.Pausas)})")
     if data.Pausas:
@@ -452,6 +488,32 @@ def construir_reporte_produccion_por_periodo(
         ],
     )
 
+    reporte.titulo_seccion("Resumen por producto")
+    if data.ResumenPorProducto:
+        reporte.parrafo(
+            "Producciones y logs de las producciones finalizadas o cerradas por cambio "
+            "de línea. Las canceladas se cuentan aparte y no entran en el promedio."
+        )
+        reporte.tabla(
+            columnas=[
+                ("Producto", "NombreProducto"),
+                ("Producciones", "CantidadProducciones"),
+                ("Logs", "TotalLogs"),
+                ("Promedio logs", "PromedioLogs"),
+                ("Canceladas", "CantidadCanceladas"),
+            ],
+            filas=data.ResumenPorProducto,
+            fila_total=[
+                "TOTAL",
+                sum(r.CantidadProducciones for r in data.ResumenPorProducto),
+                sum(r.TotalLogs for r in data.ResumenPorProducto),
+                "",
+                sum(r.CantidadCanceladas for r in data.ResumenPorProducto),
+            ],
+        )
+    else:
+        reporte.parrafo("No hubo producciones en este período.")
+
     reporte.titulo_seccion(f"Producciones ({data.TotalProducciones})")
     if data.Producciones:
         reporte.tabla(
@@ -463,7 +525,7 @@ def construir_reporte_produccion_por_periodo(
                         [f"{p.Operador},", p.Ci, p.NombreRol]
                     ),
                 ),
-                ("Tipo", "TipoBobina"),
+                ("Producto", "NombreProducto"),
                 ("Bobina 1", "CodigoBobina1"),
                 ("Bobina 2", "CodigoBobina2"),
                 ("Inicio", "FechaInicioProduccion"),
@@ -476,10 +538,11 @@ def construir_reporte_produccion_por_periodo(
     else:
         reporte.parrafo("No hubo producciones en este período.")
 
-    reporte.titulo_seccion("Pausas por motivo")
+    reporte.titulo_seccion("Pausas por producto y motivo")
     if data.PausasPorMotivo:
         reporte.tabla(
             columnas=[
+                ("Producto", "NombreProducto"),
                 ("Motivo", "Motivo"),
                 ("Cantidad", "CantidadPausas"),
                 ("Tiempo total", lambda p: _formatear_duracion(p.TiempoTotal)),
@@ -495,6 +558,7 @@ def construir_reporte_produccion_por_periodo(
             reporte.tabla(
                 columnas=[
                     ("Producción", "IdProduccionBobinaTubo"),
+                    ("Producto", "NombreProducto"),
                     ("Fecha y hora", "FechaHoraCancelacion"),
                     ("Motivo", "MotivoCancelacion"),
                     (

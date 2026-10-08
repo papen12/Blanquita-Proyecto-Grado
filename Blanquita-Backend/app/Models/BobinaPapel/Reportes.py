@@ -44,10 +44,11 @@ class VerProduccionesBobinaTuboRequest(BaseModel):
     FechaInicio: Optional[date] = None
     FechaFin: Optional[date] = None
     IdTurno: Optional[int] = None
-    IdsTipoBobina: Optional[list[int]] = None
+    IdsProducto: Optional[list[int]] = None
     CodigoBobina: Optional[str] = None
     Operador: Optional[str] = None
     IdEstadoProduccion: Optional[int] = None
+    IdsEstadoProduccion: Optional[list[int]] = None
     Pagina: int = 1
     TamanoPagina: int = 50
 
@@ -59,13 +60,15 @@ class ProduccionBobinaTuboCatalogoResponse(BaseModel):
     Operador: str
     Ci: str
     NombreRol: str
-    TipoBobina: str
+    IdProducto: int
+    NombreProducto: str
     CodigoBobina1: str
     CodigoBobina2: str
     FechaInicioProduccion: datetime
     FechaFinProduccion: Optional[datetime]
     DuracionTotal: Optional[timedelta]
     CantidadLogsActual: int
+    CantidadCargada: int = 1
 
 
 class VerProduccionesBobinaTuboResponse(BaseModel):
@@ -84,6 +87,7 @@ class ReporteProduccionBobinaTuboDetalleRequest(BaseModel):
 class PausaProduccionBobinaTuboResponse(BaseModel):
     IdPausaProduccionBobinaTubo: int
     IdProduccionBobinaTubo: int
+    NombreProducto: str
     CodigoBobina1: str
     CodigoBobina2: str
     NombreTurno: str
@@ -109,6 +113,18 @@ class MovimientoOperadorLogsResponse(BaseModel):
     NombreRol: str
 
 
+class ProduccionCargadaResponse(BaseModel):
+    IdProduccionBobinaTubo: int
+    NombreProducto: str
+    NombreEstadoProduccion: str
+    NombreTurno: str
+    Operador: str
+    FechaInicioProduccion: datetime
+    FechaFinProduccion: Optional[datetime]
+    DuracionTotal: Optional[timedelta]
+    CantidadLogsActual: int
+
+
 class ReporteProduccionBobinaTuboDetalleResponse(BaseModel):
     IdProduccionBobinaTubo: int
     NombreEstadoProduccion: str
@@ -116,6 +132,8 @@ class ReporteProduccionBobinaTuboDetalleResponse(BaseModel):
     Operador: str
     Ci: str
     NombreRol: str
+    IdProducto: int
+    NombreProducto: str
     TipoBobina: str
     CodigoBobina1: str
     PesoNeto1: Optional[Decimal]
@@ -131,6 +149,7 @@ class ReporteProduccionBobinaTuboDetalleResponse(BaseModel):
     FechaFinProduccion: Optional[datetime]
     DuracionTotal: Optional[timedelta]
     CantidadLogsActual: int
+    Cargada: list[ProduccionCargadaResponse] = []
     Pausas: Optional[list[PausaProduccionBobinaTuboResponse]] = None
     TotalTiempoPausado: Optional[timedelta] = None
     Movimientos: Optional[list[MovimientoOperadorLogsResponse]] = None
@@ -224,13 +243,23 @@ class ReporteProduccionPorPeriodoRequest(BaseModel):
 
 
 class PausaPorMotivoResponse(BaseModel):
+    NombreProducto: str
     Motivo: str
     CantidadPausas: int
     TiempoTotal: timedelta
 
 
+class ResumenProductoPeriodoResponse(BaseModel):
+    NombreProducto: str
+    CantidadProducciones: int
+    TotalLogs: int
+    PromedioLogs: Optional[Decimal]
+    CantidadCanceladas: int
+
+
 class CancelacionPeriodoResponse(BaseModel):
     IdProduccionBobinaTubo: int
+    NombreProducto: str
     FechaHoraCancelacion: datetime
     MotivoCancelacion: Optional[str]
     Ci: str
@@ -244,6 +273,7 @@ class ReporteProduccionPorPeriodoResponse(BaseModel):
     PeriodoFin: date
     TotalProducciones: int
     TotalLogs: int
+    ResumenPorProducto: list[ResumenProductoPeriodoResponse]
     Producciones: list[ProduccionBobinaTuboCatalogoResponse]
     PausasPorMotivo: list[PausaPorMotivoResponse]
     TotalPausas: int

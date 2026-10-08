@@ -8,9 +8,24 @@ import {
   Container,
   CircleUserRound,
   ClipboardList,
-  Combine,QrCode
+  Combine,QrCode,UserShield,Users,Cylinder
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
+import { Roles } from "@/constants/Values";
+
+export function rutaDeItem(item, basePath, prefijo) {
+  if (item.absoluta) return item.ruta;
+  if (item.ruta === "") return `${prefijo}/inicio`;
+  return `${basePath}/${item.ruta}`;
+}
+
+export function rutasVisibles(rutas, idRol, esAdmin) {
+  return rutas.filter(
+    (item) =>
+      (!item.isLider || idRol === Roles.Encargado) && (!item.soloAdmin || esAdmin),
+  );
+}
+
 export const RutasNavBar = [
   {
     titulo: "Inicio",
@@ -75,6 +90,13 @@ export const RutasNavBar = [
     isLider: true,
   },
   {
+    titulo: "Administrador",
+    icono: UserShield,
+    ruta: "admin/inicio",
+    absoluta: true,
+    soloAdmin: true,
+  },
+  {
     titulo: "Perfil",
     icono: CircleUserRound,
     ruta: "perfil",
@@ -130,14 +152,6 @@ export const RutasReportes = [
     titulo:"Códigos Qr",
     icono:QrCode,
     ruta:"qr",
-    subrutas:[
-      {
-        titulo: "Bobina Papel",
-        icono: toiletRoll,
-        esIconoLab: true,
-        ruta: "bobinapapel",
-      }
-    ]
   },
   {
     titulo: "Volver a la Planta",
@@ -145,3 +159,54 @@ export const RutasReportes = [
     ruta: "",
   },
 ];
+
+
+
+export const RutasAdmin = [
+  {
+    titulo: "Inicio",
+    icono: Home,
+    ruta: "inicio",
+  },
+  {
+    titulo: "Usuarios",
+    icono: Users,
+    ruta: "usuarios",
+    descripcion: "Registrar usuarios, cambiar su estado y restablecer claves",
+  },
+  {
+    titulo: "Bobina Papel",
+    icono: Cylinder,
+    ruta: "tipos-bobina-papel",
+    descripcion: "Crear tipos de bobina papel y editar sus medidas y tara",
+  },
+  {
+    titulo: "Bobina Servilleta",
+    icono: SquareStack,
+    ruta: "tipos-bobina-servilleta",
+    descripcion: "Crear tipos de bobina servilleta y editar su diámetro, crepado y resistencia",
+  },
+  {
+    titulo: "Líneas y Productos",
+    icono: Boxes,
+    ruta: "catalogo",
+    descripcion: "Crear líneas de producción y sus productos con su código",
+  },
+  {
+    titulo: "Volver a la Planta",
+    icono: Factory,
+    ruta: "",
+  },
+];
+
+export function basePathSeccion(seccion, prefijo) {
+  if (seccion === "reportes") return `${prefijo}/reportes`;
+  if (seccion === "admin") return "admin";
+  return prefijo;
+}
+
+export function rutasSeccion(seccion) {
+  if (seccion === "reportes") return RutasReportes;
+  if (seccion === "admin") return RutasAdmin;
+  return RutasNavBar;
+}

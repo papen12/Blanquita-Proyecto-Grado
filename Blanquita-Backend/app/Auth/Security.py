@@ -12,7 +12,7 @@ ph = PasswordHasher(
 )
 
 LONGITUD_MINIMA = 8
-LONGITUD_MAXIMA = 64
+LONGITUD_MAXIMA = 12
 
 SIMBOLOS = set("!@#$%^&*()-_=+[]{}|;:',.<>?/`~\"\\")
 
@@ -62,8 +62,9 @@ def ClaveComprometida(clave: str) -> bool:
     if normalizada in CLAVES_PROHIBIDAS:
         return True
 
-    sin_digitos = normalizada.rstrip("0123456789")
-    if sin_digitos and sin_digitos in CLAVES_PROHIBIDAS:
+    # "Blanquita2026!" o "Password1#" siguen siendo claves comunes con relleno al final.
+    base = normalizada.rstrip("0123456789" + "".join(SIMBOLOS))
+    if base and base in CLAVES_PROHIBIDAS:
         return True
 
     return False
@@ -80,6 +81,19 @@ def ClaveContieneDatosPersonales(clave: str, ci: str, nombres: list[str]) -> boo
             return True
 
     return False
+
+
+def ValidarClaveNueva(clave, ci: str | None = None, nombres: list[str] | None = None) -> str | None:
+    """Reglas para toda clave que se crea o se cambia (no para el login).
+    Devuelve el mensaje del primer error encontrado, o None si la clave es válida."""
+    valida, mensaje = EstructuraClave(clave)
+    if not valida:
+        return mensaje
+
+    if ClaveContieneDatosPersonales(clave, ci or "", nombres or []):
+        return "La clave no puede contener el CI ni los nombres del usuario"
+
+    return None
 
 
 def HashPassword(clave: str) -> str:

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   PackageCheck,
   PackageMinus,
-  PackagePlus,
   ClipboardPlus,
   ClipboardMinus,
 } from "lucide-react";
@@ -19,7 +18,6 @@ import CorreccionProductoTerminado from "./CorreccionProductos";
 const SUBTITULO_POR_VISTA = {
   ingreso: "Registrar ingreso",
   correccion: "Registrar corrección",
-  aumento: "Registrar aumento",
   ajustePositivo: "Registrar ajuste positivo",
   ajusteNegativo: "Registrar ajuste negativo",
 };
@@ -60,8 +58,7 @@ export default function MovimientosProductoTerminado({ usuario }) {
     );
   };
 
-  const claseTab = cn("gap-1.5 font-bold", esEncargado && "col-span-2 xl:col-span-1");
-  const claseTabAjuste = "col-span-3 gap-1.5 font-bold xl:col-span-1";
+  const claseTab = "gap-1.5 font-bold";
 
   return (
     <div className="contenido-con-sidebar flex min-h-screen flex-col bg-slate-50 pt-20 font-sans text-slate-900 md:pt-0">
@@ -77,8 +74,8 @@ export default function MovimientosProductoTerminado({ usuario }) {
             className={cn(
               "grid w-full",
               esEncargado
-                ? "grid-cols-6 gap-y-[3px] group-data-horizontal/tabs:h-auto xl:grid-cols-5"
-                : "grid-cols-3 sm:w-120",
+                ? "grid-cols-2 gap-y-[3px] group-data-horizontal/tabs:h-auto md:grid-cols-4"
+                : "grid-cols-2 sm:w-80",
             )}
           >
             <TabsTrigger value="ingreso" className={claseTab}>
@@ -89,17 +86,13 @@ export default function MovimientosProductoTerminado({ usuario }) {
               <PackageMinus size={15} strokeWidth={2.75} />
               Corrección
             </TabsTrigger>
-            <TabsTrigger value="aumento" className={claseTab}>
-              <PackagePlus size={15} strokeWidth={2.75} />
-              Aumento
-            </TabsTrigger>
             {esEncargado && (
               <>
-                <TabsTrigger value="ajustePositivo" className={claseTabAjuste}>
+                <TabsTrigger value="ajustePositivo" className={claseTab}>
                   <ClipboardPlus size={15} strokeWidth={2.75} />
                   Ajuste positivo
                 </TabsTrigger>
-                <TabsTrigger value="ajusteNegativo" className={claseTabAjuste}>
+                <TabsTrigger value="ajusteNegativo" className={claseTab}>
                   <ClipboardMinus size={15} strokeWidth={2.75} />
                   Ajuste negativo
                 </TabsTrigger>
@@ -137,13 +130,6 @@ export default function MovimientosProductoTerminado({ usuario }) {
             <div hidden={vista !== "correccion"}>
               <CorreccionProductoTerminado
                 tipo="descuento"
-                inventario={inventario}
-                onStockActualizado={actualizarStock}
-              />
-            </div>
-            <div hidden={vista !== "aumento"}>
-              <CorreccionProductoTerminado
-                tipo="aumento"
                 inventario={inventario}
                 onStockActualizado={actualizarStock}
               />

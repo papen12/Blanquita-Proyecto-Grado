@@ -6,7 +6,7 @@ import {
   descargarReporteProduccionCancelada,
   descargarReporteProduccionPorPeriodo,
 } from "@/services/BobinaPapel/Reportes";
-import { TIPO_BOBINA_PAPEL, CODIGO_BOBINA_PAPEL } from "./filtros";
+import { PRODUCTO_BOBINA_PAPEL, CODIGO_BOBINA_PAPEL } from "./filtros";
 
 const bobinas = (p) => (
   <>
@@ -15,7 +15,7 @@ const bobinas = (p) => (
 );
 
 const COLUMNAS = [
-  { titulo: "Tipo", valor: (p) => p.TipoBobina },
+  { titulo: "Producto", valor: (p) => p.NombreProducto },
   { titulo: "Bobinas", clase: "font-mono text-[12.5px]", valor: bobinas },
 ];
 
@@ -25,7 +25,7 @@ const TARJETA = {
   titulo: bobinas,
   subtitulo: (p) => (
     <>
-      {p.TipoBobina} · {p.NombreTurno}
+      {p.NombreProducto} · {p.NombreTurno}
     </>
   ),
   extra: (p) => <span>Logs {p.CantidadLogsActual}</span>,
@@ -39,7 +39,7 @@ export default function ProduccionReporteBobinaPapel({ usuario }) {
       idCalendario="rango-produccion"
       consultar={verProduccionesBobinaTubo}
       campoId="IdProduccionBobinaTubo"
-      tipo={TIPO_BOBINA_PAPEL}
+      tipo={PRODUCTO_BOBINA_PAPEL}
       codigo={CODIGO_BOBINA_PAPEL}
       descargarPeriodo={descargarReporteProduccionPorPeriodo}
       descargarCancelada={descargarReporteProduccionCancelada}

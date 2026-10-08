@@ -1,6 +1,8 @@
 import {
   IniciarProduccionBobinaTuboRequest,
   IniciarProduccionBobinaTuboResponse,
+  CambiarLineaProduccionBobinaTuboRequest,
+  CambiarLineaProduccionBobinaTuboResponse,
   FinalizarProduccionBobinaTuboRequest,
   FinalizarProduccionBobinaTuboResponse,
   PausarProduccionBobinaTuboRequest,
@@ -18,8 +20,8 @@ import { pedirJson } from "@/utils/api";
 import { conQueryParams } from "@/utils/params";
 
 
-export async function iniciarProduccion(idBobina1, idBobina2) {
-  const payload = IniciarProduccionBobinaTuboRequest(idBobina1, idBobina2);
+export async function iniciarProduccion(idBobina1, idBobina2, idProducto) {
+  const payload = IniciarProduccionBobinaTuboRequest(idBobina1, idBobina2, idProducto);
 
   const data = await pedirJson("/api/papelbobina/produccion/iniciar", {
     method: "POST",
@@ -27,6 +29,15 @@ export async function iniciarProduccion(idBobina1, idBobina2) {
   });
 
   return IniciarProduccionBobinaTuboResponse(data);
+}
+
+export async function cambiarLineaProduccion(idProduccionBobinaTubo, idProducto) {
+  const payload = CambiarLineaProduccionBobinaTuboRequest(idProduccionBobinaTubo, idProducto);
+  const data = await pedirJson("/api/papelbobina/produccion/cambiarlinea", {
+    method: "POST",
+    body: payload
+  });
+  return CambiarLineaProduccionBobinaTuboResponse(data);
 }
 
 export async function finalizarProduccion(idProduccionBobinaTubo) {
@@ -89,17 +100,23 @@ export async function insertarMovimientoLog(idProduccionBobinaTubo, idTipoMovimi
   return InsertarMovimientoOperadorLogsResponse(data);
 }
 
-export async function verProduccionBobinaTubo(idTipoBobina) {
+export async function verProduccionBobinaTubo(idTipoBobina, idProducto) {
   const data = await pedirJson(
-    conQueryParams("/api/papelbobina/produccion/activas", { IdTipoBobina: idTipoBobina })
+    conQueryParams("/api/papelbobina/produccion/activas", {
+      IdTipoBobina: idTipoBobina,
+      IdProducto: idProducto
+    })
   );
 
   return data.map(VerProduccionBobinaTuboResponse);
 }
 
-export async function verPausasProduccionBobinaTuboActivas(filtroIdTipoBobina) {
+export async function verPausasProduccionBobinaTuboActivas(filtroIdTipoBobina, filtroIdProducto) {
   const data = await pedirJson(
-    conQueryParams("/api/papelbobina/produccion/pausadas", { FiltroIdTipoBobina: filtroIdTipoBobina })
+    conQueryParams("/api/papelbobina/produccion/pausadas", {
+      FiltroIdTipoBobina: filtroIdTipoBobina,
+      FiltroIdProducto: filtroIdProducto
+    })
   );
 
   return data.map(VerPausasProduccionBobinaTuboActivasResponse);
