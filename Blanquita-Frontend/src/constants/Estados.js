@@ -70,3 +70,8 @@ export const TransicionesEstadoUsuario = {
   2: [1, 3],
   3: [],
 };
+
+export const EstadosProveedor = [
+  { IdEstadoProveedor: 1, NombreEstadoProveedor: "Activo" },
+  { IdEstadoProveedor: 2, NombreEstadoProveedor: "Inactivo" },
+];

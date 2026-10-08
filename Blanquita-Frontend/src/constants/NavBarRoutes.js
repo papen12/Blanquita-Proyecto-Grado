@@ -8,7 +8,7 @@ import {
   Container,
   CircleUserRound,
   ClipboardList,
-  Combine,QrCode,UserShield,Users,Cylinder
+  Combine,QrCode,UserShield,Users,Cylinder,Truck
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 import { Roles } from "@/constants/Values";
@@ -173,6 +173,12 @@ export const RutasAdmin = [
     icono: Users,
     ruta: "usuarios",
     descripcion: "Registrar usuarios, cambiar su estado y restablecer claves",
+  },
+  {
+    titulo: "Proveedores",
+    icono: Truck,
+    ruta: "proveedores",
+    descripcion: "Registrar Proveedores y cambiar su estado",
   },
   {
     titulo: "Bobina Papel",

@@ -1,15 +1,23 @@
-from fastapi import APIRouter,Depends
+from fastapi import APIRouter,Depends,Query
 from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
 
 from app.Services.Proveedor.Proveedor import ProveedorService
-from app.Auth.Dependencies import require_role
+from app.Auth.Dependencies import require_admin_db, require_role
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 
 from typing import List
 
 from app.Models.Proveedor.Proveedor import (
-    ProveedorForm
+    CambiarEstadoProveedorRequest,
+    CambiarEstadoProveedorResponse,
+    CrearProveedorRequest,
+    EditarProveedorRequest,
+    EstadoProveedorItem,
+    ListarProveedoresRequest,
+    ListarProveedoresResponse,
+    ProveedorForm,
+    ProveedorResponse,
 )
 
 def proveedor_service(db:Session=Depends(get_db))->ProveedorService:
@@ -29,3 +37,77 @@ def ObtenerProveedoresForm(
     usuario_actual:dict=Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service:ProveedorService=Depends(proveedor_service)
 ): return service.ObtenerProveedoresForm()
+
+
+@ProveedorRouter.get(
+    "/listar",
+    response_model=ListarProveedoresResponse,
+    status_code=200,
+)
+def ListarProveedores(
+    IdEstadoProveedor: int | None = None,
+    Busqueda: str | None = Query(default=None, max_length=50),
+    Pagina: int = Query(default=1, ge=1),
+    TamanoPagina: int = Query(default=20, ge=1, le=100),
+    usuario_actual: dict = Depends(require_admin_db),
+    service: ProveedorService = Depends(proveedor_service),
+):
+    return service.ListarProveedores(
+        ListarProveedoresRequest(
+            IdEstadoProveedor=IdEstadoProveedor,
+            Busqueda=Busqueda,
+            Pagina=Pagina,
+            TamanoPagina=TamanoPagina,
+        )
+    )
+
+
+@ProveedorRouter.get(
+    "/estados",
+    response_model=List[EstadoProveedorItem],
+    status_code=200,
+)
+def ListarEstadosProveedor(
+    usuario_actual: dict = Depends(require_admin_db),
+    service: ProveedorService = Depends(proveedor_service),
+):
+    return service.ListarEstados()
+
+
+@ProveedorRouter.post(
+    "/crear",
+    response_model=ProveedorResponse,
+    status_code=201,
+)
+def CrearProveedor(
+    data: CrearProveedorRequest,
+    usuario_actual: dict = Depends(require_admin_db),
+    service: ProveedorService = Depends(proveedor_service),
+):
+    return service.CrearProveedor(data, usuario_actual["IdUsuario"])
+
+
+@ProveedorRouter.put(
+    "/editar",
+    response_model=ProveedorResponse,
+    status_code=200,
+)
+def EditarProveedor(
+    data: EditarProveedorRequest,
+    usuario_actual: dict = Depends(require_admin_db),
+    service: ProveedorService = Depends(proveedor_service),
+):
+    return service.EditarProveedor(data, usuario_actual["IdUsuario"])
+
+
+@ProveedorRouter.patch(
+    "/estado",
+    response_model=CambiarEstadoProveedorResponse,
+    status_code=200,
+)
+def CambiarEstadoProveedor(
+    data: CambiarEstadoProveedorRequest,
+    usuario_actual: dict = Depends(require_admin_db),
+    service: ProveedorService = Depends(proveedor_service),
+):
+    return service.CambiarEstadoProveedor(data, usuario_actual["IdUsuario"])
