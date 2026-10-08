@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
 
@@ -18,7 +18,8 @@ from app.Models.BobinaServilleta.BobinaServilleta import (
 from app.Models.BobinaServilleta.TipoBobinaServilleta import (
     CrearTipoBobinaServilletaRequest,
     EditarTipoBobinaServilletaRequest,
-    TipoBobinaServilletaItem,
+    ListarTiposBobinaServilletaRequest,
+    ListarTiposBobinaServilletaResponse,
     TipoBobinaServilletaResponse,
 )
 
@@ -55,14 +56,19 @@ def ObtenerTiposBobinaServilleta(
 
 @BobinaServilletaRouter.get(
     "/tipos/listar",
-    response_model=List[TipoBobinaServilletaItem],
+    response_model=ListarTiposBobinaServilletaResponse,
     status_code=200,
 )
 def ListarTiposBobinaServilleta(
+    Busqueda: str | None = Query(default=None, max_length=50),
+    Pagina: int = Query(default=1, ge=1),
+    TamanoPagina: int = Query(default=20, ge=1, le=100),
     usuario_actual: dict = Depends(require_admin_db),
     service: TipoBobinaServilletaService = Depends(tipo_bobina_servilleta_service),
 ):
-    return service.ListarTipos()
+    return service.ListarTipos(
+        ListarTiposBobinaServilletaRequest(Busqueda=Busqueda, Pagina=Pagina, TamanoPagina=TamanoPagina)
+    )
 
 @BobinaServilletaRouter.post(
     "/tipos/crear",

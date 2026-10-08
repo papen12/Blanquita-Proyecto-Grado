@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
 
@@ -19,7 +19,8 @@ from app.Models.BobinaPapel.BobinaPapel import (
 from app.Models.BobinaPapel.TipoBobina import (
     CrearTipoBobinaPapelRequest,
     EditarTipoBobinaPapelRequest,
-    TipoBobinaPapelItem,
+    ListarTiposBobinaPapelRequest,
+    ListarTiposBobinaPapelResponse,
     TipoBobinaPapelResponse,
 )
 
@@ -75,14 +76,19 @@ def EditarBobinaPapel(
 
 @BobinaPapelRouter.get(
     "/tipos/listar",
-    response_model=List[TipoBobinaPapelItem],
+    response_model=ListarTiposBobinaPapelResponse,
     status_code=200,
 )
 def ListarTiposBobinaPapel(
+    Busqueda: str | None = Query(default=None, max_length=50),
+    Pagina: int = Query(default=1, ge=1),
+    TamanoPagina: int = Query(default=20, ge=1, le=100),
     usuario_actual: dict = Depends(require_admin_db),
     service: TipoBobinaService = Depends(tipo_bobina_service),
 ):
-    return service.ListarTipos()
+    return service.ListarTipos(
+        ListarTiposBobinaPapelRequest(Busqueda=Busqueda, Pagina=Pagina, TamanoPagina=TamanoPagina)
+    )
 
 @BobinaPapelRouter.post(
     "/tipos/crear",

@@ -4,12 +4,14 @@ import {
   TipoBobinaServilletaIngreso
 } from "../../models/BobinaServilleta/BobinaServilleta";
 import {
-  TipoBobinaServilletaItem,
+  ListarTiposBobinaServilletaRequest,
+  ListarTiposBobinaServilletaResponse,
   TipoBobinaServilletaDatos,
   EditarTipoBobinaServilletaRequest,
   TipoBobinaServilletaResponse,
 } from "../../models/BobinaServilleta/TipoBobinaServilleta";
 import { pedirJson } from "@/utils/api";
+import { conQueryParams } from "@/utils/params";
 
 export async function cargarLoteBobinaServilleta(idProveedor, idTipoBobinaServilleta, bobinas) {
   const payload = IngresoBobinaServilletaRequest(idProveedor, idTipoBobinaServilleta, bobinas);
@@ -28,9 +30,11 @@ export async function ObtenerTiposBobinaServilleta() {
   return data.map(TipoBobinaServilletaIngreso);
 }
 
-export async function listarTiposBobinaServilleta() {
-  const data = await pedirJson("/api/bobinaservilleta/tipos/listar");
-  return data.map(TipoBobinaServilletaItem);
+export async function listarTiposBobinaServilleta(filtros) {
+  const data = await pedirJson(
+    conQueryParams("/api/bobinaservilleta/tipos/listar", ListarTiposBobinaServilletaRequest(filtros)),
+  );
+  return ListarTiposBobinaServilletaResponse(data);
 }
 
 export async function crearTipoBobinaServilleta(datos) {

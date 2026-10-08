@@ -412,7 +412,7 @@ export function TarjetaReporte({
           </span>
           <span className="text-[12.5px] text-slate-500">{subtitulo}</span>
         </div>
-        <BadgeEstado estado={estado} estilos={estilos} className="shrink-0" />
+        {estado && <BadgeEstado estado={estado} estilos={estilos} className="shrink-0" />}
       </div>
 
       {children}

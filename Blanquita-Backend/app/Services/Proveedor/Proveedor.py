@@ -24,8 +24,8 @@ from app.utils.validators import REGLA_CARACTERES_OBSERVACION, ValidarTexto
 
 PATRON_NOMBRE_PROVEEDOR = r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,&-]+$"
 
+# El nombre no aparece: queda fijo desde el registro.
 ETIQUETAS_CAMPOS = {
-    "NombreProveedor": "nombre",
     "CelularProveedor": "celular",
     "CorreoProveedor": "correo",
 }
@@ -59,7 +59,7 @@ class ProveedorService:
     def ListarEstados(self) -> List[EstadoProveedorItem]:
         return [EstadoProveedorItem(**fila) for fila in self.repository.ListarEstados()]
 
-    def _ValidarNombre(self, nombre: str, excluir_id: int | None = None) -> str:
+    def _ValidarNombre(self, nombre: str) -> str:
         nombre = _limpiar(nombre)
 
         if not re.fullmatch(PATRON_NOMBRE_PROVEEDOR, nombre):
@@ -68,7 +68,7 @@ class ProveedorService:
                 detail="El nombre del proveedor solo puede tener letras, números, espacios y . , & -",
             )
 
-        if self.repository.NombreEnUso(nombre, excluir_id):
+        if self.repository.NombreEnUso(nombre):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Ya existe un proveedor llamado {nombre}",
@@ -114,7 +114,6 @@ class ProveedorService:
             )
 
         nuevos = {
-            "NombreProveedor": self._ValidarNombre(datos.NombreProveedor, proveedor.IdProveedor),
             "CelularProveedor": datos.CelularProveedor,
             "CorreoProveedor": datos.CorreoProveedor.lower() if datos.CorreoProveedor else None,
         }

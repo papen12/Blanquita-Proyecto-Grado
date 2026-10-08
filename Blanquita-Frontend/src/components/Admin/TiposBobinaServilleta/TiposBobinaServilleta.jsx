@@ -1,232 +1,80 @@
-import { useEffect, useState } from "react";
-import { SquareStack, Loader2, Pencil, Plus, RefreshCcw } from "lucide-react";
+import { useState } from "react";
+import { Pencil, Plus } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import Header from "@/components/layout/Header";
-import InputForModal from "@/components/layout/InputForModal";
 import {
-  listarTiposBobinaServilleta,
-  crearTipoBobinaServilleta,
-  editarTipoBobinaServilleta,
-} from "@/services/BobinaServilleta/BobinaServilleta";
+  TarjetaFiltros,
+  BuscadorFiltro,
+  ResultadosReporte,
+  TarjetaReporte,
+  PieTarjeta,
+  Dato,
+} from "@/components/Reportes/comunes";
+import { useReporte } from "@/hooks/useReporte";
+import { listarTiposBobinaServilleta } from "@/services/BobinaServilleta/BobinaServilleta";
 import { formatearNumero } from "@/utils/numeros";
-import { TipoBobinaServilletaDatos } from "@/models/BobinaServilleta/TipoBobinaServilleta";
+import { DialogoTipo } from "./Dialogos";
 
-const NOMBRE_MIN = 3;
-const NOMBRE_MAX = 30;
-const PATRON_NOMBRE = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 -]+$/;
-const PATRON_DECIMAL = /^\d{0,4}(\.\d{0,2})?$/;
+const FILTROS_INICIALES = { Busqueda: "" };
 
-const CAMPOS_MEDIDA = [
-  { campo: "DiametroMm", etiqueta: "Diámetro (mm)", maximo: 5000 },
-  { campo: "CrepadoPorcentaje", etiqueta: "Crepado (%)", maximo: 100 },
-  { campo: "ResistenciaKgf", etiqueta: "Resistencia (kgf)", maximo: 1000 },
+const medida = (valor, unidad) => `${formatearNumero(valor, { decimalesMinimos: 0 })} ${unidad}`;
+
+const COLUMNAS = [
+  {
+    titulo: "Nombre",
+    clase: "font-semibold text-slate-900",
+    valor: (t) => t.NombreTipoBobinaServilleta,
+  },
+  {
+    titulo: "Descripción",
+    clase: "max-w-xs whitespace-normal text-slate-600",
+    valor: (t) => t.Descripcion ?? "—",
+  },
+  { titulo: "Diámetro", clase: "tabular-nums", valor: (t) => medida(t.DiametroMm, "mm") },
+  { titulo: "Crepado", clase: "tabular-nums", valor: (t) => medida(t.CrepadoPorcentaje, "%") },
+  { titulo: "Resistencia", clase: "tabular-nums", valor: (t) => medida(t.ResistenciaKgf, "kgf") },
+  {
+    titulo: "Bobinas",
+    clase: "tabular-nums",
+    valor: (t) => `${t.CantidadEnAlmacen} en almacén · ${t.CantidadBobinas} registradas`,
+  },
 ];
 
-const VALORES_POR_DEFECTO = {
-  NombreTipoBobinaServilleta: "",
-  DiametroMm: "1210",
-  CrepadoPorcentaje: "14",
-  ResistenciaKgf: "1.35",
-};
-
-const aFormulario = (tipo) => ({
-  NombreTipoBobinaServilleta: tipo.NombreTipoBobinaServilleta,
-  DiametroMm: String(tipo.DiametroMm),
-  CrepadoPorcentaje: String(tipo.CrepadoPorcentaje),
-  ResistenciaKgf: String(tipo.ResistenciaKgf),
-});
-
-function erroresTipo(datos) {
-  const errores = {};
-  const nombre = datos.NombreTipoBobinaServilleta.trim().replace(/\s+/g, " ");
-  if (nombre && (nombre.length < NOMBRE_MIN || !PATRON_NOMBRE.test(nombre)))
-    errores.NombreTipoBobinaServilleta = `Entre ${NOMBRE_MIN} y ${NOMBRE_MAX} caracteres: letras, números, espacios y guiones`;
-  for (const { campo, maximo } of CAMPOS_MEDIDA) {
-    const valor = Number(datos[campo]);
-    if (datos[campo] !== "" && (!(valor > 0) || valor > maximo))
-      errores[campo] = `Mayor a 0 y hasta ${formatearNumero(maximo, { decimales: 0 })}`;
-  }
-  return errores;
-}
-
-function DialogoTipo({ abierto, tipo, onCerrar, onGuardado }) {
-  const [datos, setDatos] = useState(VALORES_POR_DEFECTO);
-  const [enviando, setEnviando] = useState(false);
-  const [error, setError] = useState("");
-  const editando = Boolean(tipo);
-
-  useEffect(() => {
-    if (!abierto) return;
-    setDatos(tipo ? aFormulario(tipo) : VALORES_POR_DEFECTO);
-    setError("");
-  }, [abierto, tipo]);
-
-  const cambiar = (campo) => (valor) => setDatos((previos) => ({ ...previos, [campo]: valor }));
-
-  const errores = erroresTipo(datos);
-  const completo = datos.NombreTipoBobinaServilleta.trim() && CAMPOS_MEDIDA.every(({ campo }) => datos[campo] !== "");
-  const sinCambios =
-    editando && JSON.stringify(TipoBobinaServilletaDatos(tipo)) === JSON.stringify(TipoBobinaServilletaDatos(datos));
-  const valido = completo && Object.keys(errores).length === 0 && !sinCambios;
-
-  const confirmar = async () => {
-    setEnviando(true);
-    setError("");
-    try {
-      const guardado = editando
-        ? await editarTipoBobinaServilleta(tipo.IdTipoBobinaServilleta, datos)
-        : await crearTipoBobinaServilleta(datos);
-      onGuardado(guardado, editando);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setEnviando(false);
-    }
-  };
-
+function BotonAccion({ ayuda, icono: Icono, onClick }) {
   return (
-    <Dialog open={abierto} onOpenChange={(open) => !open && !enviando && onCerrar()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{editando ? "Editar tipo de bobina servilleta" : "Nuevo tipo de bobina servilleta"}</DialogTitle>
-          <DialogDescription>
-            {editando
-              ? "Los cambios no modifican las bobinas ya registradas."
-              : "El diámetro, el crepado y la resistencia son valores de referencia del tipo."}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex flex-col gap-4">
-          <InputForModal
-            id="tipo-nombre"
-            etiqueta="Nombre"
-            valor={datos.NombreTipoBobinaServilleta}
-            onCambio={(v) => cambiar("NombreTipoBobinaServilleta")(v.slice(0, NOMBRE_MAX))}
-            placeholder="Ej. Doble hoja"
-            error={errores.NombreTipoBobinaServilleta}
-          />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {CAMPOS_MEDIDA.map(({ campo, etiqueta }) => (
-              <InputForModal
-                key={campo}
-                id={`tipo-${campo}`}
-                etiqueta={etiqueta}
-                valor={datos[campo]}
-                onCambio={(v) => PATRON_DECIMAL.test(v) && cambiar(campo)(v)}
-                inputMode="decimal"
-                classNameInput="tabular-nums"
-                error={errores[campo]}
-              />
-            ))}
-          </div>
-
-          {error && (
-            <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
-              {error}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
+    <Tooltip>
+      <TooltipTrigger
+        render={
           <Button
-            onClick={confirmar}
-            disabled={enviando || !valido}
-            className="h-11 w-full gap-2 bg-slate-900 font-extrabold text-white hover:bg-slate-800 sm:w-auto"
+            variant="ghost"
+            size="icon"
+            onClick={onClick}
+            className="h-9 w-9 text-slate-400 hover:bg-c4/10 hover:text-c3"
           >
-            {enviando ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : editando ? (
-              "Guardar cambios"
-            ) : (
-              "Crear tipo"
-            )}
+            <Icono size={16} strokeWidth={2.25} />
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Medida({ etiqueta, valor, unidad }) {
-  return (
-    <div className="flex flex-col gap-0.5 rounded-lg bg-slate-50 px-3 py-2">
-      <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{etiqueta}</span>
-      <span className="text-[15px] font-extrabold tabular-nums text-slate-900">
-        {formatearNumero(valor, { decimalesMinimos: 0 })}{" "}
-        <span className="text-xs font-semibold text-slate-500">{unidad}</span>
-      </span>
-    </div>
-  );
-}
-
-function TarjetaTipo({ tipo, onEditar }) {
-  return (
-    <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-c4/10">
-            <SquareStack size={20} className="text-c3" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-[15px] font-extrabold leading-tight break-words text-slate-900">
-              {tipo.NombreTipoBobinaServilleta}
-            </div>
-            <div className="text-[12.5px] text-slate-500">
-              {tipo.CantidadEnAlmacen} en almacén · {tipo.CantidadBobinas} registradas
-            </div>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => onEditar(tipo)}
-          aria-label={`Editar ${tipo.NombreTipoBobinaServilleta}`}
-          className="h-9 w-9 shrink-0 text-slate-400 hover:bg-c4/10 hover:text-c3"
-        >
-          <Pencil size={16} strokeWidth={2.25} />
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2">
-        <Medida etiqueta="Diámetro" valor={tipo.DiametroMm} unidad="mm" />
-        <Medida etiqueta="Crepado" valor={tipo.CrepadoPorcentaje} unidad="%" />
-        <Medida etiqueta="Resistencia" valor={tipo.ResistenciaKgf} unidad="kgf" />
-      </div>
-    </div>
+        }
+      />
+      <TooltipContent>{ayuda}</TooltipContent>
+    </Tooltip>
   );
 }
 
 export default function TiposBobinaServilleta() {
-  const [tipos, setTipos] = useState(null);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
+  const reporte = useReporte(listarTiposBobinaServilleta, FILTROS_INICIALES, ["Busqueda"]);
   const [dialogo, setDialogo] = useState({ abierto: false, tipo: null });
 
-  const cargar = async () => {
-    setCargando(true);
-    setError("");
-    try {
-      setTipos(await listarTiposBobinaServilleta());
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  useEffect(() => {
-    cargar();
-  }, []);
+  const acciones = (t) => (
+    <div className="flex justify-end gap-1">
+      <BotonAccion
+        ayuda="Editar tipo"
+        icono={Pencil}
+        onClick={() => setDialogo({ abierto: true, tipo: t })}
+      />
+    </div>
+  );
 
   const alGuardar = (guardado, editando) => {
     setDialogo({ abierto: false, tipo: null });
@@ -235,65 +83,67 @@ export default function TiposBobinaServilleta() {
         ? `Tipo ${guardado.NombreTipoBobinaServilleta} actualizado`
         : `Tipo ${guardado.NombreTipoBobinaServilleta} creado`,
     );
-    cargar();
+    reporte.recargar();
   };
 
   return (
-    <div className="contenido-con-sidebar flex min-h-screen flex-col bg-slate-50 pt-20 font-sans text-slate-900 md:pt-0">
+    <TooltipProvider>
       <Toaster richColors position="top-center" />
-      <Header
-        volver="/admin/inicio"
-        titulo="Administración"
-        subtitulo="Tipos de bobina servilleta"
-        contador={tipos ? { valor: tipos.length, singular: "tipo", plural: "tipos" } : null}
-        accion={{
-          texto: "Nuevo tipo",
-          icono: Plus,
-          onClick: () => setDialogo({ abierto: true, tipo: null }),
-        }}
-      />
+      <div className="contenido-con-sidebar flex min-h-screen flex-col bg-slate-50 pt-20 font-sans text-slate-900 md:pt-0">
+        <Header
+          volver="/admin/inicio"
+          titulo="Administración"
+          subtitulo="Tipos de bobina servilleta"
+          contador={
+            reporte.catalogo
+              ? { valor: reporte.catalogo.Total, singular: "tipo", plural: "tipos" }
+              : null
+          }
+          accion={{
+            texto: "Nuevo tipo",
+            icono: Plus,
+            onClick: () => setDialogo({ abierto: true, tipo: null }),
+          }}
+        />
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-6 sm:px-6">
-        {cargando && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2].map((i) => (
-              <Skeleton key={i} className="h-36 rounded-2xl" />
-            ))}
-          </div>
-        )}
-
-        {!cargando && error && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-6 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-slate-200">
-            {error}
-            <Button
-              variant="outline"
-              onClick={cargar}
-              className="h-9 gap-1.5 border-red-300 font-bold text-red-600 hover:bg-red-50"
-            >
-              <RefreshCcw size={14} strokeWidth={2.5} />
-              Reintentar
-            </Button>
-          </div>
-        )}
-
-        {!cargando && !error && tipos?.length === 0 && (
-          <div className="rounded-2xl bg-white p-10 text-center text-sm text-slate-400 shadow-sm ring-1 ring-slate-200">
-            Todavía no hay tipos de bobina servilleta.
-          </div>
-        )}
-
-        {!cargando && !error && tipos?.length > 0 && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {tipos.map((tipo) => (
-              <TarjetaTipo
-                key={tipo.IdTipoBobinaServilleta}
-                tipo={tipo}
-                onEditar={(t) => setDialogo({ abierto: true, tipo: t })}
+        <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
+          <TarjetaFiltros reporte={reporte}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <BuscadorFiltro
+                reporte={reporte}
+                campo="Busqueda"
+                etiqueta="Buscar"
+                placeholder="Nombre o descripción"
+                mono={false}
               />
-            ))}
-          </div>
-        )}
-      </main>
+            </div>
+          </TarjetaFiltros>
+
+          <ResultadosReporte
+            reporte={reporte}
+            elementos={reporte.catalogo?.Tipos}
+            clave={(t) => t.IdTipoBobinaServilleta}
+            nombres={["tipo", "tipos"]}
+            columnas={COLUMNAS}
+            anchoAccion="w-16"
+            accion={acciones}
+            tarjeta={(t) => (
+              <TarjetaReporte
+                titulo={t.NombreTipoBobinaServilleta}
+                tamanoTitulo="text-[14px] font-sans"
+                subtitulo={t.Descripcion ?? "Sin descripción"}
+              >
+                <PieTarjeta accion={acciones(t)}>
+                  <Dato etiqueta="Diámetro">{medida(t.DiametroMm, "mm")}</Dato>
+                  <Dato etiqueta="Crepado">{medida(t.CrepadoPorcentaje, "%")}</Dato>
+                  <Dato etiqueta="Resistencia">{medida(t.ResistenciaKgf, "kgf")}</Dato>
+                  <Dato etiqueta="En almacén">{t.CantidadEnAlmacen}</Dato>
+                </PieTarjeta>
+              </TarjetaReporte>
+            )}
+          />
+        </main>
+      </div>
 
       <DialogoTipo
         abierto={dialogo.abierto}
@@ -301,6 +151,6 @@ export default function TiposBobinaServilleta() {
         onCerrar={() => setDialogo({ abierto: false, tipo: null })}
         onGuardado={alGuardar}
       />
-    </div>
+    </TooltipProvider>
   );
 }

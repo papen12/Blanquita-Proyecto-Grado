@@ -44,12 +44,7 @@ class ListarProveedoresResponse(BaseModel):
     Proveedores: list[ProveedorItem]
 
 
-class CrearProveedorRequest(BaseModel):
-    NombreProveedor: str = Field(
-        ...,
-        min_length=LONGITUD_MINIMA_NOMBRE_PROVEEDOR,
-        max_length=LONGITUD_MAXIMA_NOMBRE_PROVEEDOR,
-    )
+class ProveedorContacto(BaseModel):
     CelularProveedor: str | None = Field(default=None, pattern=PATRON_CELULAR)
     CorreoProveedor: str | None = Field(
         default=None, max_length=LONGITUD_MAXIMA_CORREO_PROVEEDOR, pattern=PATRON_CORREO
@@ -65,7 +60,17 @@ class CrearProveedorRequest(BaseModel):
         return valor
 
 
-class EditarProveedorRequest(CrearProveedorRequest):
+class CrearProveedorRequest(ProveedorContacto):
+    NombreProveedor: str = Field(
+        ...,
+        min_length=LONGITUD_MINIMA_NOMBRE_PROVEEDOR,
+        max_length=LONGITUD_MAXIMA_NOMBRE_PROVEEDOR,
+    )
+
+
+class EditarProveedorRequest(ProveedorContacto):
+    """El nombre no se edita: queda fijo desde el registro."""
+
     IdProveedor: int = Field(..., gt=0)
 
 

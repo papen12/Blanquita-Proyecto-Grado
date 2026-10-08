@@ -26,18 +26,23 @@ export const ListarProveedoresResponse = (data) => ({
   Proveedores: (data.Proveedores ?? []).map(ProveedorItem),
 });
 
-// Se mandan siempre los tres campos: el PUT reemplaza, un campo ausente se borra.
-export const ProveedorDatos = (datos) => ({
-  NombreProveedor: (datos.NombreProveedor ?? "").trim().replace(/\s+/g, " "),
+// Se mandan siempre los campos de contacto: el PUT reemplaza, un campo ausente se borra.
+export const ProveedorContacto = (datos) => ({
   CelularProveedor: (datos.CelularProveedor ?? "").trim() || null,
   CorreoProveedor: (datos.CorreoProveedor ?? "").trim().toLowerCase() || null,
 });
 
+export const ProveedorDatos = (datos) => ({
+  NombreProveedor: (datos.NombreProveedor ?? "").trim().replace(/\s+/g, " "),
+  ...ProveedorContacto(datos),
+});
+
 export const CrearProveedorRequest = ProveedorDatos;
 
+// El nombre no se edita: queda fijo desde el registro.
 export const EditarProveedorRequest = (idProveedor, datos) => ({
   IdProveedor: idProveedor,
-  ...ProveedorDatos(datos),
+  ...ProveedorContacto(datos),
 });
 
 export const ProveedorResponse = ProveedorItem;

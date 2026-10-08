@@ -15,6 +15,7 @@ class TipoBobinaServilleta(Base):
     DiametroMm: Mapped[Decimal] = mapped_column(Numeric)
     CrepadoPorcentaje: Mapped[Decimal] = mapped_column(Numeric)
     ResistenciaKgf: Mapped[Decimal] = mapped_column(Numeric)
+    Descripcion: Mapped[str | None] = mapped_column(Text)
 
 
 class TipoMedidaSubBobina(Base):

@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -14,11 +14,12 @@ class TipoBobinaRepository:
         self.db = db
         self.caller = DbCaller(db)
 
-    def ListarTipos(self) -> list[dict]:
+    def ListarTipos(self, params: dict) -> tuple[int, list[dict]]:
         consulta = (
             select(
                 TipoBobina.IdTipoBobina,
                 TipoBobina.NombreTipoBobina,
+                TipoBobina.Descripcion,
                 TipoBobina.DiametroMm,
                 TipoBobina.Formato,
                 TipoBobina.TaraKg,
@@ -34,9 +35,26 @@ class TipoBobinaRepository:
             )
             .outerjoin(BobinaPapel, BobinaPapel.IdTipoBobina == TipoBobina.IdTipoBobina)
             .group_by(TipoBobina.IdTipoBobina)
-            .order_by(TipoBobina.IdTipoBobina)
         )
-        return self.caller.Consultar(consulta)
+
+        busqueda = (params.get("Busqueda") or "").strip()
+        if busqueda:
+            consulta = consulta.where(
+                or_(
+                    TipoBobina.NombreTipoBobina.ilike(f"%{busqueda}%"),
+                    TipoBobina.Descripcion.ilike(f"%{busqueda}%"),
+                )
+            )
+
+        total = self.caller.Consultar(
+            select(func.count().label("Total")).select_from(consulta.subquery())
+        )[0]["Total"]
+
+        pagina = consulta.order_by(
+            TipoBobina.NombreTipoBobina, TipoBobina.IdTipoBobina
+        ).limit(params["TamanoPagina"]).offset((params["Pagina"] - 1) * params["TamanoPagina"])
+
+        return total, self.caller.Consultar(pagina)
 
     def NombreEnUso(self, nombre: str, excluir_id: int | None = None) -> bool:
         consulta = select(TipoBobina.IdTipoBobina).where(

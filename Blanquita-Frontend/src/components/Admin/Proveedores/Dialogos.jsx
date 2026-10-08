@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Lock } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import InputForModal from "@/components/layout/InputForModal";
@@ -67,8 +68,22 @@ function ResumenProveedor({ proveedor }) {
   );
 }
 
+function NombreFijo({ nombre }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label className={ETIQUETA}>Nombre</Label>
+      <div className="flex h-11 items-center gap-2 rounded-lg bg-slate-100 px-3 text-sm font-bold text-slate-700">
+        <Lock size={14} className="shrink-0 text-slate-400" />
+        <span className="truncate">{nombre}</span>
+      </div>
+      <span className="text-xs text-slate-500">El nombre no se puede cambiar.</span>
+    </div>
+  );
+}
+
 export function DialogoProveedor({ abierto, proveedor, onCerrar, onGuardado }) {
   const [datos, setDatos] = useState(VALORES_POR_DEFECTO);
+  const [confirmado, setConfirmado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
   const editando = Boolean(proveedor);
@@ -76,6 +91,7 @@ export function DialogoProveedor({ abierto, proveedor, onCerrar, onGuardado }) {
   useEffect(() => {
     if (!abierto) return;
     setDatos(proveedor ? aFormulario(proveedor) : VALORES_POR_DEFECTO);
+    setConfirmado(false);
     setError("");
   }, [abierto, proveedor]);
 
@@ -86,7 +102,9 @@ export function DialogoProveedor({ abierto, proveedor, onCerrar, onGuardado }) {
   const sinCambios =
     editando &&
     JSON.stringify(ProveedorDatos(aFormulario(proveedor))) === JSON.stringify(ProveedorDatos(datos));
-  const valido = completo && Object.keys(errores).length === 0 && !sinCambios;
+  const valido =
+    completo && Object.keys(errores).length === 0 && !sinCambios && (editando || confirmado);
+  const nombreLimpio = ProveedorDatos(datos).NombreProveedor;
 
   const confirmar = async () => {
     setEnviando(true);
@@ -105,7 +123,7 @@ export function DialogoProveedor({ abierto, proveedor, onCerrar, onGuardado }) {
 
   return (
     <Dialog open={abierto} onOpenChange={(open) => !open && !enviando && onCerrar()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{editando ? "Editar proveedor" : "Registrar proveedor"}</DialogTitle>
           <DialogDescription>
@@ -116,14 +134,21 @@ export function DialogoProveedor({ abierto, proveedor, onCerrar, onGuardado }) {
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          <InputForModal
-            id="proveedor-nombre"
-            etiqueta="Nombre"
-            valor={datos.NombreProveedor}
-            onCambio={(v) => cambiar("NombreProveedor")(v.slice(0, NOMBRE_MAX))}
-            placeholder="Ej. Papelera del Sur S.R.L."
-            error={errores.NombreProveedor}
-          />
+          {editando ? (
+            <NombreFijo nombre={proveedor.NombreProveedor} />
+          ) : (
+            <InputForModal
+              id="proveedor-nombre"
+              etiqueta="Nombre"
+              valor={datos.NombreProveedor}
+              onCambio={(v) => {
+                cambiar("NombreProveedor")(v.slice(0, NOMBRE_MAX));
+                setConfirmado(false);
+              }}
+              placeholder="Ej. Papelera del Sur S.R.L."
+              error={errores.NombreProveedor}
+            />
+          )}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <InputForModal
               id="proveedor-celular"
@@ -147,6 +172,27 @@ export function DialogoProveedor({ abierto, proveedor, onCerrar, onGuardado }) {
               error={errores.CorreoProveedor}
             />
           </div>
+
+          {!editando && (
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <input
+                type="checkbox"
+                checked={confirmado}
+                onChange={(e) => setConfirmado(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-slate-900"
+              />
+              <span className="flex flex-col gap-0.5">
+                <span className="text-sm font-bold text-slate-900">
+                  Confirmo el registro del proveedor
+                  {nombreLimpio && ` «${nombreLimpio}»`}
+                </span>
+                <span className="text-[12.5px] text-slate-600">
+                  Una vez registrado, el nombre no podrá ser editado. Solo se podrán cambiar el
+                  celular y el correo.
+                </span>
+              </span>
+            </label>
+          )}
 
           {error && <ErrorDialogo mensaje={error} />}
         </div>

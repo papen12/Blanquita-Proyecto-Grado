@@ -6,12 +6,14 @@ import {
   EditarBobinaPapelResponse,
 } from "../../models/BobinaPapel/BobinaPapel";
 import {
-  TipoBobinaPapelItem,
+  ListarTiposBobinaPapelRequest,
+  ListarTiposBobinaPapelResponse,
   TipoBobinaPapelDatos,
   EditarTipoBobinaPapelRequest,
   TipoBobinaPapelResponse,
 } from "../../models/BobinaPapel/TipoBobina";
 import { pedirJson } from "@/utils/api";
+import { conQueryParams } from "@/utils/params";
 export async function cargarLoteBobinaPapel(idProveedor, idTipoBobina, bobinas) {
   const payload = IngresoModelo({
     IdProveedor: idProveedor,
@@ -43,9 +45,11 @@ export async function editarBobinaPapel(datos) {
 
   return EditarBobinaPapelResponse(data);
 }
-export async function listarTiposBobinaPapel() {
-  const data = await pedirJson("/api/bobinapapel/tipos/listar");
-  return data.map(TipoBobinaPapelItem);
+export async function listarTiposBobinaPapel(filtros) {
+  const data = await pedirJson(
+    conQueryParams("/api/bobinapapel/tipos/listar", ListarTiposBobinaPapelRequest(filtros)),
+  );
+  return ListarTiposBobinaPapelResponse(data);
 }
 
 export async function crearTipoBobinaPapel(datos) {

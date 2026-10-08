@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -14,11 +14,12 @@ class TipoBobinaServilletaRepository:
         self.db = db
         self.caller = DbCaller(db)
 
-    def ListarTipos(self) -> list[dict]:
+    def ListarTipos(self, params: dict) -> tuple[int, list[dict]]:
         consulta = (
             select(
                 TipoBobinaServilleta.IdTipoBobinaServilleta,
                 TipoBobinaServilleta.NombreTipoBobinaServilleta,
+                TipoBobinaServilleta.Descripcion,
                 TipoBobinaServilleta.DiametroMm,
                 TipoBobinaServilleta.CrepadoPorcentaje,
                 TipoBobinaServilleta.ResistenciaKgf,
@@ -37,9 +38,27 @@ class TipoBobinaServilletaRepository:
                 BobinaServilleta.IdTipoBobinaServilleta == TipoBobinaServilleta.IdTipoBobinaServilleta,
             )
             .group_by(TipoBobinaServilleta.IdTipoBobinaServilleta)
-            .order_by(TipoBobinaServilleta.IdTipoBobinaServilleta)
         )
-        return self.caller.Consultar(consulta)
+
+        busqueda = (params.get("Busqueda") or "").strip()
+        if busqueda:
+            consulta = consulta.where(
+                or_(
+                    TipoBobinaServilleta.NombreTipoBobinaServilleta.ilike(f"%{busqueda}%"),
+                    TipoBobinaServilleta.Descripcion.ilike(f"%{busqueda}%"),
+                )
+            )
+
+        total = self.caller.Consultar(
+            select(func.count().label("Total")).select_from(consulta.subquery())
+        )[0]["Total"]
+
+        pagina = consulta.order_by(
+            TipoBobinaServilleta.NombreTipoBobinaServilleta,
+            TipoBobinaServilleta.IdTipoBobinaServilleta,
+        ).limit(params["TamanoPagina"]).offset((params["Pagina"] - 1) * params["TamanoPagina"])
+
+        return total, self.caller.Consultar(pagina)
 
     def NombreEnUso(self, nombre: str, excluir_id: int | None = None) -> bool:
         consulta = select(TipoBobinaServilleta.IdTipoBobinaServilleta).where(
@@ -66,7 +85,6 @@ class TipoBobinaServilletaRepository:
     def CrearTipo(
         self, tipo: TipoBobinaServilleta, observacion, id_admin: int
     ) -> TipoBobinaServilleta:
-        """`observacion` recibe el tipo ya insertado para poder incluir su Id."""
         try:
             self.db.add(tipo)
             self.db.flush()
