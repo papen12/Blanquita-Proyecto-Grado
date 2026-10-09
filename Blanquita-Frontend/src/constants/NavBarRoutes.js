@@ -8,7 +8,7 @@ import {
   Container,
   CircleUserRound,
   ClipboardList,
-  Combine,QrCode,UserShield,Users,Cylinder,Truck
+  Combine,QrCode,UserShield,Users,Truck
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 import { Roles } from "@/constants/Values";
@@ -179,24 +179,6 @@ export const RutasAdmin = [
     icono: Truck,
     ruta: "proveedores",
     descripcion: "Registrar Proveedores y cambiar su estado",
-  },
-  {
-    titulo: "Bobina Papel",
-    icono: Cylinder,
-    ruta: "tipos-bobina-papel",
-    descripcion: "Crear tipos de bobina papel y editar sus medidas y tara",
-  },
-  {
-    titulo: "Bobina Servilleta",
-    icono: SquareStack,
-    ruta: "tipos-bobina-servilleta",
-    descripcion: "Crear tipos de bobina servilleta y editar su diámetro, crepado y resistencia",
-  },
-  {
-    titulo: "Líneas y Productos",
-    icono: Boxes,
-    ruta: "catalogo",
-    descripcion: "Crear líneas de producción y sus productos con su código",
   },
   {
     titulo: "Volver a la Planta",

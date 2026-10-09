@@ -5,15 +5,7 @@ import {
   EditarBobinaPapelRequest,
   EditarBobinaPapelResponse,
 } from "../../models/BobinaPapel/BobinaPapel";
-import {
-  ListarTiposBobinaPapelRequest,
-  ListarTiposBobinaPapelResponse,
-  TipoBobinaPapelDatos,
-  EditarTipoBobinaPapelRequest,
-  TipoBobinaPapelResponse,
-} from "../../models/BobinaPapel/TipoBobina";
 import { pedirJson } from "@/utils/api";
-import { conQueryParams } from "@/utils/params";
 export async function cargarLoteBobinaPapel(idProveedor, idTipoBobina, bobinas) {
   const payload = IngresoModelo({
     IdProveedor: idProveedor,
@@ -44,26 +36,4 @@ export async function editarBobinaPapel(datos) {
   });
 
   return EditarBobinaPapelResponse(data);
-}
-export async function listarTiposBobinaPapel(filtros) {
-  const data = await pedirJson(
-    conQueryParams("/api/bobinapapel/tipos/listar", ListarTiposBobinaPapelRequest(filtros)),
-  );
-  return ListarTiposBobinaPapelResponse(data);
-}
-
-export async function crearTipoBobinaPapel(datos) {
-  const data = await pedirJson("/api/bobinapapel/tipos/crear", {
-    method: "POST",
-    body: TipoBobinaPapelDatos(datos),
-  });
-  return TipoBobinaPapelResponse(data);
-}
-
-export async function editarTipoBobinaPapel(idTipoBobina, datos) {
-  const data = await pedirJson("/api/bobinapapel/tipos/editar", {
-    method: "PUT",
-    body: EditarTipoBobinaPapelRequest(idTipoBobina, datos),
-  });
-  return TipoBobinaPapelResponse(data);
 }
