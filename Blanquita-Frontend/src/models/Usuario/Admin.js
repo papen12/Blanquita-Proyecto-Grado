@@ -70,7 +70,22 @@ export const CambiarEstadoUsuarioResponse = (data) => ({
   NombreEstadoUsuario: data.NombreEstadoUsuario,
 });
 
-export const RestablecerClaveRequest = (idUsuario, claveNueva) => ({
+export const EditarUsuarioRequest = (idUsuario, datos) => ({
+  IdUsuario: idUsuario,
+  PrimerNombre: (datos.PrimerNombre ?? "").trim(),
+  SegundoNombre: textoOpcional(datos.SegundoNombre),
+  ApellidoPaterno: (datos.ApellidoPaterno ?? "").trim(),
+  ApellidoMaterno: textoOpcional(datos.ApellidoMaterno),
+  Celular: textoOpcional(datos.Celular),
+});
+
+export const EditarUsuarioResponse = (data) => ({
+  IdUsuario: data.IdUsuario,
+  Ci: data.Ci,
+  NombreCompleto: data.NombreCompleto,
+});
+
+export const RestablecerClaveRequest =(idUsuario, claveNueva) => ({
   IdUsuario: idUsuario,
   ClaveNueva: claveNueva,
 });

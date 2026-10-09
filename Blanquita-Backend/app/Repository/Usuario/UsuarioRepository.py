@@ -77,19 +77,6 @@ class UsuarioRepository:
         '''
         return self.caller.LlamarUnRegistro(consulta, params, commit=False)
 
-    def EditarPerfil(self, params: dict) -> dict | None:
-        consulta = '''
-            SELECT * FROM "EditarPerfil"(
-                p_IdUsuario       => :p_IdUsuario,
-                p_PrimerNombre    => :p_PrimerNombre,
-                p_ApellidoPaterno => :p_ApellidoPaterno,
-                p_SegundoNombre   => :p_SegundoNombre,
-                p_ApellidoMaterno => :p_ApellidoMaterno,
-                p_Celular         => :p_Celular
-            )
-        '''
-        return self.caller.LlamarUnRegistro(consulta, params)
-
     def ObtenerUsuarioBloqueado(self, id_usuario: int) -> Usuario | None:
         """Lee el usuario con FOR UPDATE; el bloqueo dura hasta el commit/rollback."""
         try:
@@ -122,6 +109,22 @@ class UsuarioRepository:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="No se pudo cambiar el estado del usuario",
+            )
+
+    def EditarUsuario(
+        self, usuario: Usuario, datos: dict, observacion: str, id_admin: int
+    ) -> None:
+        """Actualiza los datos y registra el historial en la misma transacción."""
+        try:
+            for campo, valor in datos.items():
+                setattr(usuario, campo, valor)
+            self.db.add(HistorialAdmin(IdUsuario=id_admin, Observacion=observacion))
+            self.db.commit()
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo editar el usuario",
             )
 
     def AgregarHistorial(self, id_admin: int, observacion: str) -> None:

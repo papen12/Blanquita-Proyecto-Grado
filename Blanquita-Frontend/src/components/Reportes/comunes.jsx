@@ -314,6 +314,7 @@ export function ResultadosReporte({
   resumen,
   columnas,
   anchoAccion = "w-12",
+  tituloAccion,
   accion,
   tarjeta,
 }) {
@@ -361,7 +362,9 @@ export function ResultadosReporte({
                       {columna.titulo}
                     </TableHead>
                   ))}
-                  <TableHead className={anchoAccion} />
+                  <TableHead className={cn(anchoAccion, tituloAccion && "text-center")}>
+                    {tituloAccion}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

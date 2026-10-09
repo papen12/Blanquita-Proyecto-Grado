@@ -5,6 +5,8 @@ import {
   CrearUsuarioResponse,
   CambiarEstadoUsuarioRequest,
   CambiarEstadoUsuarioResponse,
+  EditarUsuarioRequest,
+  EditarUsuarioResponse,
   RestablecerClaveRequest,
   RestablecerClaveResponse,
 } from "../../models/Usuario/Admin";
@@ -32,6 +34,14 @@ export async function cambiarEstadoUsuario(idUsuario, idEstadoUsuario, motivo) {
     body: CambiarEstadoUsuarioRequest(idUsuario, idEstadoUsuario, motivo),
   });
   return CambiarEstadoUsuarioResponse(data);
+}
+
+export async function editarUsuario(idUsuario, datos) {
+  const data = await pedirJson(`${BASE_URL}/editar`, {
+    method: "PATCH",
+    body: EditarUsuarioRequest(idUsuario, datos),
+  });
+  return EditarUsuarioResponse(data);
 }
 
 export async function restablecerClave(idUsuario, claveNueva) {

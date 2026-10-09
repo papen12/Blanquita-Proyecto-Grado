@@ -7,14 +7,20 @@ import InputForModal from "@/components/layout/InputForModal";
 import { SelectEntidad } from "@/components/layout/Selectentidad";
 import { RolesUsuario } from "@/constants/Values";
 import { crearUsuario } from "@/services/Usuario/Admin";
-import { CamposClave, BotonEnviar, ErrorDialogo, ETIQUETA, claveValida } from "./Dialogos";
+import {
+  CamposClave,
+  BotonEnviar,
+  ErrorDialogo,
+  ETIQUETA,
+  claveValida,
+  PATRON_NOMBRE,
+  PATRON_CELULAR,
+  CAMPOS_NOMBRE,
+  soloLetras,
+  soloDigitos,
+} from "./Dialogos";
 
-const PATRON_NOMBRE = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]{2,15}$/;
 const PATRON_CI = /^\d{6,12}$/;
-const PATRON_CELULAR = /^[67]\d{7}$/;
-
-const soloLetras = (texto) => texto.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, "").slice(0, 15);
-const soloDigitos = (texto, max) => texto.replace(/\D/g, "").slice(0, max);
 
 const FORMULARIO_VACIO = {
   Ci: "",
@@ -26,13 +32,6 @@ const FORMULARIO_VACIO = {
   IdRol: "",
   IsAdmin: false,
 };
-
-const CAMPOS_NOMBRE = [
-  { campo: "PrimerNombre", etiqueta: "Primer nombre" },
-  { campo: "SegundoNombre", etiqueta: "Segundo nombre", opcional: true },
-  { campo: "ApellidoPaterno", etiqueta: "Apellido paterno" },
-  { campo: "ApellidoMaterno", etiqueta: "Apellido materno", opcional: true },
-];
 
 function erroresRegistro(datos) {
   const errores = {};

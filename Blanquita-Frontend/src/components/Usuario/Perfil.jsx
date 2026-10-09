@@ -7,9 +7,6 @@ import {
   ShieldCheck,
   CalendarClock,
   Copy,
-  Pencil,
-  Check,
-  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -17,16 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import InputForModal from "@/components/layout/InputForModal";
-import { obtenerPerfil, editarPerfil } from "../../services/Usuario/Perfil";
+import { obtenerPerfil } from "../../services/Usuario/Perfil";
 import { dateFormatter } from "@/utils/dates";
 
 const ESTADO_ESTILO = {
@@ -34,21 +22,6 @@ const ESTADO_ESTILO = {
   2: "border-slate-300 bg-slate-100 text-slate-600",
   3: "border-red-300 bg-red-50 text-red-600",
 };
-
-const MIN_NOMBRE = 2;
-const MAX_NOMBRE = 15;
-const NOMBRE_REGEX = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+$/;
-const CARACTERES_NO_PERMITIDOS = /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g;
-const CELULAR_REGEX = /^[67]\d{7}$/;
-
-const CAMPOS_NOMBRE = [
-  { campo: "PrimerNombre", obligatorio: true },
-  { campo: "SegundoNombre", obligatorio: false },
-  { campo: "ApellidoPaterno", obligatorio: true },
-  { campo: "ApellidoMaterno", obligatorio: false },
-];
-
-const limpiarNombre = (valor) => valor.replace(CARACTERES_NO_PERMITIDOS, "");
 
 function iniciales(primerNombre, apellidoPaterno) {
   const a = primerNombre?.trim()?.[0] ?? "";
@@ -62,52 +35,6 @@ function formatearCelular(valor) {
   return limpio.length === 8
     ? limpio.replace(/(\d{4})(\d{4})/, "$1 $2")
     : String(valor);
-}
-
-const norm = (valor) => (valor ?? "").trim();
-
-function formularioDesde(perfil) {
-  return {
-    PrimerNombre: perfil.PrimerNombre ?? "",
-    SegundoNombre: perfil.SegundoNombre ?? "",
-    ApellidoPaterno: perfil.ApellidoPaterno ?? "",
-    ApellidoMaterno: perfil.ApellidoMaterno ?? "",
-    Celular: perfil.Celular ?? "",
-  };
-}
-
-function errorNombre(valor, obligatorio) {
-  const nombre = norm(valor);
-  if (!nombre) return obligatorio ? "Requerido" : null;
-  if (nombre.length < MIN_NOMBRE) return `Mínimo ${MIN_NOMBRE} caracteres`;
-  if (nombre.length > MAX_NOMBRE) return `Máximo ${MAX_NOMBRE} caracteres`;
-  if (!NOMBRE_REGEX.test(nombre)) return "Solo letras, sin espacios";
-  return null;
-}
-
-function validar(form) {
-  const errores = {};
-
-  for (const { campo, obligatorio } of CAMPOS_NOMBRE) {
-    const error = errorNombre(form[campo], obligatorio);
-    if (error) errores[campo] = error;
-  }
-
-  const celular = norm(form.Celular);
-  if (celular && !CELULAR_REGEX.test(celular))
-    errores.Celular = "8 dígitos, empezando con 6 o 7";
-
-  return errores;
-}
-
-function hayCambios(form, perfil) {
-  return (
-    norm(form.PrimerNombre) !== norm(perfil.PrimerNombre) ||
-    norm(form.SegundoNombre) !== norm(perfil.SegundoNombre) ||
-    norm(form.ApellidoPaterno) !== norm(perfil.ApellidoPaterno) ||
-    norm(form.ApellidoMaterno) !== norm(perfil.ApellidoMaterno) ||
-    norm(form.Celular) !== norm(perfil.Celular)
-  );
 }
 
 async function copiar(texto, etiqueta) {
@@ -198,155 +125,10 @@ function PerfilSkeleton() {
   );
 }
 
-function DialogEditarPerfil({ abierto, onOpenChange, perfil, onGuardado }) {
-  const [form, setForm] = useState(() => formularioDesde(perfil));
-  const [errores, setErrores] = useState({});
-  const [guardando, setGuardando] = useState(false);
-
-  useEffect(() => {
-    if (abierto) {
-      setForm(formularioDesde(perfil));
-      setErrores({});
-      setGuardando(false);
-    }
-  }, [abierto, perfil]);
-
-  const actualizar = (campo) => (valor) => {
-    setForm((prev) => ({ ...prev, [campo]: valor }));
-    setErrores((prev) => {
-      if (!prev[campo]) return prev;
-      const { [campo]: _omitido, ...resto } = prev;
-      return resto;
-    });
-  };
-
-  const actualizarNombre = (campo) => (valor) => actualizar(campo)(limpiarNombre(valor));
-
-  const actualizarCelular = (valor) =>
-    actualizar("Celular")(valor.replace(/\D/g, "").slice(0, 8));
-
-  const cambios = hayCambios(form, perfil);
-
-  const guardar = async () => {
-    const nuevosErrores = validar(form);
-    setErrores(nuevosErrores);
-    if (Object.keys(nuevosErrores).length > 0) return;
-
-    setGuardando(true);
-    try {
-      const actualizado = await editarPerfil(form);
-      onGuardado(actualizado);
-      onOpenChange(false);
-      toast.success("Perfil actualizado");
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setGuardando(false);
-    }
-  };
-
-  return (
-    <Dialog open={abierto} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Editar perfil</DialogTitle>
-        </DialogHeader>
-
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <InputForModal
-              className="flex-1"
-              id="PrimerNombre"
-              etiqueta="Primer nombre"
-              valor={form.PrimerNombre}
-              onCambio={actualizarNombre("PrimerNombre")}
-              error={errores.PrimerNombre}
-              maxLength={MAX_NOMBRE}
-              autoComplete="given-name"
-            />
-            <InputForModal
-              className="flex-1"
-              id="SegundoNombre"
-              etiqueta="Segundo nombre"
-              opcional
-              valor={form.SegundoNombre}
-              onCambio={actualizarNombre("SegundoNombre")}
-              error={errores.SegundoNombre}
-              maxLength={MAX_NOMBRE}
-              autoComplete="additional-name"
-            />
-          </div>
-
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <InputForModal
-              className="flex-1"
-              id="ApellidoPaterno"
-              etiqueta="Apellido paterno"
-              valor={form.ApellidoPaterno}
-              onCambio={actualizarNombre("ApellidoPaterno")}
-              error={errores.ApellidoPaterno}
-              maxLength={MAX_NOMBRE}
-              autoComplete="family-name"
-            />
-            <InputForModal
-              className="flex-1"
-              id="ApellidoMaterno"
-              etiqueta="Apellido materno"
-              opcional
-              valor={form.ApellidoMaterno}
-              onCambio={actualizarNombre("ApellidoMaterno")}
-              error={errores.ApellidoMaterno}
-              maxLength={MAX_NOMBRE}
-            />
-          </div>
-
-          <InputForModal
-            id="Celular"
-            etiqueta="Celular"
-            opcional
-            valor={form.Celular}
-            onCambio={actualizarCelular}
-            error={errores.Celular}
-            inputMode="numeric"
-            placeholder="Ej. 71234567"
-            autoComplete="tel-national"
-          />
-        </div>
-
-        <DialogFooter>
-          <DialogClose
-            render={<Button variant="outline" disabled={guardando} />}
-          >
-            Cancelar
-          </DialogClose>
-          <Button
-            onClick={guardar}
-            disabled={guardando || !cambios}
-            className="gap-2 bg-gradient-to-r from-c3 to-c4 font-extrabold text-white hover:opacity-90"
-          >
-            {guardando ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Guardando...
-              </>
-            ) : (
-              <>
-                <Check size={16} strokeWidth={2.75} />
-                Guardar cambios
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export default function Perfil() {
   const [perfil, setPerfil] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
-  const [editando, setEditando] = useState(false);
 
   useEffect(() => {
     let activo = true;
@@ -382,14 +164,6 @@ export default function Perfil() {
           <div className="space-y-6">
             <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
               <div className="relative flex h-full flex-col items-center gap-4 bg-gradient-to-br from-c3 to-c4 p-6 text-white sm:flex-row sm:text-left">
-                <Button
-                  onClick={() => setEditando(true)}
-                  className="absolute right-4 top-4 h-9 gap-1.5 bg-white/15 font-bold text-white hover:bg-white/25"
-                >
-                  <Pencil size={14} strokeWidth={2.5} />
-                  Editar
-                </Button>
-
                 <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white/15 text-2xl font-extrabold">
                   {iniciales(perfil.PrimerNombre, perfil.ApellidoPaterno)}
                 </div>
@@ -483,15 +257,6 @@ export default function Perfil() {
           </div>
         )}
       </main>
-
-      {perfil && (
-        <DialogEditarPerfil
-          abierto={editando}
-          onOpenChange={setEditando}
-          perfil={perfil}
-          onGuardado={setPerfil}
-        />
-      )}
     </div>
   );
 }
