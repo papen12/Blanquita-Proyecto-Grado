@@ -8,7 +8,12 @@ import {
   Container,
   CircleUserRound,
   ClipboardList,
-  Combine,QrCode,UserShield,Users,Truck,Package
+  Combine,
+  QrCode,
+  UserShield,
+  Users,
+  Truck,
+  Package,
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 import { Roles } from "@/constants/Values";
@@ -22,7 +27,8 @@ export function rutaDeItem(item, basePath, prefijo) {
 export function rutasVisibles(rutas, idRol, esAdmin) {
   return rutas.filter(
     (item) =>
-      (!item.isLider || idRol === Roles.Encargado) && (!item.soloAdmin || esAdmin),
+      (!item.isLider || idRol === Roles.Encargado) &&
+      (!item.soloAdmin || esAdmin),
   );
 }
 
@@ -147,9 +153,7 @@ export const RutasReportes = [
     titulo: "Rodela",
     icono: Database,
     ruta: "rodela",
-    subrutas: [
-      { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
-    ],
+    subrutas: [{ titulo: "Inventario", icono: Boxes, ruta: "inventario" }],
   },
   {
     titulo: "Productos",
@@ -160,10 +164,28 @@ export const RutasReportes = [
       { titulo: "Producción", icono: Factory, ruta: "produccion" },
     ],
   },
-   {
-    titulo:"Códigos Qr",
-    icono:QrCode,
-    ruta:"qr",
+  {
+    titulo: "Insumos",
+    icono: Package,
+    ruta: "insumos",
+    subrutas: [
+      {
+        titulo: "Inventario",
+        icono: Boxes,
+        ruta: "inventario",
+      },
+      { 
+        titulo: "Movimientos", 
+        icono: Combine, 
+        ruta: "movimientos" 
+
+      },
+    ],
+  },
+  {
+    titulo: "Códigos Qr",
+    icono: QrCode,
+    ruta: "qr",
   },
   {
     titulo: "Volver a la Planta",
@@ -171,8 +193,6 @@ export const RutasReportes = [
     ruta: "",
   },
 ];
-
-
 
 export const RutasAdmin = [
   {
@@ -191,6 +211,11 @@ export const RutasAdmin = [
     icono: Truck,
     ruta: "proveedores",
     descripcion: "Registrar Proveedores y cambiar su estado",
+  },
+  {
+    titulo: "Insumos",
+    icono: Package,
+    ruta: "insumos",
   },
   {
     titulo: "Volver a la Planta",
