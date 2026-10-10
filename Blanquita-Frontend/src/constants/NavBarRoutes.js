@@ -216,6 +216,7 @@ export const RutasAdmin = [
     titulo: "Insumos",
     icono: Package,
     ruta: "insumos",
+    descripcion: "Registrar insumos y editar su descripción",
   },
   {
     titulo: "Volver a la Planta",

@@ -1,11 +1,16 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.Auth.Dependencies import require_role
+from app.Auth.Dependencies import require_admin_db, require_role
 from app.Config.supabase import get_db
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 from app.Models.Insumo.Insumo import (
     CatalogoInsumoResponse,
+    CrearInsumoRequest,
+    EditarInsumoRequest,
+    InsumoResponse,
+    ListarInsumosRequest,
+    ListarInsumosResponse,
     MovimientoInsumoRequest,
     MovimientoInsumoResponse,
 )
@@ -55,3 +60,50 @@ def SacarInsumo(
     service: InsumoService = Depends(insumo_service),
 ):
     return service.SacarInsumo(data, usuario_actual["IdUsuario"])
+
+
+@InsumoRouter.get(
+    "/listar",
+    response_model=ListarInsumosResponse,
+    status_code=200,
+)
+def ListarInsumos(
+    Busqueda: str | None = Query(default=None, max_length=50),
+    Pagina: int = Query(default=1, ge=1),
+    TamanoPagina: int = Query(default=20, ge=1, le=100),
+    usuario_actual: dict = Depends(require_admin_db),
+    service: InsumoService = Depends(insumo_service),
+):
+    return service.ListarInsumos(
+        ListarInsumosRequest(
+            Busqueda=Busqueda,
+            Pagina=Pagina,
+            TamanoPagina=TamanoPagina,
+        )
+    )
+
+
+@InsumoRouter.post(
+    "/crear",
+    response_model=InsumoResponse,
+    status_code=201,
+)
+def CrearInsumo(
+    data: CrearInsumoRequest,
+    usuario_actual: dict = Depends(require_admin_db),
+    service: InsumoService = Depends(insumo_service),
+):
+    return service.CrearInsumo(data, usuario_actual["IdUsuario"])
+
+
+@InsumoRouter.patch(
+    "/editar",
+    response_model=InsumoResponse,
+    status_code=200,
+)
+def EditarInsumo(
+    data: EditarInsumoRequest,
+    usuario_actual: dict = Depends(require_admin_db),
+    service: InsumoService = Depends(insumo_service),
+):
+    return service.EditarInsumo(data, usuario_actual["IdUsuario"])

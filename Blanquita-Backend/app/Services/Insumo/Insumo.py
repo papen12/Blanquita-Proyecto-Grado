@@ -1,18 +1,28 @@
+import re
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.Constants.Cantidades import (
     CANTIDAD_MOVIMIENTO_INSUMO,
     LONGITUD_MAXIMA_DESCRIPCION,
+    LONGITUD_MAXIMA_DESCRIPCION_INSUMO,
     LONGITUD_MINIMA_DESCRIPCION,
+    LONGITUD_MINIMA_DESCRIPCION_INSUMO,
 )
 from app.Models.Insumo.Insumo import (
     CatalogoInsumoResponse,
+    CrearInsumoRequest,
+    EditarInsumoRequest,
+    InsumoItem,
+    InsumoResponse,
+    ListarInsumosRequest,
+    ListarInsumosResponse,
     MovimientoInsumoRequest,
     MovimientoInsumoResponse,
 )
 from app.Repository.Insumo.Insumo import InsumoRepository
-from app.Schemas.Insumo import MovimientoInsumo
+from app.Schemas.Insumo import MovimientoInsumo, TipoInsumo
 from app.utils.validators import EsCantidadValida, REGLA_CARACTERES_OBSERVACION, ValidarTexto
 
 ID_TIPO_MOVIMIENTO_INGRESO = 1
@@ -22,6 +32,16 @@ NOMBRE_MOVIMIENTO = {
     ID_TIPO_MOVIMIENTO_INGRESO: "Ingreso",
     ID_TIPO_MOVIMIENTO_SALIDA: "Salida",
 }
+
+PATRON_NOMBRE_INSUMO = r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,()/-]+$"
+
+
+def _limpiar(texto: str) -> str:
+    return " ".join(texto.split())
+
+
+def _mostrar(valor: str | None) -> str:
+    return valor if valor else "sin dato"
 
 
 class InsumoService:
@@ -36,6 +56,98 @@ class InsumoService:
 
     def SacarInsumo(self, data: MovimientoInsumoRequest, id_usuario: int) -> MovimientoInsumoResponse:
         return self._RegistrarMovimiento(data, id_usuario, ID_TIPO_MOVIMIENTO_SALIDA)
+
+    def ListarInsumos(self, data: ListarInsumosRequest) -> ListarInsumosResponse:
+        total, filas = self.repository.ListarInsumos(data.model_dump())
+
+        return ListarInsumosResponse(
+            Total=total,
+            Pagina=data.Pagina,
+            TamanoPagina=data.TamanoPagina,
+            Insumos=[InsumoItem(**fila) for fila in filas],
+        )
+
+    def CrearInsumo(self, datos: CrearInsumoRequest, id_admin: int) -> InsumoResponse:
+        nombre = self._ValidarNombre(datos.NombreInsumo)
+        descripcion = self._ValidarDescripcion(datos.DescripcionInsumo)
+
+        creado = self.repository.CrearInsumo(
+            TipoInsumo(NombreInsumo=nombre, DescripcionInsumo=descripcion),
+            lambda t: (
+                f"Crear insumo · #{t.IdTipoInsumo} {t.NombreInsumo} "
+                f"(descripción: {_mostrar(t.DescripcionInsumo)}), inventario inicial 0"
+            ),
+            id_admin,
+        )
+
+        return InsumoResponse(
+            IdTipoInsumo=creado.IdTipoInsumo,
+            NombreInsumo=creado.NombreInsumo,
+            DescripcionInsumo=creado.DescripcionInsumo,
+            CantidadActual=0,
+        )
+
+    def EditarInsumo(self, datos: EditarInsumoRequest, id_admin: int) -> InsumoResponse:
+        descripcion = self._ValidarDescripcion(datos.DescripcionInsumo)
+
+        tipo = self.repository.ObtenerTipoInsumoBloqueado(datos.IdTipoInsumo)
+        if tipo is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="El insumo no existe",
+            )
+
+        anterior = tipo.DescripcionInsumo
+        if anterior == descripcion:
+            self.repository.Revertir()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="No hay cambios para guardar",
+            )
+
+        observacion = (
+            f"Editar insumo · #{tipo.IdTipoInsumo} {tipo.NombreInsumo}: "
+            f"descripción: {_mostrar(anterior)} → {descripcion}"
+        )
+        editado = self.repository.EditarDescripcion(tipo, descripcion, observacion, id_admin)
+
+        return InsumoResponse(
+            IdTipoInsumo=editado.IdTipoInsumo,
+            NombreInsumo=editado.NombreInsumo,
+            DescripcionInsumo=editado.DescripcionInsumo,
+            CantidadActual=self.repository.CantidadActual(editado.IdTipoInsumo),
+        )
+
+    def _ValidarNombre(self, nombre: str) -> str:
+        nombre = _limpiar(nombre)
+        if not re.fullmatch(PATRON_NOMBRE_INSUMO, nombre):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="El nombre del insumo solo puede tener letras, números, espacios y . , ( ) / -",
+            )
+
+        if self.repository.NombreEnUso(nombre):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Ya existe un insumo llamado {nombre}",
+            )
+
+        return nombre
+
+    def _ValidarDescripcion(self, descripcion: str | None) -> str:
+        descripcion = _limpiar(descripcion or "")
+        if not ValidarTexto(
+            LONGITUD_MINIMA_DESCRIPCION_INSUMO, LONGITUD_MAXIMA_DESCRIPCION_INSUMO, descripcion
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=(
+                    "La descripción es obligatoria, debe tener entre "
+                    f"{LONGITUD_MINIMA_DESCRIPCION_INSUMO} y {LONGITUD_MAXIMA_DESCRIPCION_INSUMO} caracteres, "
+                    f"{REGLA_CARACTERES_OBSERVACION}"
+                ),
+            )
+        return descripcion
 
     def _RegistrarMovimiento(
         self, data: MovimientoInsumoRequest, id_usuario: int, id_tipo_movimiento: int
