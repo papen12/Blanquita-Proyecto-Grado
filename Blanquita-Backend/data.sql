@@ -122,6 +122,21 @@ FROM "TipoEmpaqueBolsa";
 
 
 
+INSERT INTO "TipoInsumo" ("NombreInsumo", "DescripcionInsumo") VALUES
+('Pegamento de tubos', 'Pegamento exclusivo de la máquina de tubos; llega en turriles'),
+('Pegamento de laminado', 'Une ambas láminas en la rebobinadora; llega en tanques o turriles, a veces se mezclan'),
+('Pegamento de Turril', 'Sella la cola del log en la rebobinadora; llega en turriles'),
+('Vaselina', 'Consumible de mantenimiento; llega en bidones'),
+('Maicena', 'Consumible de uso ocasional'),
+('Talco', 'Consumible de uso ocasional'),
+('Ligas', 'Ligas negras; llegan en bolsas grandes');
+
+INSERT INTO "InventarioInsumo" ("IdTipoInsumo", "CantidadActual")
+SELECT "IdTipoInsumo", 0
+FROM "TipoInsumo";
+
+
+
 INSERT INTO "TipoMedidaSubBobina" ("MedidaMm", "Descripcion") VALUES
 (435, 'Sub-bobina 435mm'),
 (220, 'Sub-bobina 220mm');

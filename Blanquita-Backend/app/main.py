@@ -31,6 +31,8 @@ from app.Routes.Proveedor.Proveedor import ProveedorRouter
 
 from app.Routes.Qr.InventarioProducto import qrRouter
 
+from app.Routes.Insumo.Insumo import InsumoRouter
+
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 from app.Auth.Limiter import limiter
@@ -111,3 +113,6 @@ app.include_router(ProveedorRouter)
 
 #ROUTERS GENERADORES DE QR
 app.include_router(qrRouter)
+
+#ROUTERS INSUMOS
+app.include_router(InsumoRouter)

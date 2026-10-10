@@ -1,0 +1,109 @@
+# CLAUDE.md — Sistema de Inventario y Producción "Papel Blanquita"
+
+## Preferencias de código
+- Escribir código limpio y sin comentarios.
+- Entregar siempre archivos completos, nunca fragmentos ni diffs parciales ni "el resto igual".
+- Respetar las convenciones ya existentes en el proyecto antes de introducir nuevas.
+
+Estas preferencias son obligatorias en todas las sesiones y en todo el código.
+
+Reglas de trabajo adicionales (acordadas con el usuario):
+- Si el usuario plantea una idea ("estaba pensando…", "tal vez…"), discutir y planear; no editar hasta que diga "vamos con ello"/"hagámoslo".
+- Funciones SQL nuevas o modificadas: pegar el `CREATE OR REPLACE FUNCTION` completo en el chat; el usuario lo aplica a mano en Supabase. No editar los `.sql` del repo salvo que lo pida. Después sí se editan las capas Python/JS.
+- Actualizar este archivo al terminar cada tarea relevante, corto y sin duplicar.
+
+## Visión general del proyecto
+Proyecto de grado (Fabricio + Franz) para la fábrica de papel higiénico/servilletas Papel Blanquita (Sucre, Bolivia). Este módulo cubre **inventario de materia prima, producción e inventario de producto terminado**; ventas/contabilidad/RRHH quedan fuera (Franz). Cliente: Carlos (líder de inventario y producción); gerente: don Osvaldo. Objetivo: trazabilidad por código de bobina, registro rápido en planta vía celular + carteles QR, reportes PDF, mínimo registro humano (fecha/turno/usuario los pone el sistema).
+
+## Arquitectura y stack
+- **Backend** `Blanquita-Backend/`: Python ≥3.13, FastAPI, SQLAlchemy 2 (ORM + `text()`), psycopg2, PyJWT (ES256 vía JWKS), httpx, slowapi (rate limit), reportlab (PDF), segno (QR), uv (`uv.lock`). Docs en `/documentacion`. Env: `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Zona horaria `America/La_Paz`.
+- **Base de datos**: PostgreSQL en Supabase. Mucha lógica de negocio vive en funciones plpgsql (`RAISE EXCEPTION` → `DbCaller` lo convierte en HTTP 409 con el mensaje). Supabase Auth con hook `custom_access_token_hook` que inyecta `IdUsuario, IdRol, IdEstadoUsuario, IsAdmin` en `app_metadata` (solo si el usuario está Activo).
+- **Frontend** `Blanquita-Frontend/`: Astro 7 SSR (`output: 'server'`, adapter node standalone) con islas **solo React 19**; Tailwind 4 + shadcn (base-ui), lucide-react/@lucide/lab, sonner (toasts), date-fns, react-day-picker, jose, qr-scanner, print-js. Alias `@` = `src`. Env: `SUPABASE_URL`, `BACKEND_URL`. Gestor: bun. Dev: `astro dev --background` (puerto 4321).
+- **Flujo de auth**: Login con CI+clave → `POST /api/auth/login` (Astro) → backend `/auth/login` resuelve correo sintético `{ci}@papelblanquita.invalid` y pide token a Supabase GoTrue → Astro verifica JWT con jose y guarda cookies httpOnly `token` (15 min) y `refresh_token` (12 h). `middleware.js` protege `/operador`, `/encargado`, `/admin`, refresca token, redirige por rol y guarda `Astro.locals.usuario`. El navegador nunca toca el backend: todo pasa por el proxy `src/pages/api/[...path].js`, que añade `Authorization: Bearer` y reenvía (incluye PDFs y `Content-Disposition`).
+
+## Estructura de carpetas y archivos clave
+Backend `app/` (capas por dominio: BobinaPapel, BobinaServilleta, Rodela, Empaque, InventarioFinal, Proveedor, Qr, Usuario):
+- `Routes/` routers (`APIRouter` con prefix), dependencia de servicio `def x_service(db=Depends(get_db))`.
+- `Services/` validación y reglas → `HTTPException`; arma `params` con prefijo `p_`.
+- `Repository/` acceso a datos: `DbCaller.LlamarFuncion/LlamarUnRegistro` (funciones SQL) o `Consultar(select(...))` (ORM). `Repository/Consultas.py`: `filtro_rango`, `nombre_operador`.
+- `Models/` = **Pydantic** (Request/Response). `Schemas/` = **SQLAlchemy ORM** (tablas).
+- `Reportes/` generación PDF; `reporte.py` clase `Reporte` (logo, `celda_multilinea()`), un archivo por dominio con `construir_reporte_*` y `nombre_archivo_*`.
+- `Auth/` `Dependencies.py` (`get_current_user`, `require_role`, `require_admin_db`, `get_generado_por`), `Jwt.py`, `Security.py` (reglas de clave), `Limiter.py`.
+- `Constants/` `Roles.py`, `Estados.py`, `Cantidades.py` (límites). `utils/validators.py` (`ValidarTexto`, `ValidarCaracteres`, `REGLA_CARACTERES_OBSERVACION`), `utils/dates.py`.
+- `config/supabase.py` (se importa como `app.Config.supabase`; NullPool, sslmode require).
+- `bd.sql` (tablas), `data.sql` (catálogos semilla), `Funciones.sql` (dump **desactualizado**: le faltan `EditarBobinaPapel`, `EditarBobinaServilleta`, `EditarRodela`, `CambiarLineaProduccionBobinaTubo`, reportes de producto terminado, y `IniciarProduccionBobinaTubo` real recibe `p_IdProducto`; la fuente de verdad es Supabase). `scripts/probar_admin_usuarios.py` prueba E2E de admin.
+
+Frontend `src/`:
+- `pages/` rutas por rol: `operador/…`, `encargado/…` (incluye `ingreso`, `reportes/…`), `admin/{inicio,usuarios,usuarios/registrar,proveedores}`; `api/` proxy y auth. Cada página monta `NavBar` (móvil) / `SideBar` (desktop), el componente principal `client:load` y `BottomBar`.
+- `components/<Dominio>/` (PapelBobina, ServilletaBobina, Rodela, Empaque, InventarioProductos, Reportes, Admin, Usuario), compartidos en `components/{Produccion,Inventario,IngresoLote}/comunes.jsx`, `layout/` (NavBar, SideBar, BottomBar, Escanerqr, DoubleDatePicker, ComboBox), `ui/` (shadcn).
+- `services/<Dominio>/*.js` llaman `pedirJson/pedir` (`utils/api.js`) a `/api/...`; `models/<Dominio>/*.js` funciones mapeadoras `XRequest(...)`/`XResponse(data)` con nombres PascalCase iguales al backend.
+- `hooks/` `useProduccion`, `useCatalogo`, `useEjecutar`, `useReporte`, `useDescarga`, `useIngresoLote`, `useDetalleInventario`, `useOpciones`.
+- `constants/` `Values.js` (roles, límites, IDs), `Estados.js`, `NavBarRoutes.js`, `OperadorConfig.js` (áreas de trabajo, motivos predefinidos), `BottomBarOptions.js`. `utils/` `validators.js` (`manejarErrorBackend`, `limpiarObservacion`), `params.js` (`conQueryParams`), `downloadFile.js` (descarga/impresión PDF), `QR.js`, `handlers.js` (espacios→guion en códigos).
+- `.vercel/output` es build generado (no editar).
+
+## Modelo de datos (tablas y relaciones principales)
+Identificadores `"PascalCase"` entre comillas, PK `Id<Tabla>` SERIAL.
+- **Usuarios**: `Usuario` (AuthUserId→auth.users, IdRol, IdEstadoUsuario, Ci único, nombres, Celular `^[67]\d{7}$`, IsAdmin) · `Rol` (1 Operador, 2 Líder de Inventario y Producción) · `EstadoUsuario` (1 Activo, 2 Inactivo, 3 Suspendido definitivo) · `HistorialAdmin` (auditoría de acciones admin) · `Turno` (Mañana 06–12, Tarde 12–15, Horas Extra; se asigna por hora local).
+- **Proveedor** (+`EstadoProveedor` 1 Activo, 2 Inactivo).
+- **Bobina papel**: `TipoBobina` (Higiénico, Toalla, Económico; diámetro 1210, formato 2760, tara 38) · `LoteBobina` (proveedor, usuario, fecha) · `BobinaPapel` (CodigoBobina único, pesos, gramaje, estado) · `MovimientoBobina`.
+- **Bobina servilleta**: `TipoBobinaServilleta` · `LoteBobinaServilleta` · `BobinaServilleta` (bobina madre) → 2 `UnidadBobinaServilleta` (código propio, `FormatoSubBobina` 435x3 o 435x2+220x1) → `SubBobinaServilleta` (`TipoMedidaSubBobina` 435/220, se liberan al abrir) · movimientos `MovimientoBobinaServilleta`, `MovimientoSubBobina`.
+- **Rodela** (pallet de rodelas para tubos): `TipoRodela`, `LoteRodela`, `Rodela`, `MovimientoRodela`.
+- **Empaque**: `LoteEmpaque` (toneladas pedidas) · empaque en bobina `TipoEmpaque`/`Empaque` (código, peso)/`MovimientoEmpaque` · empaque en bolsa por cantidad `TipoEmpaqueBolsa`/`MovimientoEmpaqueBolsa`/`InventarioEmpaqueBolsa` · `TipoBolsaJava`/`MovimientoBolsaJava`/`InventarioBolsaJava` (sin API aún).
+- **Insumos**: `TipoInsumo` (semilla en `data.sql`: pegamentos de tubos/laminado/turril, vaselina, maicena, talco, ligas) / `InventarioInsumo` (CantidadActual) / `MovimientoInsumo` (usa `TipoMovimientoMateriaPrima` 1 Ingreso, 2 Traslado = salida).
+- `EstadoMateriaPrima`: 1 En almacén, 2 En producción, 3 Agotado, 4 Dado de baja, 5 Fuera de Inventario, 6 Abierta, 7 Terminada. `TipoMovimientoMateriaPrima`: 1 Ingreso, 2 Traslado a producción, 3 Devolución, 4 Baja por defecto, 5 Retiro por falla operativa, 6 Reingreso, 7 Producción terminada, 8 Corrección de registro, 9 Cambio de línea.
+- **Producción**: `EstadoProduccion` (1 En Producción, 2 Pausa, 3 Finalizado, 4 Cancelada, 5 Cambio de línea) · `ProduccionBobinaTubo` (IdBobina_1, IdBobina_2, IdProducto, turno, fechas, CantidadLogsActual) + `PausaProduccionBobinaTubo`, `CancelacionProduccionBobinaTubo`, `MovimientoOperadorLogs` (`TipoMovimientoOperadorLogs` 1 Ingreso, 2 Descuento; 3 Aumento ya no se usa) · `ProduccionServilleta` (IdSubBobina) + pausa/cancelación.
+- **Producto terminado**: `Producto` (Luxury, EcoPack, Servilleta, Mega Rollo, Economico, Merma, Toalla; `SiglasProducto` 3 letras) → `PresentacionProducto` (TipoContenedor Jaba/Plancha, rollos, unidades, `CodigoPresentacion` p.ej. `LUX-J12`) → `InventarioProductoTerminado` (CantidadActual) · `MovimientoProductoTerminado` con `TipoMovimientoInventario` (1 Entrada, 2 Salida, 3 Descuento, 4 Aumento, 5 Ajuste +, 6 Ajuste −).
+
+## Endpoints y flujos importantes
+Roles en rutas: casi todo `require_role([LIDER, OPERADOR])`; solo líder: editar/corregir materia prima, reingresar fuera de inventario, cambiar línea, salida y ajustes de PT, reportes de bobina papel/rodela/PT y QR; admin (`require_admin_db`, verifica en BD `IsAdmin` + Activo): `/Usuario/*` (excepto `/ver`) y gestión de `/proveedor`.
+- `/auth`: login (5/min), refresh, logout, logout-todos.
+- `/Usuario`: crear (crea cuenta Auth + fila + HistorialAdmin, rollback borra la cuenta), listar (paginado, búsqueda), estado (Activo↔Inactivo, →Suspendido definitivo, con motivo), clave, editar, ver (perfil).
+- `/bobinapapel`: cargarlote, obtenertipos, editar · `/papelbobina/inventario`: resumen, detalle/{IdTipoBobina}, reingresar, fuera · `/papelbobina/produccion`: iniciar (2 bobinas En almacén + producto), cambiarlinea, pausar, reanudar, finalizar (bobinas → Agotado), cancelar (solo desde Pausa; bobinas → Fuera de Inventario), insertarlog, activas, pausadas · `/papelbobina/reportes`: inventario, produccion/{catalogo,detalle,cancelada,periodo}, lote/{catalogo,detalle,periodo}, movimientos/{catalogo,reporte}.
+- `/bobinaservilleta`: cargarlote, obtenertipos · `/inventario`: resumen, detalle, sub/resumen, sub/detalle, sub/fuera, reingresar, editar · `/produccion`: abrir (libera sub-bobinas), iniciar (una sub-bobina), pausar, reanudar, finalizar, cancelar, activas, pausadas · `/reporte`: inventario/completo, bobina/{inventario,catalogo,detalle}, sub/{inventario,catalogo}, unidad/movimientos, lote/*, produccion/*.
+- `/rodela`: cargarlote, obtenertipos · `/rodela/inventario`: resumen, detalle, enalmacen, trasladar, corregir, reingresables, deshacer (≤30 min tras traslado), editar · `/rodela/reportes`: inventario/catalogo, inventario, movimientos, lote/*.
+- `/empaquebobina`: cargarlote, trasladarproduccion, inventario, inventariodetalle, obtenertipos · `/empaquebolsa`: cargarlote, trasladarproduccion, reingresar, inventario (sin UI).
+- `/productofinal`: insertar, salida, ajuste/positivo, ajuste/negativo, correccion, aumento (obsoleto), inventario/ver, obtenerproductos · `/productofinal/reportes`: produccion/diaria(+resumen), inventario(+resumen).
+- `/insumo` (todo ORM, sin funciones SQL): inventario (catálogo), ingreso, salida — un solo insumo por movimiento, cantidad 1–100 (`CANTIDAD_MOVIMIENTO_INSUMO`), observación obligatoria (predefinida en el front), salida no puede superar el stock (409); bloqueo `FOR UPDATE` sobre `InventarioInsumo`.
+- `/proveedor`: formulario, listar, estados, crear, editar (solo celular/correo; nombre fijo), estado.
+- `/qr`: carteles PDF para producto/inventario, bobina-papel/{inventario,produccion}, bobina-servilleta/{inventario,produccion}. El escáner del front resuelve la ruta del QR anteponiendo el prefijo del rol.
+- PDFs: rutas devuelven `Response(application/pdf)` con `Content-Disposition`; front usa `descargarReportePDF`/`imprimirPDF`. "Generado por" = nombre, CI y rol del usuario.
+
+## Requerimientos y reglas de negocio del cliente
+- Recepción por lote (un solo tipo por lote, proveedor seleccionable de catálogo); se respeta el código del proveedor; registro uno a uno (peso bruto/neto, gramaje por defecto ~13.9). Espacios en códigos → guion. Todo ingreso real debe registrarse antes de usarse (si no, se rompe el cuadre).
+- Bobina papel: producción = par de bobinas ("cargada"), doble hoja. Logs contados por cargada y por producto; cambiar de línea (solo líder) cierra la producción como "Cambio de línea" y abre otra con las mismas bobinas, contador reiniciado. Logs: solo Ingreso y Descuento, campo inicia en 0. Pausas con motivo (empalme, falta de pegamento, de personal, falla, limpieza) y duración. Cancelar solo estando pausada → bobinas Fuera de Inventario → solo pueden reingresarse (marcadas "reingresada"). Dar de baja: raro, solo desde panel admin.
+- Las producciones y pausas deben finalizarse/reanudarse siempre (si no, duraciones infladas); ~1–5 producciones/día.
+- Servilleta: bobina madre con 2 unidades (formatos 435x3 / 435x2+220x1, fijos aunque cambie proveedor); al abrir se liberan sub-bobinas a inventarios 435 y 220; dos máquinas en paralelo; línea única "servilletas"; mostrar formato en producción.
+- Rodela: un tipo; se controla por pallet (no tubos); traslado reversible 30 min.
+- Empaques: en bobina (código, peso, por toneladas) y en bolsa (por cantidad); **cada presentación tiene su propio empaque** (Ecopack 4/6/12, Luxury 6/12/24…), más bolsas de jaba. Rediseño pendiente de info del cliente.
+- Insumos (pegamento en turriles/tanques, vaselina, maicena, ligas): solo entrada/salida por conteo.
+- Producto terminado: por jabas, salvo planchas (Mega Rollo, Económico) y merma por unidad; registro vía QR único seleccionando presentación; máquina + manual suman igual; no se traza de qué producción viene. Ingreso 1–100 por presentación; corrección (descuento) para operador; ajustes ± 1–500 solo líder; salida (despacho/venta) hasta 5000 con reporte.
+- Reportes: trazabilidad completa por bobina, lotes por proveedor/rango, producción diaria/semanal/mensual con pausas y cancelaciones; panel de Osvaldo solo resúmenes (stock, pausas, producción mensual en gráfico de barras); inicio del líder con accesos rápidos.
+- Admin: usuarios, proveedores (activar/desactivar), y a futuro crear productos, líneas, presentaciones, tipos de materia prima (p.ej. bobina de mezcla), empaques e insumos.
+- Clave 8–12 caracteres con número, mayúscula y símbolo; no común ni con CI/nombres. Sesión dura 12 h.
+
+## Estado actual: qué está implementado y qué falta
+Implementado (backend + frontend): auth completa con refresh y roles; ingreso por lote, inventario, edición/corrección y reingreso de bobina papel, bobina servilleta y rodela; producción de bobina papel (con línea, cambio de línea, logs, pausas, cancelación, finalizadas) y de servilleta (abrir, sub-bobinas, pausas, cancelación); empaque en bobina (ingreso, inventario, traslado); producto terminado (inventario, ingreso múltiple, corrección, ajustes, movimientos; salida solo backend/servicio); reportes PDF de bobina papel, servilleta, rodela y producto terminado; carteles QR y escáner; insumos (`/{rol}/insumos/inventario`, `components/Insumo/InventarioInsumos.jsx`: catálogo + ingreso/salida de un insumo con motivos `ObservacionMovimientosInsumo`); panel admin de usuarios (crear, listar, editar, estado, clave) y proveedores (crear, editar, estado) con `HistorialAdmin`.
+Falta:
+- Admin de catálogos (productos/líneas/presentaciones, tipos de bobina papel/servilleta, empaques, insumos): se construyó y luego se retiró en el commit "Módulos corrección" (2026-10-08); rehacer.
+- Dar de baja materia prima desde admin (funciones `DarDeBaja*` existen en SQL, sin API).
+- Rediseño de empaques por presentación; UI de empaque en bolsa; bolsas de jaba.
+- Insumos: falta admin de tipos de insumo y reporte de movimientos.
+- UI de salida de producto terminado y su reporte; quitar endpoint `aumento`.
+- Aviso/obligación de cerrar producciones y pausas abiertas.
+- Gráfico de barras de producción mensual; inicio del líder y panel de Osvaldo con resúmenes.
+- Ver/consultar `HistorialAdmin` en el panel admin.
+- Pendiente del cliente: lista oficial de proveedores, info de empaques e insumos, layout de planta, fichas de materia prima.
+
+## Convenciones de código observadas
+- Todo en español. Python: clases, métodos de servicio/repositorio y campos en PascalCase (`InsertarBobinasPapel`, `IdBobinaPapel`); helpers de módulo y dependencias en snake_case (`get_db`, `bobina_papel_service`, `_nombre_completo`); constantes MAYÚSCULAS en `Constants/`. Parámetros SQL `p_<Campo>` con nombres ligados `:p_X`; arrays con `CAST(:p AS integer[])`.
+- Flujo Route → Service → Repository; el servicio valida con `ValidarTexto(LONGITUD_MINIMA_DESCRIPCION=5, MAXIMA=150, ...)` y lanza `HTTPException` con mensajes en español; los motivos/observaciones son obligatorios en correcciones, pausas, cancelaciones y cambios de estado. Respuestas Pydantic construidas con `Model(**fila)`; `validation_alias="XOut"` cuando la función SQL devuelve columnas `...Out`.
+- Escrituras admin con ORM + `with_for_update()` + `HistorialAdmin` en la misma transacción; consultas de listados/reportes nuevas preferentemente con `select()` ORM; operaciones de dominio vía funciones plpgsql.
+- Frontend: componentes `.jsx` PascalCase, funciones de servicio camelCase (`iniciarProduccion`), modelos con fábricas `XRequest/XResponse`; errores con `toast` (sonner); límites y catálogos fijos en `constants/`; diseño mobile-first (NavBar + BottomBar en móvil, SideBar en desktop); textos de UI en español.
+
+## Decisiones tomadas y pendientes
+- Límite de logs por ingreso: 100 (cliente habló de 1000; el usuario eligió 100). Ingreso PT 100, corrección 50, ajuste 500, salida PT 5000 (backend aún sin tope de 5000 verificado).
+- Producción de servilleta sin selección de producto (línea única).
+- No se registran empalmes por separado: van como motivo de pausa.
+- Producto terminado sin vínculo con producción.
+- Usuarios autenticados por Supabase Auth con correo sintético; el perfil solo lo edita el admin.
+- CORS `*` y `debug=True` en `main.py` (revisar antes de producción). `testBd.py` contiene credenciales de prueba hardcodeadas.

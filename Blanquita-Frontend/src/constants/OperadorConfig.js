@@ -7,6 +7,7 @@ import {
   Container,
   ShelvingUnit,
   Combine,
+  Package,
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 export const movimientosOperador = [
@@ -152,6 +153,22 @@ export const AREAS_TRABAJO = [
       },
     ],
   },
+  {
+    id: "insumos",
+    titulo: "Insumos",
+    descripcion: "Pegamentos, vaselina y consumibles",
+    icono: Package,
+    ruta: "insumos",
+    idConjunto: null,
+    subrutas: [
+      {
+        titulo: "Inventario",
+        descripcion: "Stock, ingresos y salidas de insumos",
+        icono: Boxes,
+        ruta: "inventario",
+      },
+    ],
+  },
 ];
 
 
@@ -188,6 +205,16 @@ export const ObservacionServilleta=[
   "Error en la máquina",
   "Falta de personal para producción"
 ]
+
+export const ObservacionMovimientosInsumo={
+  ingreso:[
+    "Ingreso a almacén insumos",
+    "Re ingreso a almacén insumos"
+  ],
+  salida:[
+    "Salida de insumo para uso en planta"
+  ]
+}
 
 export const ObservacionReingreso=[
   "Reingreso almacén para producción",

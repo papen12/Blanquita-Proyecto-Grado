@@ -41,6 +41,7 @@ export const ID_TIPO_BOBINA_HIGIENICO = 1;
 export const IDS_PRODUCTO_BOBINA_HIGIENICO = [1, 2, 4];
 export const IDS_PRODUCTO_BOBINA_PAPEL = [1, 2, 4, 5, 7];
 export const CANTIDAD_MAXIMA_LOGS = 100;
+export const CANTIDAD_MAXIMA_INSUMO = 100;
 
 export const MOTIVO_CANCELACION_MIN = 5;
 export const MOTIVO_CANCELACION_MAX = 150;
