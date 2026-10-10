@@ -75,7 +75,7 @@ function CasillaIrreversible({ id, accion, confirmado, setConfirmado, deshabilit
           Confirmo que voy a {accion} esta producción
         </span>
         <span className="text-[12.5px] text-slate-600">
-          Esta acción es irreversible y quedará registrada con mi usuario.
+          Esta acción es irreversible y quedará registrada con su usuario.
         </span>
       </span>
     </label>
