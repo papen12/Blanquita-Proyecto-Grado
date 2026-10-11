@@ -85,6 +85,36 @@ export const BottomBarOpciones = [
         ruta: "movimientos",
       },
     ],
+  },
+  {
+    id: 6,
+    opciones: [
+      {
+        titulo: "Inventario",
+        icono: Boxes,
+        ruta: "bolsa-inventario",
+      },
+      {
+        titulo: "Ingreso",
+        icono: PackagePlus,
+        ruta: "bolsa-ingreso",
+      },
+    ],
+  },
+  {
+    id: 7,
+    opciones: [
+      {
+        titulo: "Inventario",
+        icono: Boxes,
+        ruta: "jaba-inventario",
+      },
+      {
+        titulo: "Ingreso",
+        icono: PackagePlus,
+        ruta: "jaba-ingreso",
+      },
+    ],
   }
 ];
 

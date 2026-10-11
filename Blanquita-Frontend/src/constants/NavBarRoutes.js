@@ -14,6 +14,8 @@ import {
   Users,
   Truck,
   Package,
+  Cuboid,
+  PackagePlus,
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 import { Roles } from "@/constants/Values";
@@ -76,6 +78,16 @@ export const RutasNavBar = [
         titulo: "Bobina",
         icono: Database,
         ruta: "bobina-inventario",
+      },
+      {
+        titulo: "Bolsa",
+        icono: Cuboid,
+        ruta: "bolsa-inventario",
+      },
+      {
+        titulo: "Bolsa de jaba",
+        icono: Package,
+        ruta: "jaba-inventario",
       },
     ],
   },
@@ -180,6 +192,15 @@ export const RutasReportes = [
         ruta: "movimientos" 
 
       },
+    ],
+  },
+  {
+    titulo: "Empaque",
+    icono: Container,
+    ruta: "empaque",
+    subrutas: [
+      { titulo: "Movimientos", icono: Combine, ruta: "movimientos" },
+      { titulo: "Lotes recibidos", icono: PackagePlus, ruta: "lotes" },
     ],
   },
   {

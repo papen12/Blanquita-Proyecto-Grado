@@ -8,6 +8,7 @@ import {
   ShelvingUnit,
   Combine,
   Package,
+  Cuboid,
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 export const movimientosOperador = [
@@ -106,6 +107,7 @@ export const AREAS_TRABAJO = [
         descripcion: "Ingreso de rodelas recibidas",
         icono: PackagePlus,
         ruta: "ingreso",
+        soloLider: true,
       },
     ],
   },
@@ -128,6 +130,19 @@ export const AREAS_TRABAJO = [
         descripcion: "Ingreso de empaque recibido",
         icono: PackagePlus,
         ruta: "bobina-ingreso",
+        soloLider: true,
+      },
+      {
+        titulo: "Empaque en bolsa",
+        descripcion: "Stock y salida de paquetes de bolsas",
+        icono: Cuboid,
+        ruta: "bolsa-inventario",
+      },
+      {
+        titulo: "Bolsas de jaba",
+        descripcion: "Stock y salida de paquetes de bolsas de jaba",
+        icono: Package,
+        ruta: "jaba-inventario",
       },
     ],
   },
@@ -213,6 +228,19 @@ export const ObservacionMovimientosInsumo={
   ],
   salida:[
     "Salida de insumo para uso en planta"
+  ]
+}
+
+export const ObservacionSalidaEmpaqueBolsa={
+  bolsa:[
+    "Salida de empaque bolsa para producción",
+    "Empaque bolsa dañado en almacén",
+    "Corrección de conteo de paquetes"
+  ],
+  jaba:[
+    "Salida de bolsas de jaba para producción",
+    "Bolsas de jaba dañadas en almacén",
+    "Corrección de conteo de paquetes"
   ]
 }
 

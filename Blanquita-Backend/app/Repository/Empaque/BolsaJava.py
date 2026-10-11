@@ -5,15 +5,15 @@ from sqlalchemy.orm import Session
 
 from app.Repository.DbCaller import DbCaller
 from app.Schemas.Empaque import (
-    InventarioEmpaqueBolsa,
+    InventarioBolsaJava,
     LoteEmpaque,
-    MovimientoEmpaqueBolsa,
-    TipoEmpaqueBolsa,
+    MovimientoBolsaJava,
+    TipoBolsaJava,
 )
 from app.Schemas.Proveedor import Proveedor
 
 
-class EmpaqueBolsaRepository:
+class BolsaJavaRepository:
     def __init__(self, db: Session):
         self.db = db
         self.caller = DbCaller(db)
@@ -21,17 +21,17 @@ class EmpaqueBolsaRepository:
     def VerInventario(self) -> list[dict]:
         consulta = (
             select(
-                InventarioEmpaqueBolsa.IdInventarioEmpaqueBolsa,
-                InventarioEmpaqueBolsa.IdTipoEmpaqueBolsa,
-                InventarioEmpaqueBolsa.CantidadActual,
-                TipoEmpaqueBolsa.NombreEmpaqueBolsa,
-                TipoEmpaqueBolsa.DescripcionEmpaqueBolsa,
+                InventarioBolsaJava.IdInventarioBolsaJava,
+                InventarioBolsaJava.IdTipoBolsaJava,
+                InventarioBolsaJava.CantidadActual,
+                TipoBolsaJava.NombreBolsaJava,
+                TipoBolsaJava.DescripcionBolsaJava,
             )
             .join(
-                TipoEmpaqueBolsa,
-                InventarioEmpaqueBolsa.IdTipoEmpaqueBolsa == TipoEmpaqueBolsa.IdTipoEmpaqueBolsa,
+                TipoBolsaJava,
+                InventarioBolsaJava.IdTipoBolsaJava == TipoBolsaJava.IdTipoBolsaJava,
             )
-            .order_by(TipoEmpaqueBolsa.NombreEmpaqueBolsa)
+            .order_by(TipoBolsaJava.NombreBolsaJava)
         )
         return self.caller.Consultar(consulta)
 
@@ -46,38 +46,38 @@ class EmpaqueBolsaRepository:
         return filas[0] if filas else None
 
     def ObtenerInventariosBloqueados(
-        self, ids_tipo_empaque_bolsa: list[int]
-    ) -> dict[int, tuple[InventarioEmpaqueBolsa, TipoEmpaqueBolsa]]:
+        self, ids_tipo_bolsa_java: list[int]
+    ) -> dict[int, tuple[InventarioBolsaJava, TipoBolsaJava]]:
         try:
             filas = self.db.execute(
-                select(InventarioEmpaqueBolsa, TipoEmpaqueBolsa)
+                select(InventarioBolsaJava, TipoBolsaJava)
                 .join(
-                    TipoEmpaqueBolsa,
-                    InventarioEmpaqueBolsa.IdTipoEmpaqueBolsa == TipoEmpaqueBolsa.IdTipoEmpaqueBolsa,
+                    TipoBolsaJava,
+                    InventarioBolsaJava.IdTipoBolsaJava == TipoBolsaJava.IdTipoBolsaJava,
                 )
-                .where(InventarioEmpaqueBolsa.IdTipoEmpaqueBolsa.in_(ids_tipo_empaque_bolsa))
+                .where(InventarioBolsaJava.IdTipoBolsaJava.in_(ids_tipo_bolsa_java))
                 .order_by(
-                    InventarioEmpaqueBolsa.IdTipoEmpaqueBolsa,
-                    InventarioEmpaqueBolsa.IdInventarioEmpaqueBolsa,
+                    InventarioBolsaJava.IdTipoBolsaJava,
+                    InventarioBolsaJava.IdInventarioBolsaJava,
                 )
-                .with_for_update(of=InventarioEmpaqueBolsa)
+                .with_for_update(of=InventarioBolsaJava)
             ).all()
         except SQLAlchemyError:
             self.db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error al obtener el inventario de empaques bolsa",
+                detail="Error al obtener el inventario de bolsas de jaba",
             )
 
-        inventarios: dict[int, tuple[InventarioEmpaqueBolsa, TipoEmpaqueBolsa]] = {}
+        inventarios: dict[int, tuple[InventarioBolsaJava, TipoBolsaJava]] = {}
         for inventario, tipo in filas:
-            inventarios.setdefault(inventario.IdTipoEmpaqueBolsa, (inventario, tipo))
+            inventarios.setdefault(inventario.IdTipoBolsaJava, (inventario, tipo))
         return inventarios
 
     def RegistrarIngreso(
         self,
         lote: LoteEmpaque,
-        registros: list[tuple[InventarioEmpaqueBolsa, MovimientoEmpaqueBolsa, int]],
+        registros: list[tuple[InventarioBolsaJava, MovimientoBolsaJava, int]],
         observacion,
     ) -> LoteEmpaque:
         try:
@@ -99,15 +99,15 @@ class EmpaqueBolsaRepository:
             self.db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No se pudo registrar el lote de empaques bolsa",
+                detail="No se pudo registrar el lote de bolsas de jaba",
             )
 
     def RegistrarMovimiento(
         self,
-        inventario: InventarioEmpaqueBolsa,
-        movimiento: MovimientoEmpaqueBolsa,
+        inventario: InventarioBolsaJava,
+        movimiento: MovimientoBolsaJava,
         cantidad_nueva: int,
-    ) -> MovimientoEmpaqueBolsa:
+    ) -> MovimientoBolsaJava:
         try:
             inventario.CantidadActual = cantidad_nueva
             self.db.add(movimiento)
@@ -118,7 +118,7 @@ class EmpaqueBolsaRepository:
             self.db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No se pudo registrar el movimiento del empaque bolsa",
+                detail="No se pudo registrar el movimiento de la bolsa de jaba",
             )
 
     def Revertir(self) -> None:
