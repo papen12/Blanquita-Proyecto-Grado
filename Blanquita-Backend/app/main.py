@@ -17,6 +17,8 @@ from app.Routes.Rodela.Reporte import RodelaReporteRouter
 
 from app.Routes.Empaque.EmpaqueBobinaRouter import EmpaqueBobinaRouter
 from app.Routes.Empaque.EmpaqueBolsaRouter import EmpaqueBolsaRouter
+from app.Routes.Empaque.BolsaJavaRouter import BolsaJavaRouter
+from app.Routes.Empaque.Reporte import EmpaqueReporteRouter
 
 
 from app.Routes.BobinaServilleta.BobinaServilletaRouter import BobinaServilletaRouter
@@ -29,9 +31,10 @@ from app.Routes.InventarioFinal.Reporte import ProductoFinalReporteRouter
 
 from app.Routes.Proveedor.Proveedor import ProveedorRouter
 
-from app.Routes.Catalogo.CatalogoRouter import CatalogoRouter
-
 from app.Routes.Qr.InventarioProducto import qrRouter
+
+from app.Routes.Insumo.Insumo import InsumoRouter
+from app.Routes.Insumo.Reporte import InsumoReporteRouter
 
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
@@ -100,9 +103,11 @@ app.include_router(InventarioBobinaServilletaRouter)
 app.include_router(bs_ReporteRouter)
 
 
-#ROUTERS EMPAQUE BOBINA / BOLSA
+#ROUTERS EMPAQUE BOBINA / BOLSA / BOLSA JABA
 app.include_router(EmpaqueBobinaRouter)
 app.include_router(EmpaqueBolsaRouter)
+app.include_router(BolsaJavaRouter)
+app.include_router(EmpaqueReporteRouter)
 
 #ROUTERS INVENTARIO PRODUCTO FINAL
 app.include_router(ProductoFinalRouter)
@@ -111,8 +116,9 @@ app.include_router(ProductoFinalReporteRouter)
 #ROUTERS PROVEEDOR
 app.include_router(ProveedorRouter)
 
-#ROUTERS CATALOGO (LINEAS Y PRODUCTOS)
-app.include_router(CatalogoRouter)
-
 #ROUTERS GENERADORES DE QR
 app.include_router(qrRouter)
+
+#ROUTERS INSUMOS
+app.include_router(InsumoRouter)
+app.include_router(InsumoReporteRouter)

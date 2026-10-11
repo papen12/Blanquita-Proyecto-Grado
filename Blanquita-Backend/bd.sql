@@ -55,7 +55,8 @@ CREATE TABLE "TipoBobina" (
   "NombreTipoBobina" TEXT NOT NULL,
   "DiametroMm" NUMERIC NOT NULL DEFAULT 1210,
   "Formato" NUMERIC NOT NULL DEFAULT 2760,
-  "TaraKg" NUMERIC NOT NULL DEFAULT 38
+  "TaraKg" NUMERIC NOT NULL DEFAULT 38,
+  "Descripcion" TEXT
 );
 
 CREATE TABLE "EstadoMateriaPrima" (
@@ -87,7 +88,8 @@ CREATE TABLE "TipoBobinaServilleta" (
   "NombreTipoBobinaServilleta" TEXT NOT NULL,
   "DiametroMm" NUMERIC NOT NULL DEFAULT 1210,
   "CrepadoPorcentaje" NUMERIC NOT NULL DEFAULT 14,
-  "ResistenciaKgf" NUMERIC NOT NULL DEFAULT 1.35
+  "ResistenciaKgf" NUMERIC NOT NULL DEFAULT 1.35,
+  "Descripcion" TEXT
 );
 
 CREATE TABLE "FormatoSubBobina" (

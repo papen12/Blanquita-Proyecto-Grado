@@ -314,6 +314,7 @@ export function ResultadosReporte({
   resumen,
   columnas,
   anchoAccion = "w-12",
+  tituloAccion,
   accion,
   tarjeta,
 }) {
@@ -361,7 +362,9 @@ export function ResultadosReporte({
                       {columna.titulo}
                     </TableHead>
                   ))}
-                  <TableHead className={anchoAccion} />
+                  <TableHead className={cn(anchoAccion, tituloAccion && "text-center")}>
+                    {tituloAccion}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -412,7 +415,7 @@ export function TarjetaReporte({
           </span>
           <span className="text-[12.5px] text-slate-500">{subtitulo}</span>
         </div>
-        <BadgeEstado estado={estado} estilos={estilos} className="shrink-0" />
+        {estado && <BadgeEstado estado={estado} estilos={estilos} className="shrink-0" />}
       </div>
 
       {children}

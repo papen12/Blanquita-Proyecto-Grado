@@ -10,6 +10,7 @@ import {
   idAreaPorDefecto,
   rutaAcceso,
 } from "@/utils/areaTrabajo";
+import { EsEncargado } from "@/utils/validators";
 
 const DIAS = [
   "domingo",
@@ -180,14 +181,16 @@ export default function InicioOperador({ usuario }) {
           key={area.id}
           className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {area.subrutas.map((s, i) => (
-            <TileAcceso
-              key={s.ruta}
-              subruta={s}
-              href={rutaAcceso(idRol, area, s)}
-              destacado={i === 0}
-            />
-          ))}
+          {area.subrutas
+            .filter((s) => !s.soloLider || EsEncargado(idRol))
+            .map((s, i) => (
+              <TileAcceso
+                key={s.ruta}
+                subruta={s}
+                href={rutaAcceso(idRol, area, s)}
+                destacado={i === 0}
+              />
+            ))}
         </div>
       </main>
     </div>

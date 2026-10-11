@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -42,6 +43,42 @@ function ErrorDialogo({ mensaje }) {
     <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
       {mensaje}
     </div>
+  );
+}
+
+function useConfirmacion(abierto) {
+  const [confirmado, setConfirmado] = useState(false);
+
+  useEffect(() => {
+    if (abierto) setConfirmado(false);
+  }, [abierto]);
+
+  return [confirmado, setConfirmado];
+}
+
+function CasillaIrreversible({ id, accion, confirmado, setConfirmado, deshabilitado }) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-left"
+    >
+      <input
+        id={id}
+        type="checkbox"
+        checked={confirmado}
+        disabled={deshabilitado}
+        onChange={(e) => setConfirmado(e.target.checked)}
+        className="mt-0.5 h-4 w-4 accent-slate-900"
+      />
+      <span className="flex flex-col gap-0.5">
+        <span className="text-sm font-bold text-slate-900">
+          Confirmo que voy a {accion} esta producción
+        </span>
+        <span className="text-[12.5px] text-slate-600">
+          Esta acción es irreversible y quedará registrada con su usuario.
+        </span>
+      </span>
+    </label>
   );
 }
 
@@ -122,6 +159,8 @@ export function DialogoPausar({ dialogo, tituloDe, opciones }) {
 }
 
 export function DialogoCancelar({ dialogo, tituloDe, placeholder }) {
+  const [confirmado, setConfirmado] = useConfirmacion(dialogo.abierto);
+
   return (
     <Dialog open={dialogo.abierto} onOpenChange={(open) => !open && dialogo.cerrar()}>
       <DialogContent className="max-w-md">
@@ -152,13 +191,21 @@ export function DialogoCancelar({ dialogo, tituloDe, placeholder }) {
             <ContadorMotivo motivo={dialogo.motivo} />
           </div>
 
+          <CasillaIrreversible
+            id="confirmar-cancelacion"
+            accion="cancelar"
+            confirmado={confirmado}
+            setConfirmado={setConfirmado}
+            deshabilitado={dialogo.enviando}
+          />
+
           {dialogo.error && <ErrorDialogo mensaje={dialogo.error} />}
         </div>
 
         <DialogFooter>
           <Button
             onClick={dialogo.confirmar}
-            disabled={dialogo.enviando || !dialogo.valido}
+            disabled={dialogo.enviando || !dialogo.valido || !confirmado}
             className="h-11 w-full gap-2 bg-red-600 font-extrabold text-white hover:bg-red-700 sm:w-auto"
           >
             {dialogo.enviando ? (
@@ -175,6 +222,7 @@ export function DialogoCancelar({ dialogo, tituloDe, placeholder }) {
 
 export function AlertaFinalizar({ dialogo, prefijo, codigoDe }) {
   const p = dialogo.produccion;
+  const [confirmado, setConfirmado] = useConfirmacion(dialogo.abierto);
 
   return (
     <AlertDialog open={dialogo.abierto} onOpenChange={(open) => !open && dialogo.cerrar()}>
@@ -194,11 +242,18 @@ export function AlertaFinalizar({ dialogo, prefijo, codigoDe }) {
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <CasillaIrreversible
+          id="confirmar-finalizacion"
+          accion="finalizar"
+          confirmado={confirmado}
+          setConfirmado={setConfirmado}
+          deshabilitado={dialogo.enviando}
+        />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={dialogo.enviando}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             onClick={dialogo.confirmar}
-            disabled={dialogo.enviando}
+            disabled={dialogo.enviando || !confirmado}
             className="gap-2 bg-emerald-600 hover:bg-emerald-700"
           >
             {dialogo.enviando ? <Loader2 size={16} className="animate-spin" /> : "Finalizar"}

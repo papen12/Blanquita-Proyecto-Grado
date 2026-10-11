@@ -26,11 +26,28 @@ import {
   ID_ESTADO_USUARIO_SUSPENDIDO,
 } from "@/constants/Estados";
 import { limpiarObservacion } from "@/utils/validators";
-import { cambiarEstadoUsuario, restablecerClave } from "@/services/Usuario/Admin";
+import {
+  cambiarEstadoUsuario,
+  editarUsuario,
+  restablecerClave,
+} from "@/services/Usuario/Admin";
 import { PILDORA_FILTRO } from "@/constants/Acentos";
 
 export const ETIQUETA = "text-xs font-bold uppercase tracking-wide text-slate-600";
 const SIMBOLOS = "!@#$%^&*()-_=+[]{}|;:',.<>?/`~\"\\";
+
+export const PATRON_NOMBRE = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]{2,15}$/;
+export const PATRON_CELULAR = /^[67]\d{7}$/;
+
+export const soloLetras = (texto) => texto.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, "").slice(0, 15);
+export const soloDigitos = (texto, max) => texto.replace(/\D/g, "").slice(0, max);
+
+export const CAMPOS_NOMBRE = [
+  { campo: "PrimerNombre", etiqueta: "Primer nombre" },
+  { campo: "SegundoNombre", etiqueta: "Segundo nombre", opcional: true },
+  { campo: "ApellidoPaterno", etiqueta: "Apellido paterno" },
+  { campo: "ApellidoMaterno", etiqueta: "Apellido materno", opcional: true },
+];
 
 
 export const reglasClave = (clave) => [
@@ -260,6 +277,113 @@ export function DialogoCambiarEstado({ usuario, onCerrar, onCambiado }) {
             }
           >
             {suspender ? "Suspender usuario" : "Cambiar estado"}
+          </BotonEnviar>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const formularioEdicion = (usuario) => ({
+  PrimerNombre: usuario?.PrimerNombre ?? "",
+  SegundoNombre: usuario?.SegundoNombre ?? "",
+  ApellidoPaterno: usuario?.ApellidoPaterno ?? "",
+  ApellidoMaterno: usuario?.ApellidoMaterno ?? "",
+  Celular: usuario?.Celular ?? "",
+});
+
+function erroresEdicion(datos) {
+  const errores = {};
+  for (const { campo, opcional } of CAMPOS_NOMBRE) {
+    if (!datos[campo]) {
+      if (!opcional) errores[campo] = "Requerido";
+    } else if (!PATRON_NOMBRE.test(datos[campo])) {
+      errores[campo] = "Entre 2 y 15 letras";
+    }
+  }
+  if (datos.Celular && !PATRON_CELULAR.test(datos.Celular))
+    errores.Celular = "8 dígitos, empieza con 6 o 7";
+  return errores;
+}
+
+export function DialogoEditarUsuario({ usuario, onCerrar, onEditado }) {
+  const [datos, setDatos] = useState(() => formularioEdicion(usuario));
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!usuario) return;
+    setDatos(formularioEdicion(usuario));
+    setError("");
+  }, [usuario]);
+
+  const cambiar = (campo) => (valor) => setDatos((previos) => ({ ...previos, [campo]: valor }));
+
+  const original = formularioEdicion(usuario);
+  const hayCambios = Object.keys(original).some((campo) => datos[campo] !== original[campo]);
+  const errores = erroresEdicion(datos);
+  const valido = hayCambios && Object.keys(errores).length === 0;
+
+  const confirmar = async () => {
+    setEnviando(true);
+    setError("");
+    try {
+      const resultado = await editarUsuario(usuario.IdUsuario, datos);
+      onEditado(resultado);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <Dialog open={Boolean(usuario)} onOpenChange={(open) => !open && !enviando && onCerrar()}>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Editar usuario</DialogTitle>
+        </DialogHeader>
+
+        {usuario && (
+          <div className="flex flex-col gap-4">
+            <ResumenUsuario usuario={usuario} />
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {CAMPOS_NOMBRE.map(({ campo, etiqueta, opcional }) => (
+                <InputForModal
+                  key={campo}
+                  id={`editar-${campo}`}
+                  etiqueta={etiqueta}
+                  opcional={opcional}
+                  valor={datos[campo]}
+                  onCambio={(v) => cambiar(campo)(soloLetras(v))}
+                  error={errores[campo]}
+                />
+              ))}
+              <InputForModal
+                id="editar-Celular"
+                etiqueta="Celular"
+                opcional
+                valor={datos.Celular}
+                onCambio={(v) => cambiar("Celular")(soloDigitos(v, 8))}
+                inputMode="numeric"
+                classNameInput="font-mono"
+                error={errores.Celular}
+              />
+            </div>
+
+            {error && <ErrorDialogo mensaje={error} />}
+          </div>
+        )}
+
+        <DialogFooter>
+          <BotonEnviar
+            onClick={confirmar}
+            enviando={enviando}
+            deshabilitado={!valido}
+            className="bg-slate-900 hover:bg-slate-800"
+          >
+            Guardar cambios
           </BotonEnviar>
         </DialogFooter>
       </DialogContent>

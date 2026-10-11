@@ -6,9 +6,10 @@ from app.Config.supabase import get_db
 from app.Models.Usuario.Usuario import (
     CambiarEstadoUsuarioRequest,
     CambiarEstadoUsuarioResponse,
+    EditarUsuarioRequest,
+    EditarUsuarioResponse,
     ListarUsuariosRequest,
     ListarUsuariosResponse,
-    PerfilUpdate,
     RestablecerClaveRequest,
     RestablecerClaveResponse,
     UsuarioCreate,
@@ -92,13 +93,13 @@ def VerPerfil(
 ):
     return service.ObtenerPerfil(usuario_actual)
 
-@UsuarioRouter.post(
+@UsuarioRouter.patch(
     "/editar",
-    response_model=UsuarioPerfil,
+    response_model=EditarUsuarioResponse,
 )
-def EditarPerfil(
-    datos: PerfilUpdate,
+def EditarUsuario(
+    datos: EditarUsuarioRequest,
     service: UsuarioService = Depends(get_usuario_service),
-    usuario_actual: dict = Depends(get_current_user),
+    usuario_actual: dict = Depends(require_admin_db),
 ):
-    return service.EditarPerfil(usuario_actual, datos)
+    return service.EditarUsuario(datos, usuario_actual["IdUsuario"])

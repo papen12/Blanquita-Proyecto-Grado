@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { KeyRound, UserCog, UserPlus } from "lucide-react";
+import { KeyRound, Pencil, UserCog, UserPlus } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -20,7 +20,7 @@ import { RolesUsuario } from "@/constants/Values";
 import { EstadosUsuario, ID_ESTADO_USUARIO_SUSPENDIDO } from "@/constants/Estados";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { DialogoCambiarEstado, DialogoRestablecerClave } from "./Dialogos";
+import { DialogoCambiarEstado, DialogoEditarUsuario, DialogoRestablecerClave } from "./Dialogos";
 
 const ESTADOS_USUARIO = {
   Activo: "border-emerald-300 bg-emerald-50 text-emerald-700",
@@ -76,14 +76,22 @@ export default function Usuarios({ usuario: sesion }) {
   const reporte = useReporte(listarUsuarios, FILTROS_INICIALES, ["Busqueda"]);
   const [cambioEstado, setCambioEstado] = useState(null);
   const [cambioClave, setCambioClave] = useState(null);
+  const [edicion, setEdicion] = useState(null);
 
   const acciones = (u) => {
     if (u.IdEstadoUsuario === ID_ESTADO_USUARIO_SUSPENDIDO) {
-      return <span className="text-xs font-semibold text-slate-400">Sin acciones</span>;
+      return (
+        <span className="block text-center text-xs font-semibold text-slate-400">Sin acciones</span>
+      );
     }
     const propio = u.IdUsuario === sesion?.IdUsuario;
     return (
-      <div className="flex justify-end gap-1">
+      <div className="flex justify-center gap-1">
+        <BotonAccion
+          ayuda="Editar datos"
+          icono={Pencil}
+          onClick={() => setEdicion(u)}
+        />
         {!propio && (
           <BotonAccion
             ayuda="Cambiar estado"
@@ -105,6 +113,12 @@ export default function Usuarios({ usuario: sesion }) {
     toast.success(
       `${resultado.NombreCompleto}: ${resultado.NombreEstadoAnterior} → ${resultado.NombreEstadoUsuario}`,
     );
+    reporte.recargar();
+  };
+
+  const alEditar = (resultado) => {
+    setEdicion(null);
+    toast.success(`Datos de ${resultado.NombreCompleto} actualizados`);
     reporte.recargar();
   };
 
@@ -164,7 +178,8 @@ export default function Usuarios({ usuario: sesion }) {
             clave={(u) => u.IdUsuario}
             nombres={["usuario", "usuarios"]}
             columnas={COLUMNAS}
-            anchoAccion="w-24"
+            anchoAccion="w-32"
+            tituloAccion="Acciones"
             accion={acciones}
             tarjeta={(u) => (
               <TarjetaReporte
@@ -188,6 +203,11 @@ export default function Usuarios({ usuario: sesion }) {
         usuario={cambioEstado}
         onCerrar={() => setCambioEstado(null)}
         onCambiado={alCambiarEstado}
+      />
+      <DialogoEditarUsuario
+        usuario={edicion}
+        onCerrar={() => setEdicion(null)}
+        onEditado={alEditar}
       />
       <DialogoRestablecerClave
         usuario={cambioClave}

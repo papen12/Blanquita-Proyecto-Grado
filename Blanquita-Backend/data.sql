@@ -108,17 +108,52 @@ INSERT INTO "TipoMovimientoOperadorLogs" ("NombreMovimiento", "DescripcionTipoMo
 
 
 
+-- Datos de empaques de prueba, pronto serán cambiados
 INSERT INTO "TipoEmpaqueBolsa" ("NombreEmpaqueBolsa", "DescripcionEmpaqueBolsa") VALUES
 ('Económico', 'Plancha, papel higiénico económico'),
 ('Megarollo', 'Plancha, papel higiénico Megarollo'),
 ('Merma Plancha', 'Producto de segunda categoría, línea plancha'),
-('Merma Servilletas', 'Producto de segunda categoría, línea servilleta');
+('Merma Servilletas', 'Producto de segunda categoría, línea servilleta'),
+('Servilleta 50', 'Bolsa, servilleta de bandeo 50 unidades'),
+('Servilleta 200', 'Bolsa, servilleta 200 unidades'),
+('Servilleta 500', 'Bolsa, servilleta 500 unidades');
 
 
 
 INSERT INTO "InventarioEmpaqueBolsa" ("IdTipoEmpaqueBolsa", "CantidadActual")
 SELECT "IdTipoEmpaqueBolsa", 0
 FROM "TipoEmpaqueBolsa";
+
+INSERT INTO "TipoBolsaJava" ("NombreBolsaJava", "DescripcionBolsaJava") VALUES
+('Jaba Luxury 6', 'Bolsa de jaba para LUX-J06'),
+('Jaba Luxury 12', 'Bolsa de jaba para LUX-J12'),
+('Jaba Luxury 24', 'Bolsa de jaba para LUX-J24'),
+('Jaba EcoPack 4', 'Bolsa de jaba para ECO-J04'),
+('Jaba EcoPack 6', 'Bolsa de jaba para ECO-J06'),
+('Jaba EcoPack 12', 'Bolsa de jaba para ECO-J12'),
+('Jaba Servilleta 50', 'Bolsa de jaba para SRV-J50'),
+('Jaba Servilleta 200', 'Bolsa de jaba para SRV-J200'),
+('Jaba Servilleta 500', 'Bolsa de jaba para SRV-J500'),
+('Jaba Toalla', 'Bolsa de jaba para TOA-J06');
+
+INSERT INTO "InventarioBolsaJava" ("IdTipoBolsaJava", "CantidadActual")
+SELECT "IdTipoBolsaJava", 0
+FROM "TipoBolsaJava";
+
+
+
+INSERT INTO "TipoInsumo" ("NombreInsumo", "DescripcionInsumo") VALUES
+('Pegamento de tubos', 'Pegamento exclusivo de la máquina de tubos; llega en turriles'),
+('Pegamento de laminado', 'Une ambas láminas en la rebobinadora; llega en tanques o turriles, a veces se mezclan'),
+('Pegamento de Turril', 'Sella la cola del log en la rebobinadora; llega en turriles'),
+('Vaselina', 'Consumible de mantenimiento; llega en bidones'),
+('Maicena', 'Consumible de uso ocasional'),
+('Talco', 'Consumible de uso ocasional'),
+('Ligas', 'Ligas negras; llegan en bolsas grandes');
+
+INSERT INTO "InventarioInsumo" ("IdTipoInsumo", "CantidadActual")
+SELECT "IdTipoInsumo", 0
+FROM "TipoInsumo";
 
 
 

@@ -90,12 +90,19 @@ class RestablecerClaveResponse(BaseModel):
     NombreCompleto: str
 
 
-class PerfilUpdate(BaseModel):
+class EditarUsuarioRequest(BaseModel):
+    IdUsuario: int = Field(..., gt=0)
     PrimerNombre: str = Field(..., min_length=1, max_length=15)
     SegundoNombre: str | None = Field(default=None, max_length=15)
     ApellidoPaterno: str = Field(..., min_length=1, max_length=15)
     ApellidoMaterno: str | None = Field(default=None, max_length=15)
     Celular: str | None = Field(default=None, pattern=r"^[67]\d{7}$")
+
+
+class EditarUsuarioResponse(BaseModel):
+    IdUsuario: int
+    Ci: str
+    NombreCompleto: str
 
 
 class UsuarioPerfil(BaseModel):

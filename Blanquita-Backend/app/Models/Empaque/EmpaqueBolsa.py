@@ -1,61 +1,57 @@
-from datetime import date
-from pydantic import BaseModel
+from datetime import date, datetime
+from decimal import Decimal
+
+from pydantic import BaseModel, Field
 
 
-class EmpaqueBolsaItem(BaseModel):
-    IdTipoEmpaqueBolsa: int
-    CantidadMovimiento: int
-    Observacion: str | None = None
+class IngresoEmpaqueBolsaItem(BaseModel):
+    IdTipoEmpaqueBolsa: int = Field(..., gt=0)
+    Cantidad: int
 
 
 class IngresoEmpaqueBolsaRequest(BaseModel):
-    IdProveedor: int
-    CantidadToneladasPedida: float | None = None
-    EmpaquesBolsa: list[EmpaqueBolsaItem]
+    IdProveedor: int = Field(..., gt=0)
+    CantidadToneladasPedida: Decimal | None = Field(default=None, gt=0)
+    EmpaquesBolsa: list[IngresoEmpaqueBolsaItem]
 
 
-class IngresoEmpaqueBolsaResponse(BaseModel):
-    FechaRecepcion: date
+class IngresoEmpaqueBolsaItemResponse(BaseModel):
+    IdMovimientoEmpaqueBolsa: int
     IdTipoEmpaqueBolsa: int
     NombreEmpaqueBolsa: str
     CantidadIngresada: int
     CantidadActual: int
+    FechaMovimiento: datetime
 
 
-
-class DescontarEmpaqueBolsaItem(BaseModel):
-    IdTipoEmpaqueBolsa: int
-    CantidadMovimiento: int
-    Observacion: str | None = None
-
-
-class DescontarEmpaqueBolsaRequest(BaseModel):
-    EmpaquesBolsa: list[DescontarEmpaqueBolsaItem]
-
-
-class DescontarEmpaqueBolsaResponse(BaseModel):
-    IdTipoEmpaqueBolsa: int
-    NombreEmpaqueBolsa: str
-    CantidadDescontada: int
-    CantidadActual: int
+class IngresoEmpaqueBolsaResponse(BaseModel):
+    IdLoteEmpaque: int
+    IdProveedor: int
+    NombreProveedor: str
+    FechaRecepcion: date
+    CantidadToneladasPedida: Decimal | None = None
+    CantidadTotalIngresada: int
+    Empaques: list[IngresoEmpaqueBolsaItemResponse]
 
 
+class SalidaEmpaqueBolsaRequest(BaseModel):
+    IdTipoEmpaqueBolsa: int = Field(..., gt=0)
+    Cantidad: int
+    Observacion: str
 
-class ReingresarEmpaqueBolsaRequest(BaseModel):
-    IdTipoEmpaqueBolsa: int
-    CantidadMovimiento: int
-    Observacion: str | None = None
 
-
-class ReingresarEmpaqueBolsaResponse(BaseModel):
+class SalidaEmpaqueBolsaResponse(BaseModel):
+    IdMovimientoEmpaqueBolsa: int
     IdTipoEmpaqueBolsa: int
     NombreEmpaqueBolsa: str
-    CantidadReingresada: int
+    NombreMovimiento: str
+    CantidadMovimiento: int
     CantidadActual: int
+    FechaMovimiento: datetime
 
 
-
-class CatalogoEmpaqueBolsaResponse(BaseModel):
+class InventarioEmpaqueBolsaResponse(BaseModel):
+    IdInventarioEmpaqueBolsa: int
     IdTipoEmpaqueBolsa: int
     NombreEmpaqueBolsa: str
     DescripcionEmpaqueBolsa: str | None = None

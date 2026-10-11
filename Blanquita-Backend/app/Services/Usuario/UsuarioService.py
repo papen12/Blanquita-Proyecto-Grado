@@ -8,9 +8,10 @@ from sqlalchemy.orm import Session
 from app.Models.Usuario.Usuario import (
     CambiarEstadoUsuarioRequest,
     CambiarEstadoUsuarioResponse,
+    EditarUsuarioRequest,
+    EditarUsuarioResponse,
     ListarUsuariosRequest,
     ListarUsuariosResponse,
-    PerfilUpdate,
     RestablecerClaveRequest,
     RestablecerClaveResponse,
     UsuarioCreate,
@@ -70,7 +71,7 @@ class UsuarioService:
     def __init__(self, db: Session):
         self.repository = UsuarioRepository(db)
 
-    def _ValidarNombres(self, datos: PerfilUpdate | UsuarioCreate) -> None:
+    def _ValidarNombres(self, datos: EditarUsuarioRequest | UsuarioCreate) -> None:
         for campo, etiqueta, obligatorio in CAMPOS_NOMBRE:
             valor = (getattr(datos, campo) or "").strip()
 
@@ -222,25 +223,49 @@ class UsuarioService:
 
         return UsuarioPerfil(**fila, Correo=usuario_actual.get("Correo"))
 
-    def EditarPerfil(self, usuario_actual: dict, datos: PerfilUpdate) -> UsuarioPerfil:
-        self._ValidarNombres(datos)
+    def EditarUsuario(self, data: EditarUsuarioRequest, id_admin: int) -> EditarUsuarioResponse:
+        self._ValidarNombres(data)
 
-        fila = self.repository.EditarPerfil({
-            "p_IdUsuario": usuario_actual["IdUsuario"],
-            "p_PrimerNombre": datos.PrimerNombre,
-            "p_ApellidoPaterno": datos.ApellidoPaterno,
-            "p_SegundoNombre": datos.SegundoNombre,
-            "p_ApellidoMaterno": datos.ApellidoMaterno,
-            "p_Celular": datos.Celular,
-        })
-
-        if not fila:
+        usuario = self.repository.ObtenerUsuarioBloqueado(data.IdUsuario)
+        if usuario is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="No se encontró el perfil del usuario"
+                detail="El usuario no existe",
             )
 
-        return UsuarioPerfil(**fila, Correo=usuario_actual.get("Correo"))
+        if usuario.IdEstadoUsuario == ESTADO_USUARIO_SUSPENDIDO:
+            self.repository.Revertir()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="El usuario está Suspendido de forma definitiva, no se pueden editar sus datos",
+            )
+
+        nuevos = {
+            "PrimerNombre": _texto_opcional(data.PrimerNombre),
+            "SegundoNombre": _texto_opcional(data.SegundoNombre),
+            "ApellidoPaterno": _texto_opcional(data.ApellidoPaterno),
+            "ApellidoMaterno": _texto_opcional(data.ApellidoMaterno),
+            "Celular": _texto_opcional(data.Celular),
+        }
+        cambios = [campo for campo, valor in nuevos.items() if getattr(usuario, campo) != valor]
+        if not cambios:
+            self.repository.Revertir()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="No hay cambios para guardar",
+            )
+
+        observacion = (
+            f"Editar usuario · CI {usuario.Ci} ({_nombre_completo(usuario)}): "
+            f"{', '.join(cambios)}"
+        )
+        self.repository.EditarUsuario(usuario, nuevos, observacion, id_admin)
+
+        return EditarUsuarioResponse(
+            IdUsuario=usuario.IdUsuario,
+            Ci=usuario.Ci,
+            NombreCompleto=_nombre_completo(usuario),
+        )
 
     def _CabecerasAdmin(self) -> dict:
         return {

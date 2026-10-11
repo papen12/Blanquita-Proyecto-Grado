@@ -15,6 +15,7 @@ class TipoBobina(Base):
     DiametroMm: Mapped[Decimal] = mapped_column(Numeric, server_default=text("1210"))
     Formato: Mapped[Decimal] = mapped_column(Numeric, server_default=text("2760"))
     TaraKg: Mapped[Decimal] = mapped_column(Numeric, server_default=text("38"))
+    Descripcion: Mapped[str | None] = mapped_column(Text)
 
 
 class LoteBobina(Base):

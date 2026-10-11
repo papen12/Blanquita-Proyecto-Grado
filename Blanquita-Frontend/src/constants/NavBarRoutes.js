@@ -8,7 +8,14 @@ import {
   Container,
   CircleUserRound,
   ClipboardList,
-  Combine,QrCode,UserShield,Users,Cylinder
+  Combine,
+  QrCode,
+  UserShield,
+  Users,
+  Truck,
+  Package,
+  Cuboid,
+  PackagePlus,
 } from "lucide-react";
 import { toiletRoll } from "@lucide/lab";
 import { Roles } from "@/constants/Values";
@@ -22,7 +29,8 @@ export function rutaDeItem(item, basePath, prefijo) {
 export function rutasVisibles(rutas, idRol, esAdmin) {
   return rutas.filter(
     (item) =>
-      (!item.isLider || idRol === Roles.Encargado) && (!item.soloAdmin || esAdmin),
+      (!item.isLider || idRol === Roles.Encargado) &&
+      (!item.soloAdmin || esAdmin),
   );
 }
 
@@ -71,6 +79,16 @@ export const RutasNavBar = [
         icono: Database,
         ruta: "bobina-inventario",
       },
+      {
+        titulo: "Bolsa",
+        icono: Cuboid,
+        ruta: "bolsa-inventario",
+      },
+      {
+        titulo: "Bolsa de jaba",
+        icono: Package,
+        ruta: "jaba-inventario",
+      },
     ],
   },
 
@@ -81,6 +99,18 @@ export const RutasNavBar = [
     subrutas: [
       { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
       { titulo: "Movimientos", icono: Combine, ruta: "movimientos" },
+    ],
+  },
+  {
+    titulo: "Insumos",
+    icono: Package,
+    ruta: "insumos",
+    subrutas: [
+      {
+        titulo: "Inventario",
+        icono: Boxes,
+        ruta: "inventario",
+      },
     ],
   },
   {
@@ -135,9 +165,7 @@ export const RutasReportes = [
     titulo: "Rodela",
     icono: Database,
     ruta: "rodela",
-    subrutas: [
-      { titulo: "Inventario", icono: Boxes, ruta: "inventario" },
-    ],
+    subrutas: [{ titulo: "Inventario", icono: Boxes, ruta: "inventario" }],
   },
   {
     titulo: "Productos",
@@ -148,10 +176,37 @@ export const RutasReportes = [
       { titulo: "Producción", icono: Factory, ruta: "produccion" },
     ],
   },
-   {
-    titulo:"Códigos Qr",
-    icono:QrCode,
-    ruta:"qr",
+  {
+    titulo: "Insumos",
+    icono: Package,
+    ruta: "insumos",
+    subrutas: [
+      {
+        titulo: "Inventario",
+        icono: Boxes,
+        ruta: "inventario",
+      },
+      { 
+        titulo: "Movimientos", 
+        icono: Combine, 
+        ruta: "movimientos" 
+
+      },
+    ],
+  },
+  {
+    titulo: "Empaque",
+    icono: Container,
+    ruta: "empaque",
+    subrutas: [
+      { titulo: "Movimientos", icono: Combine, ruta: "movimientos" },
+      { titulo: "Lotes recibidos", icono: PackagePlus, ruta: "lotes" },
+    ],
+  },
+  {
+    titulo: "Códigos Qr",
+    icono: QrCode,
+    ruta: "qr",
   },
   {
     titulo: "Volver a la Planta",
@@ -159,8 +214,6 @@ export const RutasReportes = [
     ruta: "",
   },
 ];
-
-
 
 export const RutasAdmin = [
   {
@@ -175,22 +228,16 @@ export const RutasAdmin = [
     descripcion: "Registrar usuarios, cambiar su estado y restablecer claves",
   },
   {
-    titulo: "Bobina Papel",
-    icono: Cylinder,
-    ruta: "tipos-bobina-papel",
-    descripcion: "Crear tipos de bobina papel y editar sus medidas y tara",
+    titulo: "Proveedores",
+    icono: Truck,
+    ruta: "proveedores",
+    descripcion: "Registrar Proveedores y cambiar su estado",
   },
   {
-    titulo: "Bobina Servilleta",
-    icono: SquareStack,
-    ruta: "tipos-bobina-servilleta",
-    descripcion: "Crear tipos de bobina servilleta y editar su diámetro, crepado y resistencia",
-  },
-  {
-    titulo: "Líneas y Productos",
-    icono: Boxes,
-    ruta: "catalogo",
-    descripcion: "Crear líneas de producción y sus productos con su código",
+    titulo: "Insumos",
+    icono: Package,
+    ruta: "insumos",
+    descripcion: "Registrar insumos y editar su descripción",
   },
   {
     titulo: "Volver a la Planta",
