@@ -2,7 +2,9 @@ export const prerender = false;
 
 import { obtenerAccessTokenValido, limpiarSesion } from "../../lib/auth-server";
 
-const BACKEND_URL = import.meta.env.BACKEND_URL;
+const BACKEND_URL = (
+  import.meta.env.PROD ? import.meta.env.BACKEND_URL_DEPLOY : import.meta.env.BACKEND_URL
+).replace(/\/+$/, "");
 
 export const ALL = async ({ request, params, cookies }) => {
   const accessToken = await obtenerAccessTokenValido(cookies);
