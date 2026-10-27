@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 4321
+    },
+    {
+      "name": "reporte-pruebas",
+      "runtimeExecutable": "bunx",
+      "runtimeArgs": ["vite", "preview", "--outDir", ".vitest", "--port", "4173", "--strictPort"],
+      "port": 4173
     }
   ]
 }
