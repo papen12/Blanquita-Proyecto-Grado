@@ -26,6 +26,33 @@ dependencies = [
 dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
+    "pytest-html>=4.2.0",
     "pytest-mock>=3.17.0",
     "time-machine>=3.6.0",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers"
+markers = [
+    "unitaria: funciones puras sin dependencias externas",
+    "servicio: reglas de negocio con repositorio simulado",
+    "api: endpoints con TestClient y dependencias reemplazadas",
+    "comun: utilidades compartidas por todos los módulos",
+    "bobina_papel",
+    "bobina_servilleta",
+    "rodela",
+    "empaque",
+    "insumo",
+    "producto_terminado",
+    "usuario",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/testBd.py"]
+
+[tool.coverage.report]
+skip_empty = true
+show_missing = true
