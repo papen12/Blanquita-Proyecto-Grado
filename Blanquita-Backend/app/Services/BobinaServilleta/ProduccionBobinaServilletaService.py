@@ -14,7 +14,11 @@ from app.Constants.Estados import (
     ESTADO_PRODUCCION_EN_PRODUCCION,
     ESTADO_PRODUCCION_FINALIZADO,
     ESTADO_PRODUCCION_PAUSA,
+    ESTADO_PRODUCCION_POSPUESTA,
+    ESTADOS_PRODUCCION_CANCELABLES,
     MOVIMIENTO_MATERIA_PRIMA_INGRESO,
+    MOVIMIENTO_MATERIA_PRIMA_PRODUCCION_POSPUESTA,
+    MOVIMIENTO_MATERIA_PRIMA_PRODUCCION_RETOMADA,
     MOVIMIENTO_MATERIA_PRIMA_PRODUCCION_TERMINADA,
     MOVIMIENTO_MATERIA_PRIMA_RETIRO_FALLA,
     MOVIMIENTO_MATERIA_PRIMA_TRASLADO,
@@ -31,9 +35,14 @@ from app.Models.BobinaServilleta.ProduccionBobinaServilleta import (
     IniciarProduccionServilletaResponse,
     PausaProduccionServilletaRequest,
     PausaProduccionServilletaResponse,
+    PosponerProduccionServilletaRequest,
+    PosponerProduccionServilletaResponse,
     ReanudarProduccionServilletaRequest,
     ReanudarProduccionServilletaResponse,
+    RetomarProduccionServilletaRequest,
+    RetomarProduccionServilletaResponse,
     VerPausasProduccionServilletaActivasResponse,
+    VerPospuestasProduccionServilletaResponse,
     VerProduccionServilletaActivasRequest,
     VerProduccionServilletaActivasResponse,
 )
@@ -261,6 +270,104 @@ class ProduccionBobinaServilletaService:
             IdEstadoProduccion=ESTADO_PRODUCCION_EN_PRODUCCION,
         )
 
+    def PosponerProduccionServilleta(
+        self, data: PosponerProduccionServilletaRequest, id_usuario: int
+    ) -> PosponerProduccionServilletaResponse:
+        motivo = self._ValidarTexto(
+            data.MotivoPosposicion, "El motivo de la posposición es obligatorio"
+        )
+
+        produccion = self._ObtenerProduccion(data.IdProduccionServilleta)
+        if produccion.IdEstadoProduccion != ESTADO_PRODUCCION_PAUSA:
+            self._Revertir(
+                status.HTTP_409_CONFLICT,
+                "La producción indicada no se encuentra en Pausa, no puede posponerse",
+            )
+
+        pausa = self.repository.ObtenerPausaActiva(produccion.IdProduccionServilleta)
+        if pausa is None:
+            self._Revertir(
+                status.HTTP_409_CONFLICT,
+                "No existe una pausa activa para la producción indicada",
+            )
+
+        pausa.FechaHoraPosposicion = _ahora()
+        pausa.MotivoPosposicion = motivo
+        produccion.IdEstadoProduccion = ESTADO_PRODUCCION_POSPUESTA
+        movimiento = self._MoverSubBobina(
+            produccion,
+            ESTADO_MATERIA_PRIMA_EN_PRODUCCION,
+            MOVIMIENTO_MATERIA_PRIMA_PRODUCCION_POSPUESTA,
+            id_usuario,
+            f"Retiro de máquina por posposición - Servilleta #{produccion.IdProduccionServilleta}: {motivo}",
+        )
+        self.repository.Guardar(
+            produccion,
+            pausa,
+            *movimiento,
+            mensaje_error="No se pudo posponer la producción de servilleta",
+        )
+
+        return PosponerProduccionServilletaResponse(
+            IdPausaProduccionServilleta=pausa.IdPausaProduccionServilleta,
+            IdProduccionServilleta=pausa.IdProduccionServilleta,
+            FechaHoraPausa=pausa.FechaHoraPausa,
+            MotivoPausaProduccion=pausa.MotivoPausaProduccion,
+            FechaHoraPosposicion=pausa.FechaHoraPosposicion,
+            MotivoPosposicion=pausa.MotivoPosposicion,
+            IdEstadoProduccion=ESTADO_PRODUCCION_POSPUESTA,
+        )
+
+    def RetomarProduccionServilleta(
+        self, data: RetomarProduccionServilletaRequest, id_usuario: int
+    ) -> RetomarProduccionServilletaResponse:
+        motivo = self._ValidarTexto(
+            data.MotivoReanudacion, "El motivo de la reanudación es obligatorio"
+        )
+
+        produccion = self._ObtenerProduccion(data.IdProduccionServilleta)
+        if produccion.IdEstadoProduccion != ESTADO_PRODUCCION_POSPUESTA:
+            self._Revertir(
+                status.HTTP_409_CONFLICT,
+                "La producción indicada no se encuentra Pospuesta, no puede retomarse",
+            )
+
+        pausa = self.repository.ObtenerPausaActiva(produccion.IdProduccionServilleta)
+        if pausa is None:
+            self._Revertir(
+                status.HTTP_409_CONFLICT,
+                "No existe una pausa activa para la producción indicada",
+            )
+
+        pausa.FechaHoraReanudacion = _ahora()
+        pausa.MotivoReanudacion = motivo
+        produccion.IdEstadoProduccion = ESTADO_PRODUCCION_EN_PRODUCCION
+        movimiento = self._MoverSubBobina(
+            produccion,
+            ESTADO_MATERIA_PRIMA_EN_PRODUCCION,
+            MOVIMIENTO_MATERIA_PRIMA_PRODUCCION_RETOMADA,
+            id_usuario,
+            f"Retorno a máquina - Servilleta #{produccion.IdProduccionServilleta}: {motivo}",
+        )
+        self.repository.Guardar(
+            produccion,
+            pausa,
+            *movimiento,
+            mensaje_error="No se pudo retomar la producción de servilleta",
+        )
+
+        return RetomarProduccionServilletaResponse(
+            IdPausaProduccionServilleta=pausa.IdPausaProduccionServilleta,
+            IdProduccionServilleta=pausa.IdProduccionServilleta,
+            FechaHoraPausa=pausa.FechaHoraPausa,
+            MotivoPausaProduccion=pausa.MotivoPausaProduccion,
+            FechaHoraPosposicion=pausa.FechaHoraPosposicion,
+            MotivoPosposicion=pausa.MotivoPosposicion,
+            FechaHoraReanudacion=pausa.FechaHoraReanudacion,
+            MotivoReanudacion=pausa.MotivoReanudacion,
+            IdEstadoProduccion=ESTADO_PRODUCCION_EN_PRODUCCION,
+        )
+
     def FinalizarProduccionServilleta(
         self, data: FinalizarProduccionServilletaRequest, id_usuario: int
     ) -> FinalizarProduccionServilletaResponse:
@@ -301,10 +408,10 @@ class ProduccionBobinaServilletaService:
         motivo = self._ValidarTexto(data.MotivoCancelacion, "El motivo de cancelación es obligatorio")
 
         produccion = self._ObtenerProduccion(data.IdProduccionServilleta)
-        if produccion.IdEstadoProduccion != ESTADO_PRODUCCION_PAUSA:
+        if produccion.IdEstadoProduccion not in ESTADOS_PRODUCCION_CANCELABLES:
             self._Revertir(
                 status.HTTP_409_CONFLICT,
-                "La producción indicada no está en Pausa, no se puede cancelar",
+                "La producción indicada no está en Pausa ni Pospuesta, no se puede cancelar",
             )
 
         produccion.IdEstadoProduccion = ESTADO_PRODUCCION_CANCELADA
@@ -350,6 +457,14 @@ class ProduccionBobinaServilletaService:
         return [
             VerPausasProduccionServilletaActivasResponse(**fila)
             for fila in self.repository.VerPausasProduccionServilletaActivas()
+        ]
+
+    def VerPospuestasProduccionServilleta(
+        self,
+    ) -> list[VerPospuestasProduccionServilletaResponse]:
+        return [
+            VerPospuestasProduccionServilletaResponse(**fila)
+            for fila in self.repository.VerPospuestasProduccionServilleta()
         ]
 
     def _MoverSubBobina(

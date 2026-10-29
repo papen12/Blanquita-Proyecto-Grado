@@ -3,12 +3,20 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   verProduccionServilletaActivas,
   verPausasProduccionServilletaActivas,
+  verPospuestasProduccionServilleta,
   pausarProduccionServilleta,
   reanudarProduccionServilleta,
+  posponerProduccionServilleta,
+  retomarProduccionServilleta,
   finalizarProduccionServilleta,
   cancelarProduccionServilleta,
 } from "../../services/BobinaServilleta/Produccion";
-import { ObservacionServilleta, MotivosReanudacionProduccion } from "@/constants/OperadorConfig";
+import {
+  ObservacionServilleta,
+  MotivosReanudacionProduccion,
+  MotivosPosposicionProduccion,
+  MotivosRetomaProduccion,
+} from "@/constants/OperadorConfig";
 import { VeComoLider, EsEncargado, EsGerente } from "@/utils/validators";
 import { useProduccion } from "@/hooks/useProduccion";
 import {
@@ -20,6 +28,8 @@ import ConcluidasServilleta from "./Concluidas";
 import {
   DialogoPausar,
   DialogoReanudar,
+  DialogoPosponer,
+  DialogoRetomar,
   DialogoCancelar,
   AlertaFinalizar,
 } from "@/components/Produccion/Dialogos";
@@ -54,20 +64,26 @@ export default function ProduccionBobinaServilleta({ usuario }) {
   const {
     activas,
     pausadas,
+    pospuestas,
     pausa,
     cancelacion,
     finalizacion,
     reanudacion,
+    posposicion,
+    retoma,
     procesandoId,
     reanudar,
   } = useProduccion({
     verActivas: () => verProduccionServilletaActivas(),
     verPausadas: () => verPausasProduccionServilletaActivas(),
+    verPospuestas: () => verPospuestasProduccionServilleta(),
     idDe: (p) => p.IdProduccionServilleta,
     pausar: pausarProduccionServilleta,
     cancelar: cancelarProduccionServilleta,
     finalizar: finalizarProduccionServilleta,
     reanudar: reanudarProduccionServilleta,
+    posponer: posponerProduccionServilleta,
+    retomar: retomarProduccionServilleta,
   });
 
   return (
@@ -81,6 +97,7 @@ export default function ProduccionBobinaServilleta({ usuario }) {
           onCambio={setVista}
           totalActivas={activas.datos.length}
           totalPausadas={pausadas.datos.length}
+          totalPospuestas={pospuestas.datos.length}
           mostrarConcluidas={veConcluidas}
           totalConcluidas={totalConcluidas}
         />
@@ -124,9 +141,35 @@ export default function ProduccionBobinaServilleta({ usuario }) {
                   acciones={soloLectura ? [] : [
                     { tipo: "reanudar", onClick: () => reanudar(p), disabled: procesando, procesando },
                     ...(esEncargado
-                      ? [{ tipo: "cancelar", onClick: () => cancelacion.abrir(p), disabled: procesando }]
+                      ? [
+                          { tipo: "posponer", onClick: () => posposicion.abrir(p), disabled: procesando },
+                          { tipo: "cancelar", onClick: () => cancelacion.abrir(p), disabled: procesando },
+                        ]
                       : []),
                   ]}
+                />
+              );
+            }}
+          />
+        )}
+
+        {vista === "pospuestas" && (
+          <ListaProducciones
+            lista={pospuestas}
+            altoSkeleton="h-52"
+            mensajeVacio="No hay producciones pospuestas."
+            renderizar={(p) => {
+              const procesando = procesandoId === p.IdProduccionServilleta;
+              return (
+                <TarjetaProduccion
+                  key={p.IdPausaProduccionServilleta}
+                  produccion={p}
+                  pospuesta
+                  encabezado={<EncabezadoSubBobina p={p} />}
+                  acciones={esEncargado ? [
+                    { tipo: "retomar", onClick: () => retoma.abrir(p), disabled: procesando, procesando },
+                    { tipo: "cancelar", onClick: () => cancelacion.abrir(p), disabled: procesando },
+                  ] : []}
                 />
               );
             }}
@@ -140,6 +183,20 @@ export default function ProduccionBobinaServilleta({ usuario }) {
         dialogo={reanudacion}
         tituloDe={tituloDe}
         opciones={MotivosReanudacionProduccion}
+      />
+
+      <DialogoPosponer
+        dialogo={posposicion}
+        tituloDe={tituloDe}
+        opciones={MotivosPosposicionProduccion}
+        detalle="La sub-bobina se retira de la máquina pero sigue en inventario, reservada para esta producción. Podrá retomarla cuando se resuelva."
+      />
+
+      <DialogoRetomar
+        dialogo={retoma}
+        tituloDe={tituloDe}
+        opciones={MotivosRetomaProduccion}
+        detalle="La sub-bobina vuelve a la máquina y la pausa se cerrará con la hora actual, registrada con su usuario."
       />
 
       <DialogoCancelar

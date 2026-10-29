@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, aliased
 from app.Constants.Estados import (
     ESTADO_PRODUCCION_EN_PRODUCCION as ID_ESTADO_EN_PRODUCCION,
     ESTADO_PRODUCCION_PAUSA as ID_ESTADO_PAUSA,
+    ESTADO_PRODUCCION_POSPUESTA as ID_ESTADO_POSPUESTA,
 )
 from app.Repository.Consultas import turno_actual
 from app.Repository.DbCaller import DbCaller
@@ -177,6 +178,19 @@ class ProduccionBobinaPapelRepository:
         return self.caller.Consultar(consulta)
 
     def VerPausasProduccionBobinaTuboActivas(self, params: dict) -> list[dict]:
+        return self._PausasAbiertas(ID_ESTADO_PAUSA, params)
+
+    def VerPospuestasProduccionBobinaTubo(self, params: dict) -> list[dict]:
+        pausa = PausaProduccionBobinaTubo
+        return self._PausasAbiertas(
+            ID_ESTADO_POSPUESTA,
+            params,
+            pausa.MotivoPausaProduccion,
+            pausa.FechaHoraPosposicion,
+            pausa.MotivoPosposicion,
+        )
+
+    def _PausasAbiertas(self, id_estado: int, params: dict, *columnas) -> list[dict]:
         pausa = PausaProduccionBobinaTubo
         pb = ProduccionBobinaTubo
         b1 = aliased(BobinaPapel)
@@ -193,6 +207,7 @@ class ProduccionBobinaPapelRepository:
                 pausa.FechaHoraPausa,
                 EstadoProduccion.NombreEstadoProduccion,
                 pb.CantidadLogsActual,
+                *columnas,
             )
             .join(pb, pb.IdProduccionBobinaTubo == pausa.IdProduccionBobinaTubo)
             .join(EstadoProduccion, EstadoProduccion.IdEstadoProduccion == pb.IdEstadoProduccion)
@@ -200,7 +215,7 @@ class ProduccionBobinaPapelRepository:
             .join(b2, b2.IdBobinaPapel == pb.IdBobina_2)
             .join(Producto, Producto.IdProducto == pb.IdProducto)
             .where(
-                pb.IdEstadoProduccion == ID_ESTADO_PAUSA,
+                pb.IdEstadoProduccion == id_estado,
                 pausa.FechaHoraReanudacion.is_(None),
             )
             .order_by(pausa.FechaHoraPausa)

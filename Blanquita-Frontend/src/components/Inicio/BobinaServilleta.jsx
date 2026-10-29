@@ -36,8 +36,8 @@ export const itemProduccion = (item) => ({
   titulo: `Sub-bobina ${medidaMm(item.MedidaMm)}`,
   subtitulo: item.NombreTipoBobinaServilleta,
   codigos: `Unidad ${item.CodigoUnidadOrigen}`,
-  motivo: item.MotivoPausaProduccion,
-  desde: item.FechaHoraPausa ?? item.FechaInicioProduccion,
+  motivo: item.MotivoPosposicion ?? item.MotivoPausaProduccion,
+  desde: item.FechaHoraPosposicion ?? item.FechaHoraPausa ?? item.FechaInicioProduccion,
   atrasada: item.Atrasada,
   detalles: item.FechaHoraPausa ? [`Pausó ${item.Operador}`] : [`Turno ${item.NombreTurno}`, item.Operador],
 });
@@ -141,6 +141,7 @@ function Produccion({ datos }) {
         href={`${RUTA}/produccion`}
         activas={datos.Activas}
         pausadas={datos.Pausadas}
+        pospuestas={datos.Pospuestas}
         horasAlerta={datos.HorasAlertaPausa}
         descripcionActivas="Sub-bobinas que están en máquina ahora"
         aItem={itemProduccion}

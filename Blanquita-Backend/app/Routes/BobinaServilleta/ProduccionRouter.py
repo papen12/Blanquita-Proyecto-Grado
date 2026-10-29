@@ -16,11 +16,16 @@ from app.Models.BobinaServilleta.ProduccionBobinaServilleta import (
     PausaProduccionServilletaResponse,
     ReanudarProduccionServilletaRequest,
     ReanudarProduccionServilletaResponse,
+    PosponerProduccionServilletaRequest,
+    PosponerProduccionServilletaResponse,
+    RetomarProduccionServilletaRequest,
+    RetomarProduccionServilletaResponse,
     FinalizarProduccionServilletaRequest,
     FinalizarProduccionServilletaResponse,
     CancelarProduccionServilletaRequest,
     CancelarProduccionServilletaResponse,
     VerPausasProduccionServilletaActivasResponse,
+    VerPospuestasProduccionServilletaResponse,
     VerProduccionServilletaActivasRequest,
     VerProduccionServilletaActivasResponse
 )
@@ -83,6 +88,30 @@ def ReanudadProduccionSubBobina(
     return service.ReanudarProduccionServilleta(data, usuario_actual["IdUsuario"])
 
 @ProduccionBobinaServilletaRouter.post(
+    "/posponer",
+    response_model=PosponerProduccionServilletaResponse,
+    status_code=200
+)
+def PosponerProduccionSubBobina(
+    data: PosponerProduccionServilletaRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+    service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
+):
+    return service.PosponerProduccionServilleta(data, usuario_actual["IdUsuario"])
+
+@ProduccionBobinaServilletaRouter.post(
+    "/retomar",
+    response_model=RetomarProduccionServilletaResponse,
+    status_code=200
+)
+def RetomarProduccionSubBobina(
+    data: RetomarProduccionServilletaRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+    service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
+):
+    return service.RetomarProduccionServilleta(data, usuario_actual["IdUsuario"])
+
+@ProduccionBobinaServilletaRouter.post(
     "/finalizar",
     response_model=FinalizarProduccionServilletaResponse,
     status_code=200
@@ -128,3 +157,14 @@ def VerPausasProduccionServilletaActivas(
     service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
 ):
     return service.VerPausasProduccionServilletaActivas()
+
+@ProduccionBobinaServilletaRouter.get(
+    "/pospuestas",
+    response_model=list[VerPospuestasProduccionServilletaResponse],
+    status_code=200
+)
+def VerPospuestasProduccionServilleta(
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR, ROL_GERENTE_GENERAL])),
+    service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
+):
+    return service.VerPospuestasProduccionServilleta()

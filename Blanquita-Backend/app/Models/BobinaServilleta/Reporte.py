@@ -284,6 +284,8 @@ class PausaProduccionServilletaResponse(BaseModel):
     NombreTurno: str
     FechaHoraPausa: datetime
     MotivoPausaProduccion: Optional[str]
+    FechaHoraPosposicion: Optional[datetime] = None
+    MotivoPosposicion: Optional[str] = None
     FechaHoraReanudacion: Optional[datetime]
     MotivoReanudacion: Optional[str] = None
     DuracionPausa: Optional[timedelta]

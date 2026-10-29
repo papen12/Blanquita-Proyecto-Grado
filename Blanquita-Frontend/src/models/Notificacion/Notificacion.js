@@ -14,6 +14,8 @@ export const ProduccionBobinaPapelResponse = (data) => ({
   Operador: data.Operador,
   FechaInicioProduccion: data.FechaInicioProduccion ?? null,
   FechaHoraPausa: data.FechaHoraPausa ?? null,
+  FechaHoraPosposicion: data.FechaHoraPosposicion ?? null,
+  MotivoPosposicion: data.MotivoPosposicion ?? null,
   CantidadLogsActual: Number(data.CantidadLogsActual ?? 0),
   Atrasada: Boolean(data.Atrasada),
 });
@@ -29,12 +31,15 @@ export const ProduccionBobinaServilletaResponse = (data) => ({
   Operador: data.Operador,
   FechaInicioProduccion: data.FechaInicioProduccion ?? null,
   FechaHoraPausa: data.FechaHoraPausa ?? null,
+  FechaHoraPosposicion: data.FechaHoraPosposicion ?? null,
+  MotivoPosposicion: data.MotivoPosposicion ?? null,
   Atrasada: Boolean(data.Atrasada),
 });
 
 export const ProduccionResponse = (data, mapear) => ({
   Activas: (data?.Activas ?? []).map(mapear),
   Pausadas: (data?.Pausadas ?? []).map(mapear),
+  Pospuestas: (data?.Pospuestas ?? []).map(mapear),
 });
 
 export const NotificacionesResponse = (data) => ({

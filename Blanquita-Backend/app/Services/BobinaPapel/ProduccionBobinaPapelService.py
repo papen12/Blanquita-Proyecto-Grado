@@ -19,7 +19,11 @@ from app.Constants.Estados import (
     ESTADO_PRODUCCION_EN_PRODUCCION,
     ESTADO_PRODUCCION_FINALIZADO,
     ESTADO_PRODUCCION_PAUSA,
+    ESTADO_PRODUCCION_POSPUESTA,
+    ESTADOS_PRODUCCION_CANCELABLES,
     MOVIMIENTO_MATERIA_PRIMA_CAMBIO_LINEA,
+    MOVIMIENTO_MATERIA_PRIMA_PRODUCCION_POSPUESTA,
+    MOVIMIENTO_MATERIA_PRIMA_PRODUCCION_RETOMADA,
     MOVIMIENTO_MATERIA_PRIMA_PRODUCCION_TERMINADA,
     MOVIMIENTO_MATERIA_PRIMA_RETIRO_FALLA,
     MOVIMIENTO_MATERIA_PRIMA_TRASLADO,
@@ -37,10 +41,15 @@ from app.Models.BobinaPapel.ProduccionBobinaPapel import (
     InsertarMovimientoOperadorLogsResponse,
     PausarProduccionBobinaTuboRequest,
     PausarProduccionBobinaTuboResponse,
+    PosponerProduccionBobinaTuboRequest,
+    PosponerProduccionBobinaTuboResponse,
     ReanudarProduccionBobinaTuboRequest,
     ReanudarProduccionBobinaTuboResponse,
+    RetomarProduccionBobinaTuboRequest,
+    RetomarProduccionBobinaTuboResponse,
     VerPausasProduccionBobinaTuboActivasRequest,
     VerPausasProduccionBobinaTuboActivasResponse,
+    VerPospuestasProduccionBobinaTuboResponse,
     VerProduccionBobinaTuboRequest,
     VerProduccionBobinaTuboResponse,
 )
@@ -330,6 +339,114 @@ class ProduccionBobinaPapelService:
             IdEstadoProduccion=ESTADO_PRODUCCION_EN_PRODUCCION,
         )
 
+    def PosponerProduccion(
+        self, data: PosponerProduccionBobinaTuboRequest, id_usuario: int
+    ) -> PosponerProduccionBobinaTuboResponse:
+        motivo = self._ValidarTexto(
+            data.MotivoPosposicion, "El motivo de la posposición es obligatorio"
+        )
+
+        produccion = self._ObtenerProduccion(data.IdProduccionBobinaTubo)
+
+        if produccion.IdEstadoProduccion != ESTADO_PRODUCCION_PAUSA:
+            self._Revertir(
+                status.HTTP_409_CONFLICT,
+                "La producción indicada no se encuentra en Pausa, no puede posponerse",
+            )
+
+        pausa = self.repository.ObtenerPausaActiva(produccion.IdProduccionBobinaTubo)
+        if pausa is None:
+            self._Revertir(
+                status.HTTP_409_CONFLICT,
+                "No existe una pausa activa para la producción indicada",
+            )
+
+        pausa.FechaHoraPosposicion = _ahora()
+        pausa.MotivoPosposicion = motivo
+        produccion.IdEstadoProduccion = ESTADO_PRODUCCION_POSPUESTA
+
+        bobinas = self.repository.ObtenerBobinasBloqueadas(
+            [produccion.IdBobina_1, produccion.IdBobina_2]
+        )
+        movimientos = self._MoverBobinas(
+            bobinas.values(),
+            ESTADO_MATERIA_PRIMA_EN_PRODUCCION,
+            MOVIMIENTO_MATERIA_PRIMA_PRODUCCION_POSPUESTA,
+            id_usuario,
+            f"Retiro de máquina por posposición - Bobina Tubo #{produccion.IdProduccionBobinaTubo}: {motivo}",
+        )
+        self.repository.Guardar(
+            produccion,
+            pausa,
+            *movimientos,
+            mensaje_error="No se pudo posponer la producción de bobina tubo",
+        )
+
+        return PosponerProduccionBobinaTuboResponse(
+            IdPausaProduccionBobinaTubo=pausa.IdPausaProduccionBobinaTubo,
+            IdProduccionBobinaTubo=pausa.IdProduccionBobinaTubo,
+            FechaHoraPausa=pausa.FechaHoraPausa,
+            MotivoPausaProduccion=pausa.MotivoPausaProduccion,
+            FechaHoraPosposicion=pausa.FechaHoraPosposicion,
+            MotivoPosposicion=pausa.MotivoPosposicion,
+            IdEstadoProduccion=ESTADO_PRODUCCION_POSPUESTA,
+        )
+
+    def RetomarProduccion(
+        self, data: RetomarProduccionBobinaTuboRequest, id_usuario: int
+    ) -> RetomarProduccionBobinaTuboResponse:
+        motivo = self._ValidarTexto(
+            data.MotivoReanudacion, "El motivo de la reanudación es obligatorio"
+        )
+
+        produccion = self._ObtenerProduccion(data.IdProduccionBobinaTubo)
+
+        if produccion.IdEstadoProduccion != ESTADO_PRODUCCION_POSPUESTA:
+            self._Revertir(
+                status.HTTP_409_CONFLICT,
+                "La producción indicada no se encuentra Pospuesta, no puede retomarse",
+            )
+
+        pausa = self.repository.ObtenerPausaActiva(produccion.IdProduccionBobinaTubo)
+        if pausa is None:
+            self._Revertir(
+                status.HTTP_409_CONFLICT,
+                "No existe una pausa activa para la producción indicada",
+            )
+
+        pausa.FechaHoraReanudacion = _ahora()
+        pausa.MotivoReanudacion = motivo
+        produccion.IdEstadoProduccion = ESTADO_PRODUCCION_EN_PRODUCCION
+
+        bobinas = self.repository.ObtenerBobinasBloqueadas(
+            [produccion.IdBobina_1, produccion.IdBobina_2]
+        )
+        movimientos = self._MoverBobinas(
+            bobinas.values(),
+            ESTADO_MATERIA_PRIMA_EN_PRODUCCION,
+            MOVIMIENTO_MATERIA_PRIMA_PRODUCCION_RETOMADA,
+            id_usuario,
+            f"Retorno a máquina - Bobina Tubo #{produccion.IdProduccionBobinaTubo}: {motivo}",
+        )
+        self.repository.Guardar(
+            produccion,
+            pausa,
+            *movimientos,
+            mensaje_error="No se pudo retomar la producción de bobina tubo",
+        )
+
+        return RetomarProduccionBobinaTuboResponse(
+            IdPausaProduccionBobinaTubo=pausa.IdPausaProduccionBobinaTubo,
+            IdProduccionBobinaTubo=pausa.IdProduccionBobinaTubo,
+            FechaHoraPausa=pausa.FechaHoraPausa,
+            MotivoPausaProduccion=pausa.MotivoPausaProduccion,
+            FechaHoraPosposicion=pausa.FechaHoraPosposicion,
+            MotivoPosposicion=pausa.MotivoPosposicion,
+            FechaHoraReanudacion=pausa.FechaHoraReanudacion,
+            MotivoReanudacion=pausa.MotivoReanudacion,
+            IdEstadoProduccion=ESTADO_PRODUCCION_EN_PRODUCCION,
+        )
+
     def CancelarProduccion(
         self, data: CancelarProduccionBobinaTuboRequest, id_usuario: int
     ) -> CancelarProduccionBobinaTuboResponse:
@@ -337,10 +454,10 @@ class ProduccionBobinaPapelService:
 
         produccion = self._ObtenerProduccion(data.IdProduccionBobinaTubo)
 
-        if produccion.IdEstadoProduccion != ESTADO_PRODUCCION_PAUSA:
+        if produccion.IdEstadoProduccion not in ESTADOS_PRODUCCION_CANCELABLES:
             self._Revertir(
                 status.HTTP_409_CONFLICT,
-                "La producción indicada no está en Pausa, no se puede cancelar",
+                "La producción indicada no está en Pausa ni Pospuesta, no se puede cancelar",
             )
 
         produccion.IdEstadoProduccion = ESTADO_PRODUCCION_CANCELADA
@@ -455,6 +572,19 @@ class ProduccionBobinaPapelService:
         return [
             VerPausasProduccionBobinaTuboActivasResponse(**resultado)
             for resultado in self.repository.VerPausasProduccionBobinaTuboActivas(params)
+        ]
+
+    def VerPospuestas(
+        self, data: VerPausasProduccionBobinaTuboActivasRequest
+    ) -> list[VerPospuestasProduccionBobinaTuboResponse]:
+        params = {
+            "p_FiltroIdTipoBobina": data.FiltroIdTipoBobina,
+            "p_FiltroIdProducto": data.FiltroIdProducto,
+        }
+
+        return [
+            VerPospuestasProduccionBobinaTuboResponse(**resultado)
+            for resultado in self.repository.VerPospuestasProduccionBobinaTubo(params)
         ]
 
     def _ResolverProducto(self, id_tipo_bobina: int, id_producto: int | None) -> dict:
