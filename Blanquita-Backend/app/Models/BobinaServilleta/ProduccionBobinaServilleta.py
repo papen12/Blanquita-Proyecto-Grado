@@ -63,6 +63,38 @@ class ReanudarProduccionServilletaResponse(BaseModel):
 
 
 
+class PosponerProduccionServilletaRequest(BaseModel):
+    IdProduccionServilleta: int
+    MotivoPosposicion: str | None = None
+
+
+class PosponerProduccionServilletaResponse(BaseModel):
+    IdPausaProduccionServilleta: int
+    IdProduccionServilleta: int
+    FechaHoraPausa: datetime
+    MotivoPausaProduccion: str | None
+    FechaHoraPosposicion: datetime
+    MotivoPosposicion: str
+    IdEstadoProduccion: int
+
+
+class RetomarProduccionServilletaRequest(BaseModel):
+    IdProduccionServilleta: int
+    MotivoReanudacion: str | None = None
+
+
+class RetomarProduccionServilletaResponse(BaseModel):
+    IdPausaProduccionServilleta: int
+    IdProduccionServilleta: int
+    FechaHoraPausa: datetime
+    MotivoPausaProduccion: str | None
+    FechaHoraPosposicion: datetime
+    MotivoPosposicion: str | None
+    FechaHoraReanudacion: datetime
+    MotivoReanudacion: str
+    IdEstadoProduccion: int
+
+
 class FinalizarProduccionServilletaRequest(BaseModel):
     IdProduccionServilleta: int
 
@@ -113,4 +145,19 @@ class VerPausasProduccionServilletaActivasResponse(BaseModel):
     MedidaMm: int
     DescripcionFormato: str
     FechaHoraPausa: datetime
+    NombreEstadoProduccion: str
+
+
+class VerPospuestasProduccionServilletaResponse(BaseModel):
+    IdPausaProduccionServilleta: int
+    IdProduccionServilleta: int
+    IdSubBobina: int
+    CodigoUnidadOrigen: str
+    IdTipoMedidaSubBobina: int
+    MedidaMm: int
+    DescripcionFormato: str
+    FechaHoraPausa: datetime
+    MotivoPausaProduccion: str | None
+    FechaHoraPosposicion: datetime
+    MotivoPosposicion: str | None
     NombreEstadoProduccion: str

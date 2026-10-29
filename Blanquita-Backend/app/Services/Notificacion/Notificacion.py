@@ -6,10 +6,12 @@ from app.Constants.Horario import HORA_FIN_SOLO_CONSULTA, HORA_INICIO_SOLO_CONSU
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_GERENTE_GENERAL
 from app.Models.BobinaPapel.Inicio import (
     PausaAbiertaInicioBobinaPapel,
+    PospuestaInicioBobinaPapel,
     ProduccionActivaInicioBobinaPapel,
 )
 from app.Models.BobinaServilleta.Inicio import (
     PausaAbiertaInicioBobinaServilleta,
+    PospuestaInicioBobinaServilleta,
     ProduccionActivaInicioBobinaServilleta,
 )
 from app.Models.Notificacion.Notificacion import (
@@ -65,6 +67,7 @@ class NotificacionService:
                 PausaAbiertaInicioBobinaPapel(**fila, Atrasada=semana.pausa_atrasada(fila["FechaHoraPausa"]))
                 for fila in self.bobina_papel.PausasAbiertas()
             ],
+            Pospuestas=[PospuestaInicioBobinaPapel(**fila) for fila in self.bobina_papel.Pospuestas()],
         )
         bobina_servilleta = ProduccionBobinaServilletaNotificaciones(
             Activas=[
@@ -78,6 +81,9 @@ class NotificacionService:
                     **fila, Atrasada=semana.pausa_atrasada(fila["FechaHoraPausa"])
                 )
                 for fila in self.bobina_servilleta.PausasAbiertas()
+            ],
+            Pospuestas=[
+                PospuestaInicioBobinaServilleta(**fila) for fila in self.bobina_servilleta.Pospuestas()
             ],
         )
         return bobina_papel, bobina_servilleta
@@ -97,6 +103,7 @@ class NotificacionService:
             *bobina_servilleta.Activas,
             *bobina_servilleta.Pausadas,
         ]
+        pospuestas = len(bobina_papel.Pospuestas) + len(bobina_servilleta.Pospuestas)
         total_stock = len(stock.SinStock) + len(stock.Criticos) if stock else 0
         total_bloqueo = 1 if bloqueo and bloqueo.Bloqueado else 0
         modo_consulta = (
@@ -121,5 +128,6 @@ class NotificacionService:
             + (1 if conteo else 0)
             + total_stock
             + total_bloqueo
-            + len(producciones),
+            + len(producciones)
+            + pospuestas,
         )

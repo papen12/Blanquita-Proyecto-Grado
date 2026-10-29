@@ -62,6 +62,21 @@ class PausaAbiertaInicioBobinaPapel(BaseModel):
     Atrasada: bool
 
 
+class PospuestaInicioBobinaPapel(BaseModel):
+    IdPausaProduccionBobinaTubo: int
+    IdProduccionBobinaTubo: int
+    NombreTipoBobina: str
+    NombreProducto: str
+    CodigoBobina1: str
+    CodigoBobina2: str
+    MotivoPausaProduccion: Optional[str]
+    Operador: str
+    FechaHoraPausa: datetime
+    FechaHoraPosposicion: datetime
+    MotivoPosposicion: Optional[str]
+    CantidadLogsActual: int
+
+
 class BobinaFueraInicioBobinaPapel(BaseModel):
     IdBobinaPapel: int
     CodigoBobina: str
@@ -94,6 +109,7 @@ class InicioBobinaPapelResponse(BaseModel):
     MotivosPausa: list[MotivoPausaInicio]
     Activas: list[ProduccionActivaInicioBobinaPapel]
     Pausadas: list[PausaAbiertaInicioBobinaPapel]
+    Pospuestas: list[PospuestaInicioBobinaPapel]
     Stock: list[VerResumenInventarioBobinaPapelResponse]
     FueraInventario: FueraInventarioInicioBobinaPapel
     UltimoLote: Optional[UltimoLoteInicioBobinaPapel]

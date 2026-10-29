@@ -80,19 +80,24 @@ function useDialogoMotivo({ enviar, exito, invalido, alTerminar }) {
 export function useProduccion({
   verActivas,
   verPausadas,
+  verPospuestas = async () => [],
   idDe,
   pausar,
   cancelar,
   finalizar,
   reanudar,
+  posponer,
+  retomar,
   dependencias = [],
 }) {
   const activas = useListaProducciones(verActivas);
   const pausadas = useListaProducciones(verPausadas);
+  const pospuestas = useListaProducciones(verPospuestas);
 
   const recargarTodo = () => {
     activas.recargar();
     pausadas.recargar();
+    pospuestas.recargar();
   };
 
   useEffect(() => {
@@ -110,7 +115,10 @@ export function useProduccion({
     enviar: (p, motivo) => cancelar(idDe(p), motivo),
     exito: "Producción cancelada",
     invalido: `El motivo de cancelación debe tener entre ${MOTIVO_CANCELACION_MIN} y ${MOTIVO_CANCELACION_MAX} caracteres`,
-    alTerminar: pausadas.recargar,
+    alTerminar: () => {
+      pausadas.recargar();
+      pospuestas.recargar();
+    },
   });
 
   const [porFinalizar, setPorFinalizar] = useState(null);
@@ -137,9 +145,26 @@ export function useProduccion({
     alTerminar: recargarTodo,
   });
 
+  const posposicion = useDialogoMotivo({
+    enviar: (p, motivo) => posponer(idDe(p), motivo),
+    exito: "Producción pospuesta",
+    invalido: `El motivo de la posposición debe tener entre ${MOTIVO_CANCELACION_MIN} y ${MOTIVO_CANCELACION_MAX} caracteres`,
+    alTerminar: recargarTodo,
+  });
+
+  const retoma = useDialogoMotivo({
+    enviar: (p, motivo) => retomar(idDe(p), motivo),
+    exito: "Producción retomada",
+    invalido: `El motivo de la reanudación debe tener entre ${MOTIVO_CANCELACION_MIN} y ${MOTIVO_CANCELACION_MAX} caracteres`,
+    alTerminar: recargarTodo,
+  });
+
+  const enProceso = [reanudacion, retoma].find((d) => d.enviando && d.produccion);
+
   return {
     activas,
     pausadas,
+    pospuestas,
     recargarTodo,
     pausa,
     cancelacion,
@@ -152,8 +177,9 @@ export function useProduccion({
       confirmar: confirmarFinalizar,
     },
     reanudacion,
-    procesandoId:
-      reanudacion.enviando && reanudacion.produccion ? idDe(reanudacion.produccion) : null,
+    posposicion,
+    retoma,
+    procesandoId: enProceso ? idDe(enProceso.produccion) : null,
     reanudar: reanudacion.abrir,
   };
 }

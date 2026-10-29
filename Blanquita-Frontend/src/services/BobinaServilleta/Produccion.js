@@ -12,7 +12,12 @@ import {
   CancelarProduccionServilletaRequest,
   CancelarProduccionServilletaResponse,
   VerProduccionServilletaActivasResponse,
-  VerPausasProduccionServilletaActivasResponse
+  VerPausasProduccionServilletaActivasResponse,
+  PosponerProduccionServilletaRequest,
+  PosponerProduccionServilletaResponse,
+  RetomarProduccionServilletaRequest,
+  RetomarProduccionServilletaResponse,
+  VerPospuestasProduccionServilletaResponse
 } from "../../models/BobinaServilleta/Produccion";
 import { pedirJson } from "@/utils/api";
 import { conQueryParams } from "@/utils/params";
@@ -95,4 +100,33 @@ export async function verPausasProduccionServilletaActivas() {
   const data = await pedirJson("/api/bobinaservilleta/produccion/pausadas");
 
   return data.map(VerPausasProduccionServilletaActivasResponse);
+}
+
+
+export async function posponerProduccionServilleta(idProduccionServilleta, motivoPosposicion) {
+  const payload = PosponerProduccionServilletaRequest(idProduccionServilleta, motivoPosposicion);
+
+  const data = await pedirJson("/api/bobinaservilleta/produccion/posponer", {
+    method: "POST",
+    body: payload
+  });
+
+  return PosponerProduccionServilletaResponse(data);
+}
+
+export async function retomarProduccionServilleta(idProduccionServilleta, motivoReanudacion) {
+  const payload = RetomarProduccionServilletaRequest(idProduccionServilleta, motivoReanudacion);
+
+  const data = await pedirJson("/api/bobinaservilleta/produccion/retomar", {
+    method: "POST",
+    body: payload
+  });
+
+  return RetomarProduccionServilletaResponse(data);
+}
+
+export async function verPospuestasProduccionServilleta() {
+  const data = await pedirJson("/api/bobinaservilleta/produccion/pospuestas");
+
+  return data.map(VerPospuestasProduccionServilletaResponse);
 }

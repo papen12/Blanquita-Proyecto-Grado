@@ -8,6 +8,7 @@ from app.Constants.Estados import (
     ESTADO_PRODUCCION_EN_PRODUCCION,
     ESTADO_PRODUCCION_FINALIZADO,
     ESTADO_PRODUCCION_PAUSA,
+    ESTADO_PRODUCCION_POSPUESTA,
     MOVIMIENTO_MATERIA_PRIMA_TRASLADO,
 )
 from app.Repository.Consultas import ZONA_HORARIA, filtro_rango, nombre_operador
@@ -116,6 +117,7 @@ class InicioBobinaServilletaRepository:
         consulta = select(
             pausa.MotivoPausaProduccion,
             pausa.FechaHoraPausa,
+            pausa.FechaHoraPosposicion,
             pausa.FechaHoraReanudacion,
         ).where(*filtro_rango(pausa.FechaHoraPausa, fecha_inicio, fecha_fin))
         return self.caller.Consultar(consulta)
@@ -142,6 +144,15 @@ class InicioBobinaServilletaRepository:
         return self.caller.Consultar(consulta)
 
     def PausasAbiertas(self) -> list[dict]:
+        return self._PausasAbiertas(ESTADO_PRODUCCION_PAUSA)
+
+    def Pospuestas(self) -> list[dict]:
+        pausa = PausaProduccionServilleta
+        return self._PausasAbiertas(
+            ESTADO_PRODUCCION_POSPUESTA, pausa.FechaHoraPosposicion, pausa.MotivoPosposicion
+        )
+
+    def _PausasAbiertas(self, id_estado: int, *columnas) -> list[dict]:
         ps = ProduccionServilleta
         pausa = PausaProduccionServilleta
         consulta = _con_origen(
@@ -154,6 +165,7 @@ class InicioBobinaServilletaRepository:
                 pausa.MotivoPausaProduccion,
                 nombre_operador(Usuario).label("Operador"),
                 pausa.FechaHoraPausa,
+                *columnas,
             )
             .select_from(pausa)
             .join(ps, ps.IdProduccionServilleta == pausa.IdProduccionServilleta)
@@ -161,7 +173,7 @@ class InicioBobinaServilletaRepository:
         consulta = (
             consulta.join(Usuario, Usuario.IdUsuario == pausa.IdUsuario)
             .where(
-                ps.IdEstadoProduccion == ESTADO_PRODUCCION_PAUSA,
+                ps.IdEstadoProduccion == id_estado,
                 pausa.FechaHoraReanudacion.is_(None),
             )
             .order_by(pausa.FechaHoraPausa)

@@ -4,6 +4,7 @@ import {
   ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
+  CalendarClock,
   CirclePause,
   Factory,
   Minus,
@@ -256,14 +257,15 @@ export function AccesosRapidos({ accesos }) {
   );
 }
 
-function ItemProduccion({ href, titulo, subtitulo, codigos, valor, motivo, detalles, pausa, atrasada, aviso, ahora, desde }) {
+function ItemProduccion({ href, titulo, subtitulo, codigos, valor, motivo, detalles, pausa, pospuesta, atrasada, aviso, ahora, desde }) {
   const tiempo = formatearSegundos(segundosDesde(desde, ahora));
+  const IconoPausa = pospuesta ? CalendarClock : CirclePause;
   return (
     <a
       href={href}
       className={cn(
         "flex flex-col gap-1.5 rounded-xl p-3 ring-1 transition-colors hover:bg-slate-50",
-        atrasada ? "bg-red-50/40 ring-red-200" : pausa ? "ring-amber-200" : "ring-slate-200",
+        atrasada ? "bg-red-50/40 ring-red-200" : pospuesta ? "ring-slate-300" : pausa ? "ring-amber-200" : "ring-slate-200",
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -275,10 +277,10 @@ function ItemProduccion({ href, titulo, subtitulo, codigos, valor, motivo, detal
           <div
             className={cn(
               "flex items-center gap-1 text-[13px] font-extrabold tabular-nums",
-              atrasada ? "text-red-600" : "text-amber-600",
+              atrasada ? "text-red-600" : pospuesta ? "text-slate-600" : "text-amber-600",
             )}
           >
-            <CirclePause size={14} />
+            <IconoPausa size={14} />
             {tiempo}
           </div>
         ) : (
@@ -307,6 +309,7 @@ export function ProduccionAhora({
   href,
   activas,
   pausadas,
+  pospuestas = [],
   horasAlerta,
   descripcionActivas,
   descripcionPausas = "Recuerda reanudarlas para no inflar las duraciones",
@@ -367,6 +370,32 @@ export function ProduccionAhora({
           <SinDatos icono={CirclePause} titulo="Sin pausas abiertas" descripcion="Todas las producciones están corriendo o cerradas." />
         )}
       </Bloque>
+
+      {pospuestas.length > 0 && (
+        <Bloque
+          titulo={`Producciones pospuestas (${pospuestas.length})`}
+          descripcion="Materia prima fuera de la máquina, reservada para retomarlas"
+          icono={CalendarClock}
+          accion={<EnlaceBloque href={href} />}
+          className="lg:col-span-2"
+        >
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+            {pospuestas.map((item) => {
+              const datos = aItem(item);
+              return (
+                <ItemProduccion
+                  key={datos.id}
+                  {...datos}
+                  href={datos.href ?? href}
+                  ahora={ahora}
+                  pausa
+                  pospuesta
+                />
+              );
+            })}
+          </div>
+        </Bloque>
+      )}
     </div>
   );
 }

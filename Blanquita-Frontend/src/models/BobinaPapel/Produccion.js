@@ -130,3 +130,50 @@ export const InsertarMovimientoOperadorLogsResponse = (data) => ({
   CantidadTotalActual: data.CantidadTotalActual,
   FechaMovimiento: data.FechaMovimiento
 });
+
+export const PosponerProduccionBobinaTuboRequest = (idProduccionBobinaTubo, motivoPosposicion) => ({
+  IdProduccionBobinaTubo: idProduccionBobinaTubo,
+  MotivoPosposicion: motivoPosposicion ?? null
+});
+
+export const PosponerProduccionBobinaTuboResponse = (data) => ({
+  IdPausaProduccionBobinaTubo: data.IdPausaProduccionBobinaTubo,
+  IdProduccionBobinaTubo: data.IdProduccionBobinaTubo,
+  FechaHoraPausa: data.FechaHoraPausa,
+  MotivoPausaProduccion: data.MotivoPausaProduccion ?? null,
+  FechaHoraPosposicion: data.FechaHoraPosposicion,
+  MotivoPosposicion: data.MotivoPosposicion,
+  IdEstadoProduccion: data.IdEstadoProduccion
+});
+
+export const RetomarProduccionBobinaTuboRequest = (idProduccionBobinaTubo, motivoReanudacion) => ({
+  IdProduccionBobinaTubo: idProduccionBobinaTubo,
+  MotivoReanudacion: motivoReanudacion ?? null
+});
+
+export const RetomarProduccionBobinaTuboResponse = (data) => ({
+  IdPausaProduccionBobinaTubo: data.IdPausaProduccionBobinaTubo,
+  IdProduccionBobinaTubo: data.IdProduccionBobinaTubo,
+  FechaHoraPausa: data.FechaHoraPausa,
+  MotivoPausaProduccion: data.MotivoPausaProduccion ?? null,
+  FechaHoraPosposicion: data.FechaHoraPosposicion,
+  MotivoPosposicion: data.MotivoPosposicion ?? null,
+  FechaHoraReanudacion: data.FechaHoraReanudacion,
+  MotivoReanudacion: data.MotivoReanudacion,
+  IdEstadoProduccion: data.IdEstadoProduccion
+});
+
+export const VerPospuestasProduccionBobinaTuboResponse = (data) => ({
+  IdPausaProduccionBobinaTubo: data.IdPausaProduccionBobinaTubo,
+  IdProduccionBobinaTubo: data.IdProduccionBobinaTubo,
+  IdProducto: data.IdProducto,
+  NombreProducto: data.NombreProducto,
+  CodigoBobina1: data.CodigoBobina1,
+  CodigoBobina2: data.CodigoBobina2,
+  FechaHoraPausa: data.FechaHoraPausa,
+  MotivoPausaProduccion: data.MotivoPausaProduccion ?? null,
+  FechaHoraPosposicion: data.FechaHoraPosposicion,
+  MotivoPosposicion: data.MotivoPosposicion ?? null,
+  NombreEstadoProduccion: data.NombreEstadoProduccion,
+  CantidadLogsActual: data.CantidadLogsActual
+});

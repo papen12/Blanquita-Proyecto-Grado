@@ -9,6 +9,7 @@ from app.Constants.Estados import (
     ESTADO_PRODUCCION_EN_PRODUCCION,
     ESTADO_PRODUCCION_FINALIZADO,
     ESTADO_PRODUCCION_PAUSA,
+    ESTADO_PRODUCCION_POSPUESTA,
     MOVIMIENTO_LOGS_DESCUENTO,
     MOVIMIENTO_LOGS_INGRESO,
 )
@@ -110,6 +111,7 @@ class InicioBobinaPapelRepository:
         consulta = select(
             pausa.MotivoPausaProduccion,
             pausa.FechaHoraPausa,
+            pausa.FechaHoraPosposicion,
             pausa.FechaHoraReanudacion,
         ).where(*filtro_rango(pausa.FechaHoraPausa, fecha_inicio, fecha_fin))
         return self.caller.Consultar(consulta)
@@ -142,6 +144,15 @@ class InicioBobinaPapelRepository:
         return self.caller.Consultar(consulta)
 
     def PausasAbiertas(self) -> list[dict]:
+        return self._PausasAbiertas(ESTADO_PRODUCCION_PAUSA)
+
+    def Pospuestas(self) -> list[dict]:
+        pausa = PausaProduccionBobinaTubo
+        return self._PausasAbiertas(
+            ESTADO_PRODUCCION_POSPUESTA, pausa.FechaHoraPosposicion, pausa.MotivoPosposicion
+        )
+
+    def _PausasAbiertas(self, id_estado: int, *columnas) -> list[dict]:
         pausa = PausaProduccionBobinaTubo
         pb = ProduccionBobinaTubo
         b1 = aliased(BobinaPapel)
@@ -158,6 +169,7 @@ class InicioBobinaPapelRepository:
                 nombre_operador(Usuario).label("Operador"),
                 pausa.FechaHoraPausa,
                 pb.CantidadLogsActual,
+                *columnas,
             )
             .join(pb, pb.IdProduccionBobinaTubo == pausa.IdProduccionBobinaTubo)
             .join(b1, b1.IdBobinaPapel == pb.IdBobina_1)
@@ -166,7 +178,7 @@ class InicioBobinaPapelRepository:
             .join(Producto, Producto.IdProducto == pb.IdProducto)
             .join(Usuario, Usuario.IdUsuario == pausa.IdUsuario)
             .where(
-                pb.IdEstadoProduccion == ESTADO_PRODUCCION_PAUSA,
+                pb.IdEstadoProduccion == id_estado,
                 pausa.FechaHoraReanudacion.is_(None),
             )
             .order_by(pausa.FechaHoraPausa)

@@ -328,6 +328,8 @@ CREATE TABLE "PausaProduccionBobinaTubo" (
   "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
   "FechaHoraPausa" TIMESTAMPTZ NOT NULL,
   "MotivoPausaProduccion" TEXT,
+  "FechaHoraPosposicion" TIMESTAMPTZ,
+  "MotivoPosposicion" TEXT,
   "FechaHoraReanudacion" TIMESTAMPTZ,
   "MotivoReanudacion" TEXT
 );
@@ -341,6 +343,8 @@ CREATE TABLE "PausaProduccionServilleta" (
   "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
   "FechaHoraPausa" TIMESTAMPTZ NOT NULL,
   "MotivoPausaProduccion" TEXT,
+  "FechaHoraPosposicion" TIMESTAMPTZ,
+  "MotivoPosposicion" TEXT,
   "FechaHoraReanudacion" TIMESTAMPTZ,
   "MotivoReanudacion" TEXT
 );
