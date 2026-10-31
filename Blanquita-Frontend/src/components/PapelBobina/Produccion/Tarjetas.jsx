@@ -62,7 +62,7 @@ export function CardActiva({ p, onInsertar, onPausar, onFinalizar, onCambiarLine
   );
 }
 
-export function CardPausada({ p, procesando, onInsertar, onReanudar, onCancelar }) {
+export function CardPausada({ p, procesando, onInsertar, onReanudar, onPosponer, onCancelar }) {
   return (
     <TarjetaProduccion
       produccion={p}
@@ -78,7 +78,31 @@ export function CardPausada({ p, procesando, onInsertar, onReanudar, onCancelar 
       acciones={[
         { tipo: "insertar", onClick: onInsertar },
         { tipo: "reanudar", onClick: onReanudar, disabled: procesando, procesando },
+        ...(onPosponer ? [{ tipo: "posponer", onClick: onPosponer, disabled: procesando }] : []),
         ...(onCancelar ? [{ tipo: "cancelar", onClick: onCancelar }] : []),
+      ]}
+    >
+      <LogsRegistrados cantidad={p.CantidadLogsActual} />
+    </TarjetaProduccion>
+  );
+}
+
+export function CardPospuesta({ p, procesando, onRetomar, onCancelar }) {
+  return (
+    <TarjetaProduccion
+      produccion={p}
+      pospuesta
+      encabezado={
+        <>
+          <div className="font-mono text-[15px] font-extrabold text-slate-900">
+            {p.CodigoBobina1} + {p.CodigoBobina2}
+          </div>
+          <EtiquetaProducto nombre={p.NombreProducto} />
+        </>
+      }
+      acciones={[
+        { tipo: "retomar", onClick: onRetomar, disabled: procesando, procesando },
+        { tipo: "cancelar", onClick: onCancelar, disabled: procesando },
       ]}
     >
       <LogsRegistrados cantidad={p.CantidadLogsActual} />

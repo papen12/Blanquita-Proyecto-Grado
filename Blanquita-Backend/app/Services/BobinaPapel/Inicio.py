@@ -12,6 +12,7 @@ from app.Models.BobinaPapel.Inicio import (
     IndicadoresSemanaBobinaPapel,
     InicioBobinaPapelResponse,
     PausaAbiertaInicioBobinaPapel,
+    PospuestaInicioBobinaPapel,
     ProduccionActivaInicioBobinaPapel,
     ProduccionDiaBobinaPapel,
     ProduccionProductoBobinaPapel,
@@ -111,6 +112,7 @@ class InicioBobinaPapelService:
                 PausaAbiertaInicioBobinaPapel(**fila, Atrasada=semana.pausa_atrasada(fila["FechaHoraPausa"]))
                 for fila in self.repository.PausasAbiertas()
             ],
+            Pospuestas=[PospuestaInicioBobinaPapel(**fila) for fila in self.repository.Pospuestas()],
             Stock=[VerResumenInventarioBobinaPapelResponse(**fila) for fila in self.inventario.VerResumen()],
             FueraInventario=FueraInventarioInicioBobinaPapel(
                 Cantidad=len(fuera),

@@ -18,8 +18,11 @@ import {
 import {
   verProduccionBobinaTubo,
   verPausasProduccionBobinaTuboActivas,
+  verPospuestasProduccionBobinaTubo,
   pausarProduccion,
   reanudarProduccion,
+  posponerProduccion,
+  retomarProduccion,
   finalizarProduccion,
   cancelarProduccion,
   insertarMovimientoLog,
@@ -32,6 +35,8 @@ import {
   movimientosOperador,
   ObservacionesInsertarLogs,
   MotivosReanudacionProduccion,
+  MotivosPosposicionProduccion,
+  MotivosRetomaProduccion,
 } from "../../../constants/OperadorConfig";
 import { CANTIDAD_MAXIMA_LOGS } from "@/constants/Values";
 import { PILDORA_FILTRO } from "@/constants/Acentos";
@@ -52,11 +57,13 @@ import {
 import {
   DialogoPausar,
   DialogoReanudar,
+  DialogoPosponer,
+  DialogoRetomar,
   DialogoCancelar,
   AlertaFinalizar,
 } from "@/components/Produccion/Dialogos";
 import Header from "../../layout/Header";
-import { CardActiva, CardPausada } from "./Tarjetas";
+import { CardActiva, CardPausada, CardPospuesta } from "./Tarjetas";
 import ProduccionesConcluidas from "./Concluidas";
 
 const ID_TIPO_INGRESO = 1;
@@ -101,21 +108,27 @@ export default function ProduccionBobinaTubo({ usuario }) {
   const {
     activas,
     pausadas,
+    pospuestas,
     recargarTodo,
     pausa,
     cancelacion,
     finalizacion,
     reanudacion,
+    posposicion,
+    retoma,
     procesandoId,
     reanudar,
   } = useProduccion({
     verActivas: () => verProduccionBobinaTubo(idTipoFiltro, idProductoFiltro),
     verPausadas: () => verPausasProduccionBobinaTuboActivas(idTipoFiltro, idProductoFiltro),
+    verPospuestas: () => verPospuestasProduccionBobinaTubo(idTipoFiltro, idProductoFiltro),
     idDe: (p) => p.IdProduccionBobinaTubo,
     pausar: pausarProduccion,
     cancelar: cancelarProduccion,
     finalizar: finalizarProduccion,
     reanudar: reanudarProduccion,
+    posponer: posponerProduccion,
+    retomar: retomarProduccion,
     dependencias: [filtroTipo, filtroProducto],
   });
 
@@ -276,6 +289,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
 
   const activasFiltradas = activas.datos.filter(coincideCodigoBobina);
   const pausadasFiltradas = pausadas.datos.filter(coincideCodigoBobina);
+  const pospuestasFiltradas = pospuestas.datos.filter(coincideCodigoBobina);
 
   const sinCoincidencias = (estado) =>
     `Ninguna producción ${estado} con el código «${buscarCodigoBobina.trim()}».`;
@@ -291,6 +305,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
           onCambio={setVista}
           totalActivas={activasFiltradas.length}
           totalPausadas={pausadasFiltradas.length}
+          totalPospuestas={pospuestasFiltradas.length}
           mostrarConcluidas={veConcluidas}
           totalConcluidas={totalConcluidas}
         />
@@ -431,6 +446,26 @@ export default function ProduccionBobinaTubo({ usuario }) {
                 procesando={procesandoId === p.IdProduccionBobinaTubo}
                 onInsertar={soloLectura ? undefined : () => abrirInsertar(p)}
                 onReanudar={soloLectura ? undefined : () => reanudar(p)}
+                onPosponer={esEncargado ? () => posposicion.abrir(p) : undefined}
+                onCancelar={esEncargado ? () => cancelacion.abrir(p) : undefined}
+              />
+            )}
+          />
+        )}
+
+        {vista === "pospuestas" && (
+          <ListaProducciones
+            lista={pospuestas}
+            elementos={pospuestasFiltradas}
+            altoSkeleton="h-64"
+            mensajeVacio="No hay producciones pospuestas."
+            mensajeSinCoincidencias={sinCoincidencias("pospuesta")}
+            renderizar={(p) => (
+              <CardPospuesta
+                key={p.IdPausaProduccionBobinaTubo}
+                p={p}
+                procesando={procesandoId === p.IdProduccionBobinaTubo}
+                onRetomar={esEncargado ? () => retoma.abrir(p) : undefined}
                 onCancelar={esEncargado ? () => cancelacion.abrir(p) : undefined}
               />
             )}
@@ -637,6 +672,20 @@ export default function ProduccionBobinaTubo({ usuario }) {
         dialogo={reanudacion}
         tituloDe={codigosDe}
         opciones={MotivosReanudacionProduccion}
+      />
+
+      <DialogoPosponer
+        dialogo={posposicion}
+        tituloDe={codigosDe}
+        opciones={MotivosPosposicionProduccion}
+        detalle="Las bobinas se retiran de la máquina pero siguen en inventario, reservadas para esta producción. Podrá retomarla cuando se resuelva."
+      />
+
+      <DialogoRetomar
+        dialogo={retoma}
+        tituloDe={codigosDe}
+        opciones={MotivosRetomaProduccion}
+        detalle="Las bobinas vuelven a la máquina y la pausa se cerrará con la hora actual, registrada con su usuario."
       />
 
       <DialogoCancelar

@@ -89,6 +89,8 @@ class PausaProduccionServilleta(Base):
     IdUsuario: Mapped[int]
     FechaHoraPausa: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     MotivoPausaProduccion: Mapped[str | None] = mapped_column(Text)
+    FechaHoraPosposicion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    MotivoPosposicion: Mapped[str | None] = mapped_column(Text)
     FechaHoraReanudacion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     MotivoReanudacion: Mapped[str | None] = mapped_column(Text)
 
@@ -111,5 +113,7 @@ class PausaProduccionBobinaTubo(Base):
     IdUsuario: Mapped[int]
     FechaHoraPausa: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     MotivoPausaProduccion: Mapped[str | None] = mapped_column(Text)
+    FechaHoraPosposicion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    MotivoPosposicion: Mapped[str | None] = mapped_column(Text)
     FechaHoraReanudacion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     MotivoReanudacion: Mapped[str | None] = mapped_column(Text)

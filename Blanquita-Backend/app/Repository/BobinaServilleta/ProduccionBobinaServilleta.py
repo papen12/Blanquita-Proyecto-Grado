@@ -3,7 +3,11 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.Constants.Estados import ESTADO_PRODUCCION_EN_PRODUCCION, ESTADO_PRODUCCION_PAUSA
+from app.Constants.Estados import (
+    ESTADO_PRODUCCION_EN_PRODUCCION,
+    ESTADO_PRODUCCION_PAUSA,
+    ESTADO_PRODUCCION_POSPUESTA,
+)
 from app.Repository.Consultas import turno_actual
 from app.Repository.DbCaller import DbCaller
 from app.Schemas.BobinaServilleta import (
@@ -175,6 +179,18 @@ class ProduccionBobinaServilletaRepository:
         return self.caller.Consultar(consulta)
 
     def VerPausasProduccionServilletaActivas(self) -> list[dict]:
+        return self._PausasAbiertas(ESTADO_PRODUCCION_PAUSA)
+
+    def VerPospuestasProduccionServilleta(self) -> list[dict]:
+        pausa = PausaProduccionServilleta
+        return self._PausasAbiertas(
+            ESTADO_PRODUCCION_POSPUESTA,
+            pausa.MotivoPausaProduccion,
+            pausa.FechaHoraPosposicion,
+            pausa.MotivoPosposicion,
+        )
+
+    def _PausasAbiertas(self, id_estado: int, *columnas) -> list[dict]:
         consulta = (
             select(
                 PausaProduccionServilleta.IdPausaProduccionServilleta,
@@ -186,6 +202,7 @@ class ProduccionBobinaServilletaRepository:
                 FormatoSubBobina.DescripcionFormato,
                 PausaProduccionServilleta.FechaHoraPausa,
                 EstadoProduccion.NombreEstadoProduccion,
+                *columnas,
             )
             .join(
                 ProduccionServilleta,
@@ -214,8 +231,9 @@ class ProduccionBobinaServilletaRepository:
                 FormatoSubBobina.IdFormatoSubBobina == UnidadBobinaServilleta.IdFormatoSubBobina,
             )
             .where(
-                ProduccionServilleta.IdEstadoProduccion == ESTADO_PRODUCCION_PAUSA,
+                ProduccionServilleta.IdEstadoProduccion == id_estado,
                 PausaProduccionServilleta.FechaHoraReanudacion.is_(None),
             )
+            .order_by(PausaProduccionServilleta.FechaHoraPausa)
         )
         return self.caller.Consultar(consulta)

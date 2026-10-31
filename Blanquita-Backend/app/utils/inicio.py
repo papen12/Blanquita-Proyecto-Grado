@@ -9,6 +9,10 @@ MOTIVO_SIN_DETALLE = "Sin motivo"
 MOTIVO_OTROS = "Otros"
 
 
+def _fin_pausa(pausa: dict) -> datetime | None:
+    return pausa.get("FechaHoraPosposicion") or pausa["FechaHoraReanudacion"]
+
+
 @dataclass(frozen=True)
 class SemanaInicio:
     ahora: datetime
@@ -30,7 +34,7 @@ class SemanaInicio:
         return max(int(((fin or self.ahora) - inicio).total_seconds()), 0)
 
     def segundos_pausas(self, pausas: list[dict]) -> int:
-        return sum(self.segundos(p["FechaHoraPausa"], p["FechaHoraReanudacion"]) for p in pausas)
+        return sum(self.segundos(p["FechaHoraPausa"], _fin_pausa(p)) for p in pausas)
 
     def motivos_pausa(self, pausas: list[dict]) -> list[dict]:
         motivos: dict[str, dict] = {}
@@ -38,7 +42,7 @@ class SemanaInicio:
             motivo = (pausa["MotivoPausaProduccion"] or "").strip() or MOTIVO_SIN_DETALLE
             registro = motivos.setdefault(motivo, {"Motivo": motivo, "Pausas": 0, "Segundos": 0})
             registro["Pausas"] += 1
-            registro["Segundos"] += self.segundos(pausa["FechaHoraPausa"], pausa["FechaHoraReanudacion"])
+            registro["Segundos"] += self.segundos(pausa["FechaHoraPausa"], _fin_pausa(pausa))
 
         ordenados = sorted(motivos.values(), key=lambda m: (-m["Segundos"], -m["Pausas"]))
         if len(ordenados) > MOTIVOS_PAUSA_INICIO:

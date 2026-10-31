@@ -397,6 +397,7 @@ function PlantaAhora({ planta, claves = CLAVES_PLANTA }) {
       href={`${RUTA}/${areas[0].ruta}/produccion`}
       activas={areas.flatMap((area) => planta[area.clave].Activas.map(conRuta(area)))}
       pausadas={areas.flatMap((area) => planta[area.clave].Pausadas.map(conRuta(area)))}
+      pospuestas={areas.flatMap((area) => planta[area.clave].Pospuestas.map(conRuta(area)))}
       horasAlerta={planta.HorasAlertaPausa}
       descripcionActivas={
         areas.length > 1 ? "Bobina papel y servilleta corriendo ahora" : `${areas[0].texto} corriendo ahora`

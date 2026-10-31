@@ -56,6 +56,8 @@ const PausaAbiertaResponse = (data) => ({
   MotivoPausaProduccion: data.MotivoPausaProduccion ?? null,
   Operador: data.Operador,
   FechaHoraPausa: data.FechaHoraPausa,
+  FechaHoraPosposicion: data.FechaHoraPosposicion ?? null,
+  MotivoPosposicion: data.MotivoPosposicion ?? null,
   CantidadLogsActual: Number(data.CantidadLogsActual ?? 0),
   Atrasada: Boolean(data.Atrasada),
 });
@@ -99,6 +101,7 @@ export const InicioBobinaPapelResponse = (data) => ({
   MotivosPausa: (data.MotivosPausa ?? []).map(MotivoPausaResponse),
   Activas: (data.Activas ?? []).map(ProduccionActivaResponse),
   Pausadas: (data.Pausadas ?? []).map(PausaAbiertaResponse),
+  Pospuestas: (data.Pospuestas ?? []).map(PausaAbiertaResponse),
   Stock: (data.Stock ?? []).map(StockTipoResponse),
   FueraInventario: {
     Cantidad: Number(data.FueraInventario?.Cantidad ?? 0),

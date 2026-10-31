@@ -221,6 +221,42 @@ export function DialogoReanudar({ dialogo, tituloDe, opciones }) {
   );
 }
 
+export function DialogoPosponer({ dialogo, tituloDe, opciones, detalle }) {
+  return (
+    <DialogoMotivoProduccion
+      dialogo={dialogo}
+      tituloDe={tituloDe}
+      opciones={opciones}
+      id="motivo-posposicion"
+      titulo="Posponer producción"
+      etiqueta="Detalle de la posposición"
+      placeholder="Ej. No se resolvió la falla hoy, pedido urgente de otra línea..."
+      accion="posponer"
+      detalle={detalle}
+      textoBoton="Posponer producción"
+      claseBoton="bg-slate-700 hover:bg-slate-800"
+    />
+  );
+}
+
+export function DialogoRetomar({ dialogo, tituloDe, opciones, detalle }) {
+  return (
+    <DialogoMotivoProduccion
+      dialogo={dialogo}
+      tituloDe={tituloDe}
+      opciones={opciones}
+      id="motivo-retoma"
+      titulo="Retomar producción"
+      etiqueta="Detalle de la reanudación"
+      placeholder="Ej. Se reparó la máquina, ya se atendió el pedido urgente..."
+      accion="retomar"
+      detalle={detalle}
+      textoBoton="Retomar producción"
+      claseBoton="bg-emerald-600 hover:bg-emerald-700"
+    />
+  );
+}
+
 export function DialogoCancelar({ dialogo, tituloDe, placeholder }) {
   const [confirmado, setConfirmado] = useConfirmacion(dialogo.abierto);
 

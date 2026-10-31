@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import {
   Bell,
+  CalendarClock,
   CircleCheck,
   CirclePause,
   Eye,
@@ -53,8 +54,8 @@ const itemBobinaPapel = (item) => ({
   subtitulo: item.NombreTipoBobina,
   codigos: `${item.CodigoBobina1} · ${item.CodigoBobina2}`,
   valor: `${numero(item.CantidadLogsActual)} logs`,
-  motivo: item.MotivoPausaProduccion,
-  desde: item.FechaHoraPausa ?? item.FechaInicioProduccion,
+  motivo: item.MotivoPosposicion ?? item.MotivoPausaProduccion,
+  desde: item.FechaHoraPosposicion ?? item.FechaHoraPausa ?? item.FechaInicioProduccion,
   atrasada: item.Atrasada,
   detalles: item.FechaHoraPausa ? [`Pausó ${item.Operador}`] : [`Turno ${item.NombreTurno}`, item.Operador],
 });
@@ -64,8 +65,8 @@ const itemBobinaServilleta = (item) => ({
   titulo: `Sub-bobina ${numero(item.MedidaMm)} mm`,
   subtitulo: item.NombreTipoBobinaServilleta,
   codigos: `Unidad ${item.CodigoUnidadOrigen}`,
-  motivo: item.MotivoPausaProduccion,
-  desde: item.FechaHoraPausa ?? item.FechaInicioProduccion,
+  motivo: item.MotivoPosposicion ?? item.MotivoPausaProduccion,
+  desde: item.FechaHoraPosposicion ?? item.FechaHoraPausa ?? item.FechaInicioProduccion,
   atrasada: item.Atrasada,
   detalles: item.FechaHoraPausa ? [`Pausó ${item.Operador}`] : [`Turno ${item.NombreTurno}`, item.Operador],
 });
@@ -178,14 +179,15 @@ function ItemStock({ item, href, estado }) {
   );
 }
 
-function ItemProduccion({ href, titulo, subtitulo, codigos, valor, motivo, detalles, pausa, atrasada, aviso, ahora, desde }) {
+function ItemProduccion({ href, titulo, subtitulo, codigos, valor, motivo, detalles, pausa, pospuesta, atrasada, aviso, ahora, desde }) {
   const tiempo = formatearSegundos(segundosDesde(desde, ahora));
+  const IconoPausa = pospuesta ? CalendarClock : CirclePause;
   return (
     <a
       href={href}
       className={cn(
         "flex flex-col gap-1.5 rounded-xl p-3 ring-1 transition-colors hover:bg-slate-50",
-        atrasada ? "bg-red-50/40 ring-red-200" : pausa ? "ring-amber-200" : "ring-slate-200",
+        atrasada ? "bg-red-50/40 ring-red-200" : pospuesta ? "ring-slate-300" : pausa ? "ring-amber-200" : "ring-slate-200",
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -197,10 +199,10 @@ function ItemProduccion({ href, titulo, subtitulo, codigos, valor, motivo, detal
           <div
             className={cn(
               "flex shrink-0 items-center gap-1 text-[13px] font-extrabold tabular-nums",
-              atrasada ? "text-red-600" : "text-amber-600",
+              atrasada ? "text-red-600" : pospuesta ? "text-slate-600" : "text-amber-600",
             )}
           >
-            <CirclePause size={14} />
+            <IconoPausa size={14} />
             {tiempo}
           </div>
         ) : (
@@ -245,10 +247,11 @@ function Seccion({ valor, titulo, icono: Icono, cantidad, urgente, children }) {
 }
 
 function SeccionProduccion({ valor, titulo, icono, produccion, aItem, href, horasAlerta, ahora }) {
-  const { Activas, Pausadas } = produccion;
+  const { Activas, Pausadas, Pospuestas } = produccion;
   const urgente = [...Activas, ...Pausadas].some((item) => item.Atrasada);
+  const cantidad = Activas.length + Pausadas.length + Pospuestas.length;
   return (
-    <Seccion valor={valor} titulo={titulo} icono={icono} cantidad={Activas.length + Pausadas.length} urgente={urgente}>
+    <Seccion valor={valor} titulo={titulo} icono={icono} cantidad={cantidad} urgente={urgente}>
       <Subgrupo titulo="En producción" icono={Factory} cantidad={Activas.length} vacio="No hay máquinas corriendo en este momento.">
         {Activas.map((item) => {
           const datos = aItem(item);
@@ -271,6 +274,17 @@ function SeccionProduccion({ valor, titulo, icono, produccion, aItem, href, hora
           );
         })}
       </Subgrupo>
+      {Pospuestas.length > 0 && (
+        <>
+          <Separator />
+          <Subgrupo titulo="Pospuestas" icono={CalendarClock} cantidad={Pospuestas.length}>
+            {Pospuestas.map((item) => {
+              const datos = aItem(item);
+              return <ItemProduccion key={datos.id} {...datos} href={href} ahora={ahora} pausa pospuesta />;
+            })}
+          </Subgrupo>
+        </>
+      )}
     </Seccion>
   );
 }

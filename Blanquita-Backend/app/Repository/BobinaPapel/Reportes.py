@@ -245,14 +245,20 @@ class ReporteBobinaPapelRepository:
                 Turno.NombreTurno,
                 pausa.FechaHoraPausa,
                 pausa.MotivoPausaProduccion,
+                pausa.FechaHoraPosposicion,
+                pausa.MotivoPosposicion,
                 pausa.FechaHoraReanudacion,
                 pausa.MotivoReanudacion,
-                (pausa.FechaHoraReanudacion - pausa.FechaHoraPausa).label("DuracionPausa"),
+                (
+                    func.coalesce(pausa.FechaHoraPosposicion, pausa.FechaHoraReanudacion)
+                    - pausa.FechaHoraPausa
+                ).label("DuracionPausa"),
                 _nombre_operador(Usuario).label("OperadorPausa"),
                 Rol.NombreRol.label("RolPausa"),
                 case(
-                    (pausa.FechaHoraReanudacion.is_(None), "Abierta"),
-                    else_="Cerrada",
+                    (pausa.FechaHoraReanudacion.is_not(None), "Cerrada"),
+                    (pausa.FechaHoraPosposicion.is_not(None), "Pospuesta"),
+                    else_="Abierta",
                 ).label("EstadoPausa"),
             )
             .join(pb, pb.IdProduccionBobinaTubo == pausa.IdProduccionBobinaTubo)

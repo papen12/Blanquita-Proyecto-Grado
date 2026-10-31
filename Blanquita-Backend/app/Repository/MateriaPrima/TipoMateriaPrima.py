@@ -3,7 +3,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.Constants.Estados import ESTADO_PRODUCCION_EN_PRODUCCION, ESTADO_PRODUCCION_PAUSA
+from app.Constants.Estados import ESTADOS_PRODUCCION_EN_CURSO
 from app.Repository.DbCaller import DbCaller
 from app.Schemas.HistorialAdmin import HistorialAdmin
 from app.Schemas.Produccion import ProduccionBobinaTubo
@@ -101,9 +101,7 @@ class TipoMateriaPrimaRepository:
             .join(ProduccionBobinaTubo, ProduccionBobinaTubo.IdProducto == Producto.IdProducto)
             .where(
                 Producto.IdProducto.in_(ids_producto),
-                ProduccionBobinaTubo.IdEstadoProduccion.in_(
-                    [ESTADO_PRODUCCION_EN_PRODUCCION, ESTADO_PRODUCCION_PAUSA]
-                ),
+                ProduccionBobinaTubo.IdEstadoProduccion.in_(ESTADOS_PRODUCCION_EN_CURSO),
             )
             .distinct()
             .order_by(Producto.NombreProducto)

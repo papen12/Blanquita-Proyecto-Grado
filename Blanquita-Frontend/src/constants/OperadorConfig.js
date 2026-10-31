@@ -260,6 +260,22 @@ export const MotivosReanudacionProduccion=[
   "Terminó la limpieza de la máquina"
 ]
 
+export const MotivosPosposicionProduccion=[
+  "No se resolvió la falla en el día",
+  "Pedido urgente de otra línea",
+  "Fin de la jornada",
+  "Falta de material o insumo",
+  "Mantenimiento de la máquina"
+]
+
+export const MotivosRetomaProduccion=[
+  "Se solucionó la falla de la máquina",
+  "Se atendió el pedido urgente",
+  "Llegó el material o insumo faltante",
+  "Terminó el mantenimiento",
+  "Inicio de la jornada"
+]
+
 export const ObservacionMovimientosInsumo={
   ingreso:[
     "Ingreso a almacén insumos",

@@ -5,10 +5,12 @@ from pydantic import BaseModel
 from app.Models.AlertaStock.AlertaStock import UmbralStockItem
 from app.Models.BobinaPapel.Inicio import (
     PausaAbiertaInicioBobinaPapel,
+    PospuestaInicioBobinaPapel,
     ProduccionActivaInicioBobinaPapel,
 )
 from app.Models.BobinaServilleta.Inicio import (
     PausaAbiertaInicioBobinaServilleta,
+    PospuestaInicioBobinaServilleta,
     ProduccionActivaInicioBobinaServilleta,
 )
 from app.Models.InventarioFinal.Conteo import ResumenConteoProductoTerminadoResponse
@@ -23,11 +25,13 @@ class StockNotificaciones(BaseModel):
 class ProduccionBobinaPapelNotificaciones(BaseModel):
     Activas: list[ProduccionActivaInicioBobinaPapel]
     Pausadas: list[PausaAbiertaInicioBobinaPapel]
+    Pospuestas: list[PospuestaInicioBobinaPapel]
 
 
 class ProduccionBobinaServilletaNotificaciones(BaseModel):
     Activas: list[ProduccionActivaInicioBobinaServilleta]
     Pausadas: list[PausaAbiertaInicioBobinaServilleta]
+    Pospuestas: list[PospuestaInicioBobinaServilleta]
 
 
 class ModoConsultaNotificaciones(BaseModel):

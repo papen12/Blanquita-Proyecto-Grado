@@ -63,6 +63,38 @@ class ReanudarProduccionBobinaTuboResponse(BaseModel):
     IdEstadoProduccion: int
 
 
+class PosponerProduccionBobinaTuboRequest(BaseModel):
+    IdProduccionBobinaTubo: int
+    MotivoPosposicion: Optional[str] = None
+
+
+class PosponerProduccionBobinaTuboResponse(BaseModel):
+    IdPausaProduccionBobinaTubo: int
+    IdProduccionBobinaTubo: int
+    FechaHoraPausa: datetime
+    MotivoPausaProduccion: Optional[str] = None
+    FechaHoraPosposicion: datetime
+    MotivoPosposicion: str
+    IdEstadoProduccion: int
+
+
+class RetomarProduccionBobinaTuboRequest(BaseModel):
+    IdProduccionBobinaTubo: int
+    MotivoReanudacion: Optional[str] = None
+
+
+class RetomarProduccionBobinaTuboResponse(BaseModel):
+    IdPausaProduccionBobinaTubo: int
+    IdProduccionBobinaTubo: int
+    FechaHoraPausa: datetime
+    MotivoPausaProduccion: Optional[str] = None
+    FechaHoraPosposicion: datetime
+    MotivoPosposicion: Optional[str] = None
+    FechaHoraReanudacion: datetime
+    MotivoReanudacion: str
+    IdEstadoProduccion: int
+
+
 class FinalizarProduccionBobinaTuboRequest(BaseModel):
     IdProduccionBobinaTubo: int
 
@@ -119,6 +151,21 @@ class VerPausasProduccionBobinaTuboActivasResponse(BaseModel):
     CodigoBobina1: str
     CodigoBobina2: str
     FechaHoraPausa: datetime
+    NombreEstadoProduccion: str
+    CantidadLogsActual: int
+
+
+class VerPospuestasProduccionBobinaTuboResponse(BaseModel):
+    IdPausaProduccionBobinaTubo: int
+    IdProduccionBobinaTubo: int
+    IdProducto: int
+    NombreProducto: str
+    CodigoBobina1: str
+    CodigoBobina2: str
+    FechaHoraPausa: datetime
+    MotivoPausaProduccion: Optional[str] = None
+    FechaHoraPosposicion: datetime
+    MotivoPosposicion: Optional[str] = None
     NombreEstadoProduccion: str
     CantidadLogsActual: int
 

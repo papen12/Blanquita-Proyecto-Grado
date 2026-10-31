@@ -61,6 +61,19 @@ class PausaAbiertaInicioBobinaServilleta(BaseModel):
     Atrasada: bool
 
 
+class PospuestaInicioBobinaServilleta(BaseModel):
+    IdPausaProduccionServilleta: int
+    IdProduccionServilleta: int
+    MedidaMm: int
+    CodigoUnidadOrigen: str
+    NombreTipoBobinaServilleta: str
+    MotivoPausaProduccion: Optional[str]
+    Operador: str
+    FechaHoraPausa: datetime
+    FechaHoraPosposicion: datetime
+    MotivoPosposicion: Optional[str]
+
+
 class SubBobinaFueraInicioBobinaServilleta(BaseModel):
     IdSubBobinaServilleta: int
     CodigoUnidadOrigen: str
@@ -92,6 +105,7 @@ class InicioBobinaServilletaResponse(BaseModel):
     MotivosPausa: list[MotivoPausaInicio]
     Activas: list[ProduccionActivaInicioBobinaServilleta]
     Pausadas: list[PausaAbiertaInicioBobinaServilleta]
+    Pospuestas: list[PospuestaInicioBobinaServilleta]
     StockBobinas: list[ResumenInventarioBobinaServilletaResponse]
     StockSubBobinas: list[ResumenInventarioSubBobinaServilletaResponse]
     FueraInventario: FueraInventarioInicioBobinaServilleta

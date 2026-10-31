@@ -3,7 +3,7 @@ from sqlalchemy import exists, func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.Constants.Estados import ESTADO_PRODUCCION_EN_PRODUCCION, ESTADO_PRODUCCION_PAUSA
+from app.Constants.Estados import ESTADOS_PRODUCCION_EN_CURSO
 from app.Repository.MateriaPrima.TipoMateriaPrima import TipoMateriaPrimaRepository
 from app.Schemas.BobinaPapel import TipoBobina
 from app.Schemas.BobinaServilleta import TipoBobinaServilleta
@@ -19,9 +19,7 @@ class LineaProductoRepository(TipoMateriaPrimaRepository):
     def ListarLineas(self, id_producto: int | None = None) -> list[dict]:
         en_produccion = exists().where(
             ProduccionBobinaTubo.IdProducto == Producto.IdProducto,
-            ProduccionBobinaTubo.IdEstadoProduccion.in_(
-                [ESTADO_PRODUCCION_EN_PRODUCCION, ESTADO_PRODUCCION_PAUSA]
-            ),
+            ProduccionBobinaTubo.IdEstadoProduccion.in_(ESTADOS_PRODUCCION_EN_CURSO),
         )
         consulta = (
             select(

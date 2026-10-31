@@ -20,6 +20,10 @@ from app.Models.BobinaPapel.ProduccionBobinaPapel import (
     PausarProduccionBobinaTuboResponse,
     ReanudarProduccionBobinaTuboRequest,
     ReanudarProduccionBobinaTuboResponse,
+    PosponerProduccionBobinaTuboRequest,
+    PosponerProduccionBobinaTuboResponse,
+    RetomarProduccionBobinaTuboRequest,
+    RetomarProduccionBobinaTuboResponse,
     CancelarProduccionBobinaTuboRequest,
     CancelarProduccionBobinaTuboResponse,
     InsertarMovimientoOperadorLogsRequest,
@@ -28,6 +32,7 @@ from app.Models.BobinaPapel.ProduccionBobinaPapel import (
     VerProduccionBobinaTuboResponse,
     VerPausasProduccionBobinaTuboActivasRequest,
     VerPausasProduccionBobinaTuboActivasResponse,
+    VerPospuestasProduccionBobinaTuboResponse,
 )
 
 
@@ -110,6 +115,32 @@ def ReanudarProduccion(
 
 
 @ProduccionBobinaPapelRouter.post(
+    "/posponer",
+    response_model=PosponerProduccionBobinaTuboResponse,
+    status_code=200,
+)
+def PosponerProduccion(
+    data: PosponerProduccionBobinaTuboRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+    service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
+):
+    return service.PosponerProduccion(data, usuario_actual["IdUsuario"])
+
+
+@ProduccionBobinaPapelRouter.post(
+    "/retomar",
+    response_model=RetomarProduccionBobinaTuboResponse,
+    status_code=200,
+)
+def RetomarProduccion(
+    data: RetomarProduccionBobinaTuboRequest,
+    usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
+    service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
+):
+    return service.RetomarProduccion(data, usuario_actual["IdUsuario"])
+
+
+@ProduccionBobinaPapelRouter.post(
     "/cancelar",
     response_model=CancelarProduccionBobinaTuboResponse,
     status_code=200,
@@ -169,6 +200,27 @@ def VerPausasProduccionBobinaTuboActivas(
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
     return service.VerPausasActivas(
+        VerPausasProduccionBobinaTuboActivasRequest(
+            FiltroIdTipoBobina=FiltroIdTipoBobina,
+            FiltroIdProducto=FiltroIdProducto,
+        )
+    )
+
+
+@ProduccionBobinaPapelRouter.get(
+    "/pospuestas",
+    response_model=list[VerPospuestasProduccionBobinaTuboResponse],
+    status_code=200,
+    dependencies=[
+        Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR, ROL_GERENTE_GENERAL]))
+    ],
+)
+def VerPospuestasProduccionBobinaTubo(
+    FiltroIdTipoBobina: int | None = None,
+    FiltroIdProducto: int | None = None,
+    service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
+):
+    return service.VerPospuestas(
         VerPausasProduccionBobinaTuboActivasRequest(
             FiltroIdTipoBobina=FiltroIdTipoBobina,
             FiltroIdProducto=FiltroIdProducto,

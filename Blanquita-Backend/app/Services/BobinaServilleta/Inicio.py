@@ -6,6 +6,7 @@ from app.Models.BobinaServilleta.Inicio import (
     IndicadoresSemanaBobinaServilleta,
     InicioBobinaServilletaResponse,
     PausaAbiertaInicioBobinaServilleta,
+    PospuestaInicioBobinaServilleta,
     ProduccionActivaInicioBobinaServilleta,
     ProduccionDiaBobinaServilleta,
     ProduccionMedidaBobinaServilleta,
@@ -113,6 +114,9 @@ class InicioBobinaServilletaService:
                     **fila, Atrasada=semana.pausa_atrasada(fila["FechaHoraPausa"])
                 )
                 for fila in self.repository.PausasAbiertas()
+            ],
+            Pospuestas=[
+                PospuestaInicioBobinaServilleta(**fila) for fila in self.repository.Pospuestas()
             ],
             StockBobinas=[
                 ResumenInventarioBobinaServilletaResponse(**fila)

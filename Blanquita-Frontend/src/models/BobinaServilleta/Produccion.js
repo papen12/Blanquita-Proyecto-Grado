@@ -105,3 +105,51 @@ export const VerPausasProduccionServilletaActivasResponse = (data) => ({
   FechaHoraPausa: data.FechaHoraPausa,
   NombreEstadoProduccion: data.NombreEstadoProduccion
 });
+
+
+export const PosponerProduccionServilletaRequest = (idProduccionServilleta, motivoPosposicion) => ({
+  IdProduccionServilleta: idProduccionServilleta,
+  MotivoPosposicion: motivoPosposicion ?? null
+});
+
+export const PosponerProduccionServilletaResponse = (data) => ({
+  IdPausaProduccionServilleta: data.IdPausaProduccionServilleta,
+  IdProduccionServilleta: data.IdProduccionServilleta,
+  FechaHoraPausa: data.FechaHoraPausa,
+  MotivoPausaProduccion: data.MotivoPausaProduccion ?? null,
+  FechaHoraPosposicion: data.FechaHoraPosposicion,
+  MotivoPosposicion: data.MotivoPosposicion,
+  IdEstadoProduccion: data.IdEstadoProduccion
+});
+
+export const RetomarProduccionServilletaRequest = (idProduccionServilleta, motivoReanudacion) => ({
+  IdProduccionServilleta: idProduccionServilleta,
+  MotivoReanudacion: motivoReanudacion ?? null
+});
+
+export const RetomarProduccionServilletaResponse = (data) => ({
+  IdPausaProduccionServilleta: data.IdPausaProduccionServilleta,
+  IdProduccionServilleta: data.IdProduccionServilleta,
+  FechaHoraPausa: data.FechaHoraPausa,
+  MotivoPausaProduccion: data.MotivoPausaProduccion ?? null,
+  FechaHoraPosposicion: data.FechaHoraPosposicion,
+  MotivoPosposicion: data.MotivoPosposicion ?? null,
+  FechaHoraReanudacion: data.FechaHoraReanudacion,
+  MotivoReanudacion: data.MotivoReanudacion,
+  IdEstadoProduccion: data.IdEstadoProduccion
+});
+
+export const VerPospuestasProduccionServilletaResponse = (data) => ({
+  IdPausaProduccionServilleta: data.IdPausaProduccionServilleta,
+  IdProduccionServilleta: data.IdProduccionServilleta,
+  IdSubBobina: data.IdSubBobina,
+  CodigoUnidadOrigen: data.CodigoUnidadOrigen,
+  IdTipoMedidaSubBobina: data.IdTipoMedidaSubBobina,
+  MedidaMm: data.MedidaMm,
+  DescripcionFormato: data.DescripcionFormato,
+  FechaHoraPausa: data.FechaHoraPausa,
+  MotivoPausaProduccion: data.MotivoPausaProduccion ?? null,
+  FechaHoraPosposicion: data.FechaHoraPosposicion,
+  MotivoPosposicion: data.MotivoPosposicion ?? null,
+  NombreEstadoProduccion: data.NombreEstadoProduccion
+});

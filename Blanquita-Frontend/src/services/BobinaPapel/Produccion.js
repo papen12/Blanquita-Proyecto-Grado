@@ -14,7 +14,12 @@ import {
   InsertarMovimientoOperadorLogsRequest,
   InsertarMovimientoOperadorLogsResponse,
   VerProduccionBobinaTuboResponse,
-  VerPausasProduccionBobinaTuboActivasResponse
+  VerPausasProduccionBobinaTuboActivasResponse,
+  PosponerProduccionBobinaTuboRequest,
+  PosponerProduccionBobinaTuboResponse,
+  RetomarProduccionBobinaTuboRequest,
+  RetomarProduccionBobinaTuboResponse,
+  VerPospuestasProduccionBobinaTuboResponse
 } from "../../models/BobinaPapel/Produccion";
 import { pedirJson } from "@/utils/api";
 import { conQueryParams } from "@/utils/params";
@@ -120,4 +125,37 @@ export async function verPausasProduccionBobinaTuboActivas(filtroIdTipoBobina, f
   );
 
   return data.map(VerPausasProduccionBobinaTuboActivasResponse);
+}
+
+export async function posponerProduccion(idProduccionBobinaTubo, motivoPosposicion) {
+  const payload = PosponerProduccionBobinaTuboRequest(idProduccionBobinaTubo, motivoPosposicion);
+
+  const data = await pedirJson("/api/papelbobina/produccion/posponer", {
+    method: "POST",
+    body: payload
+  });
+
+  return PosponerProduccionBobinaTuboResponse(data);
+}
+
+export async function retomarProduccion(idProduccionBobinaTubo, motivoReanudacion) {
+  const payload = RetomarProduccionBobinaTuboRequest(idProduccionBobinaTubo, motivoReanudacion);
+
+  const data = await pedirJson("/api/papelbobina/produccion/retomar", {
+    method: "POST",
+    body: payload
+  });
+
+  return RetomarProduccionBobinaTuboResponse(data);
+}
+
+export async function verPospuestasProduccionBobinaTubo(filtroIdTipoBobina, filtroIdProducto) {
+  const data = await pedirJson(
+    conQueryParams("/api/papelbobina/produccion/pospuestas", {
+      FiltroIdTipoBobina: filtroIdTipoBobina,
+      FiltroIdProducto: filtroIdProducto
+    })
+  );
+
+  return data.map(VerPospuestasProduccionBobinaTuboResponse);
 }
