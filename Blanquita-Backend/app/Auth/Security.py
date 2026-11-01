@@ -62,7 +62,6 @@ def ClaveComprometida(clave: str) -> bool:
     if normalizada in CLAVES_PROHIBIDAS:
         return True
 
-    # "Blanquita2026!" o "Password1#" siguen siendo claves comunes con relleno al final.
     base = normalizada.rstrip("0123456789" + "".join(SIMBOLOS))
     if base and base in CLAVES_PROHIBIDAS:
         return True
@@ -84,8 +83,7 @@ def ClaveContieneDatosPersonales(clave: str, ci: str, nombres: list[str]) -> boo
 
 
 def ValidarClaveNueva(clave, ci: str | None = None, nombres: list[str] | None = None) -> str | None:
-    """Reglas para toda clave que se crea o se cambia (no para el login).
-    Devuelve el mensaje del primer error encontrado, o None si la clave es válida."""
+    
     valida, mensaje = EstructuraClave(clave)
     if not valida:
         return mensaje

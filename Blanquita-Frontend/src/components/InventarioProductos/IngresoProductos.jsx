@@ -30,11 +30,6 @@ import {
 
 const CANTIDAD_MAXIMA_INGRESO = 100;
 
-const construirObservacion = (lineas) =>
-  `Ingreso a inventario: ${lineas
-    .map((l) => `${l.cantidadNum} ${l.nombreProducto} (${l.codigo})`)
-    .join(", ")}`;
-
 function CardIngreso({
   presentacion,
   valor,
@@ -140,16 +135,6 @@ export default function IngresoProductoTerminado({ inventario, onStockActualizad
     .map((i) => ({ ...i, cantidadNum: aEntero(i.cantidad) }))
     .filter((i) => i.cantidadNum > 0);
   const totalUnidades = lineasValidas.reduce((s, i) => s + i.cantidadNum, 0);
-  const observacion = construirObservacion(
-    lineasValidas.map((i) => {
-      const p = presentacionDe(i.IdPresentacion);
-      return {
-        cantidadNum: i.cantidadNum,
-        nombreProducto: p?.NombreProducto ?? "",
-        codigo: p?.CodigoPresentacion ?? "",
-      };
-    }),
-  );
   const hayIncompletas = items.length > lineasValidas.length;
 
   const agregarPresentacion = (presentacion) => {
@@ -191,7 +176,6 @@ export default function IngresoProductoTerminado({ inventario, onStockActualizad
     const payload = lineasValidas.map((i) => ({
       IdPresentacion: i.IdPresentacion,
       Cantidad: i.cantidadNum,
-      Observacion: observacion,
     }));
 
     setEnviando(true);
@@ -314,11 +298,6 @@ export default function IngresoProductoTerminado({ inventario, onStockActualizad
               aquí.
             </DialogDescription>
           </DialogHeader>
-
-          <div className="rounded-xl bg-slate-50 px-3.5 py-2.5 text-[12.5px] text-slate-600">
-            <span className="font-bold text-slate-500">Observación: </span>
-            {observacion}
-          </div>
 
           <div className="max-h-60 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200">
             {lineasValidas.map((l) => {

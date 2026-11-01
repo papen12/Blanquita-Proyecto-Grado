@@ -1,21 +1,21 @@
 import { useState } from "react";
-import { QrCode, Printer, Eye, Loader2 } from "lucide-react";
+import { QrCode, Printer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { imprimirCartelQr, descargarCartelQr } from "@/services/Qr/Carteles";
+import { descargarCartelQr } from "@/services/Qr/Carteles";
 
 export function TarjetaQr({ titulo, descripcion, ruta }) {
-  const [enProceso, setEnProceso] = useState(null);
+  const [enProceso, setEnProceso] = useState(false);
   const [error, setError] = useState("");
 
-  const ejecutar = async (clave, accion) => {
-    setEnProceso(clave);
+  const abrirCartel = async () => {
+    setEnProceso(true);
     setError("");
     try {
-      await accion(ruta);
+      await descargarCartelQr(ruta);
     } catch (e) {
       setError(e.message);
     } finally {
-      setEnProceso(null);
+      setEnProceso(false);
     }
   };
 
@@ -38,31 +38,18 @@ export function TarjetaQr({ titulo, descripcion, ruta }) {
         </div>
       )}
 
-      <div className="mt-auto flex w-full gap-2">
+      <div className="mt-auto flex w-full">
         <Button
-          onClick={() => ejecutar("imprimir", imprimirCartelQr)}
-          disabled={enProceso !== null}
+          onClick={abrirCartel}
+          disabled={enProceso}
           className="h-11 flex-1 gap-2 bg-gradient-to-r from-c3 to-c4 font-extrabold text-white hover:opacity-90"
         >
-          {enProceso === "imprimir" ? (
+          {enProceso ? (
             <Loader2 size={16} className="animate-spin" />
           ) : (
             <Printer size={16} strokeWidth={2.75} />
           )}
           Imprimir
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => ejecutar("descargar", descargarCartelQr)}
-          disabled={enProceso !== null}
-          className="h-11 gap-2 border-2 border-slate-200 font-bold text-c3"
-        >
-          {enProceso === "descargar" ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <Eye size={16} strokeWidth={2.75} />
-          )}
-          Ver
         </Button>
       </div>
     </div>
