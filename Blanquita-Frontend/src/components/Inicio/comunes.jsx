@@ -23,6 +23,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { ESTILO_STOCK, estadoStock } from "@/utils/stock";
+import { MedidorStock } from "@/components/layout/MedidorStock";
 import { dateFormatter, dateOnlyFormatter, formatearSegundos, segundosDesde } from "@/utils/dates";
 
 export const numero = (valor) => Number(valor || 0).toLocaleString("es-BO");
@@ -32,13 +33,6 @@ export const COLORES_SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87
 export const colorSerie = (indice) => COLORES_SERIES[Math.min(indice, COLORES_SERIES.length - 1)];
 
 const ORDEN_STOCK = { critico: 0, agotado: 1, bajo: 2, disponible: 3 };
-
-const RELLENO_STOCK = {
-  disponible: "bg-emerald-500",
-  bajo: "bg-amber-500",
-  critico: "bg-red-500",
-  agotado: "bg-slate-300",
-};
 
 export function useAhora(intervaloMs = 60000) {
   const [ahora, setAhora] = useState(() => Date.now());
@@ -403,9 +397,6 @@ export function ProduccionAhora({
 function BarraStock({ item }) {
   const estado = estadoStock(item.cantidad, item);
   const estilo = ESTILO_STOCK[estado];
-  const conUmbral = item.StockMinimo !== null && item.StockPreventivo !== null;
-  const tope = Math.max(item.cantidad, conUmbral ? item.StockPreventivo * 2 : item.cantidad, 1);
-  const porcentaje = (valor) => `${Math.min((valor / tope) * 100, 100)}%`;
 
   return (
     <div className="flex flex-col gap-1.5 rounded-xl p-3 ring-1 ring-slate-200">
@@ -420,20 +411,7 @@ function BarraStock({ item }) {
         <span className={cn("text-xl font-extrabold tabular-nums", estilo.numero)}>{numero(item.cantidad)}</span>
         <span className="text-[12px] font-semibold text-slate-500">{item.unidad}</span>
       </div>
-      {conUmbral ? (
-        <>
-          <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100">
-            <div className={cn("h-full rounded-full transition-all", RELLENO_STOCK[estado])} style={{ width: porcentaje(item.cantidad) }} />
-            <div className="absolute inset-y-0 w-0.5 bg-red-400" style={{ left: porcentaje(item.StockMinimo) }} />
-            <div className="absolute inset-y-0 w-0.5 bg-amber-400" style={{ left: porcentaje(item.StockPreventivo) }} />
-          </div>
-          <div className="text-[11.5px] text-slate-500">
-            Mínimo {numero(item.StockMinimo)} · Preventivo {numero(item.StockPreventivo)}
-          </div>
-        </>
-      ) : (
-        <div className="text-[11.5px] text-slate-400">Sin alerta de stock configurada</div>
-      )}
+      <MedidorStock cantidad={item.cantidad} StockMinimo={item.StockMinimo} StockPreventivo={item.StockPreventivo} />
     </div>
   );
 }

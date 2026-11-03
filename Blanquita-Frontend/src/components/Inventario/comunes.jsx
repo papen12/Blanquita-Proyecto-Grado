@@ -20,7 +20,7 @@ import { ACENTOS } from "@/constants/Acentos";
 import { MOTIVO_CORRECCION_MIN, MOTIVO_CORRECCION_MAX } from "@/constants/Values";
 import { dateFormatter } from "@/utils/dates";
 import { limpiarObservacion } from "@/utils/validators";
-import { estadoStock, ESTILO_STOCK } from "@/utils/stock";
+import { estadoStock, ESTILO_STOCK, FILTROS_STOCK } from "@/utils/stock";
 
 export const GRID_TARJETAS = "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3";
 
@@ -319,10 +319,40 @@ export function BuscadorNombre({ valor, onCambio, placeholder = "Buscar por nomb
   );
 }
 
-export function SinCoincidencias({ busqueda }) {
+export function FiltroEstadoStock({ valor, onCambio, items }) {
+  const conteo = (id) =>
+    id === "todos" ? items.length : items.filter((i) => i.stock === id).length;
+
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-2">
+      {FILTROS_STOCK.map((f) => (
+        <button
+          key={f.id}
+          type="button"
+          onClick={() => onCambio(f.id)}
+          aria-pressed={valor === f.id}
+          className={cn(
+            "flex min-h-9 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-bold transition-colors",
+            valor === f.id ? "bg-c4/10 text-c3" : "text-slate-500 hover:bg-white",
+          )}
+        >
+          {f.texto}
+          <span className="tabular-nums text-[11.5px] opacity-70">{conteo(f.id)}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function SinCoincidencias({ busqueda, estado = "todos" }) {
+  const texto = FILTROS_STOCK.find((f) => f.id === estado)?.texto;
+  const filtroEstado = estado !== "todos" ? ` en "${texto}"` : "";
+
   return (
     <div className="rounded-2xl bg-white p-10 text-center text-sm text-slate-400 ring-1 ring-slate-200">
-      Ningún tipo coincide con "{busqueda}".
+      {busqueda.trim()
+        ? `Ningún tipo${filtroEstado} coincide con "${busqueda}".`
+        : `No hay tipos${filtroEstado}.`}
     </div>
   );
 }

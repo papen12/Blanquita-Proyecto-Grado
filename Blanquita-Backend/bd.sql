@@ -55,7 +55,7 @@ CREATE TABLE "TipoBobina" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_tipobobina_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_tipobobina_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_tipobobina_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_tipobobina_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -96,7 +96,7 @@ CREATE TABLE "TipoBobinaServilleta" (
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_tipobobinaservilleta_unidades" CHECK ("CantidadUnidades" > 0),
   CONSTRAINT "ck_tipobobinaservilleta_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_tipobobinaservilleta_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_tipobobinaservilleta_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_tipobobinaservilleta_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -117,7 +117,7 @@ CREATE TABLE "TipoMedidaSubBobina" (
   CONSTRAINT "uq_tipomedidasubbobina_medida" UNIQUE ("MedidaMm"),
   CONSTRAINT "ck_tipomedidasubbobina_medida" CHECK ("MedidaMm" > 0),
   CONSTRAINT "ck_tipomedidasubbobina_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_tipomedidasubbobina_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_tipomedidasubbobina_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_tipomedidasubbobina_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -188,7 +188,7 @@ CREATE TABLE "TipoEmpaque" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_tipoempaque_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_tipoempaque_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_tipoempaque_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_tipoempaque_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -217,7 +217,7 @@ CREATE TABLE "TipoRodela" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_tiporodela_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_tiporodela_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_tiporodela_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_tiporodela_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -404,7 +404,7 @@ CREATE TABLE "InventarioProductoTerminado" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_invpt_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_invpt_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_invpt_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_invpt_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -486,7 +486,7 @@ CREATE TABLE "InventarioInsumo" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_invinsumo_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_invinsumo_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_invinsumo_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_invinsumo_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -521,7 +521,7 @@ CREATE TABLE "InventarioEmpaqueBolsa" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_invempaquebolsa_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_invempaquebolsa_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_invempaquebolsa_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_invempaquebolsa_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -556,7 +556,7 @@ CREATE TABLE "InventarioBolsaJava" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_invbolsajava_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_invbolsajava_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_invbolsajava_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_invbolsajava_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 

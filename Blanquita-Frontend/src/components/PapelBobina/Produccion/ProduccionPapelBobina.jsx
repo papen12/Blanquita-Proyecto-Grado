@@ -477,7 +477,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
         open={modalInsertar.open}
         onOpenChange={(open) => setModalInsertar({ open, produccion: open ? modalInsertar.produccion : null })}
       >
-        <DialogContent className="max-w-xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Insertar movimiento de logs</DialogTitle>
           </DialogHeader>
@@ -490,54 +490,56 @@ export default function ProduccionBobinaTubo({ usuario }) {
               />
             )}
 
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Tipo de movimiento
-              </Label>
-              <ToggleGroup
-                type="single"
-                value={movimientoSeleccionado ? [movimientoSeleccionado.NombreMovimiento] : []}
-                className="flex w-full flex-wrap justify-start gap-2"
-              >
-                {movimientosOperador.map((m) => (
-                  <ToggleGroupItem
-                    key={m.IdTipoMovimientoOperadorLogs}
-                    value={m.NombreMovimiento}
-                    onClick={() => seleccionarTipoMovimiento(m.IdTipoMovimientoOperadorLogs)}
-                    className="h-auto rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 bg-white hover:border-slate-300 hover:bg-white hover:text-slate-600 aria-pressed:border-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white aria-pressed:hover:border-slate-900 aria-pressed:hover:bg-slate-900 aria-pressed:hover:text-white"
-                  >
-                    {m.NombreMovimiento}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="cantidad-logs" className="text-xs font-bold uppercase tracking-wide text-slate-600">
-                Cantidad de logs
-              </Label>
-              <Input
-                id="cantidad-logs"
-                value={formCantidadLogs}
-                onChange={(e) => setFormCantidadLogs(e.target.value)}
-                placeholder="0"
-                type="number"
-                min={1}
-                max={esDescuento ? Math.min(logsActuales, CANTIDAD_MAXIMA_LOGS) : CANTIDAD_MAXIMA_LOGS}
-                className="h-11"
-              />
-              <span className="text-xs text-slate-500">
-                Máximo {CANTIDAD_MAXIMA_LOGS} logs por registro
-              </span>
-              {esDescuento && (
-                <span
-                  className={`text-xs font-semibold ${
-                    descuentoExcedeTotal ? "text-red-600" : "text-slate-500"
-                  }`}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                  Tipo de movimiento
+                </Label>
+                <ToggleGroup
+                  type="single"
+                  value={movimientoSeleccionado ? [movimientoSeleccionado.NombreMovimiento] : []}
+                  className="flex w-full flex-wrap justify-start gap-2"
                 >
-                  Disponible para descontar: {logsActuales} logs
+                  {movimientosOperador.map((m) => (
+                    <ToggleGroupItem
+                      key={m.IdTipoMovimientoOperadorLogs}
+                      value={m.NombreMovimiento}
+                      onClick={() => seleccionarTipoMovimiento(m.IdTipoMovimientoOperadorLogs)}
+                      className="h-auto rounded-full border-2 border-slate-200 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 bg-white hover:border-slate-300 hover:bg-white hover:text-slate-600 aria-pressed:border-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white aria-pressed:hover:border-slate-900 aria-pressed:hover:bg-slate-900 aria-pressed:hover:text-white"
+                    >
+                      {m.NombreMovimiento}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="cantidad-logs" className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                  Cantidad de logs
+                </Label>
+                <Input
+                  id="cantidad-logs"
+                  value={formCantidadLogs}
+                  onChange={(e) => setFormCantidadLogs(e.target.value)}
+                  placeholder="0"
+                  type="number"
+                  min={1}
+                  max={esDescuento ? Math.min(logsActuales, CANTIDAD_MAXIMA_LOGS) : CANTIDAD_MAXIMA_LOGS}
+                  className="h-11"
+                />
+                <span className="text-xs text-slate-500">
+                  Máximo {CANTIDAD_MAXIMA_LOGS} logs por registro
                 </span>
-              )}
+                {esDescuento && (
+                  <span
+                    className={`text-xs font-semibold ${
+                      descuentoExcedeTotal ? "text-red-600" : "text-slate-500"
+                    }`}
+                  >
+                    Disponible para descontar: {logsActuales} logs
+                  </span>
+                )}
+              </div>
             </div>
 
             {requiereObservacion && (
@@ -550,7 +552,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
                     <ToggleGroup
                       type="multiple"
                       value={motivosObservacion.filter(motivoObservacionEnTexto)}
-                      className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+                      className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3"
                     >
                       {motivosObservacion.map((motivo) => (
                         <ToggleGroupItem
@@ -575,7 +577,7 @@ export default function ProduccionBobinaTubo({ usuario }) {
                     value={formObservacionLog}
                     onChange={(e) => setFormObservacionLog(limpiarObservacion(e.target.value))}
                     placeholder="Motivo de la corrección..."
-                    className="min-h-20"
+                    className="min-h-16"
                   />
                 </div>
               </div>

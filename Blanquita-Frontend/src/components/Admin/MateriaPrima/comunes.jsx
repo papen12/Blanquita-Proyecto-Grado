@@ -61,7 +61,11 @@ const FILTROS_INICIALES = { Busqueda: "", Activo: "" };
 export const numero = (valor) => formatearNumero(valor, { decimales: 2, decimalesMinimos: 0 });
 
 export const textoUmbral = (t) =>
-  t.StockMinimo === null ? "Sin umbral" : `Mín. ${t.StockMinimo} · Prev. ${t.StockPreventivo}`;
+  t.StockMinimo === null
+    ? "Sin umbral"
+    : t.StockPreventivo === null
+      ? `Mín. ${t.StockMinimo} · Sin preventivo`
+      : `Mín. ${t.StockMinimo} · Prev. ${t.StockPreventivo}`;
 
 export const textoProductos = (t) =>
   t.Productos.length ? t.Productos.map((p) => p.NombreProducto).join(", ") : "Sin productos";

@@ -37,6 +37,7 @@ import {
   PanelDetalle,
   BuscadorCodigo,
   BuscadorNombre,
+  FiltroEstadoStock,
   SinCoincidencias,
   ContenidoLista,
   CasillaSeleccion,
@@ -48,6 +49,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { descargarReporteInventarioEmpaque } from "@/services/Empaque/Reporte";
 import { MINUTOS_REINGRESO_EMPAQUE_BOBINA } from "@/constants/Values";
 import { VeComoLider, EsGerente, rutaDeRol } from "@/utils/validators";
+import { coincideEstadoStock } from "@/utils/stock";
 
 function DialogoConfirmarTraslado({ abierto, codigos, enviando, onCancelar, onConfirmar }) {
   const varios = codigos.length > 1;
@@ -192,10 +194,13 @@ export default function EmpaqueBobinaInventario({ usuario }) {
   const detalle = useDetalleInventario(verDetalleInventarioEmpaque);
   const envio = useEjecutar();
   const [busquedaTipo, setBusquedaTipo] = useState("");
+  const [estadoFiltro, setEstadoFiltro] = useState("todos");
   const [confirmando, setConfirmando] = useState(false);
 
   const tipos = conAcentos(resumen.datos, { cantidadDe: (t) => t.CantidadEmpaques });
-  const tiposFiltrados = tipos.filter((t) => coincide(busquedaTipo, t.NombreTipoEmpaque));
+  const tiposFiltrados = tipos.filter(
+    (t) => coincide(busquedaTipo, t.NombreTipoEmpaque) && coincideEstadoStock(estadoFiltro, t.stock),
+  );
   const tipoSel = detalle.sel ? tipos.find((t) => t.IdTipoEmpaque === detalle.sel) : null;
   const { marcadas: marcados, setMarcadas: setMarcados } = detalle;
 
@@ -285,7 +290,10 @@ export default function EmpaqueBobinaInventario({ usuario }) {
             onCambio={setBusquedaTipo}
             placeholder="Buscar tipo de empaque por nombre..."
           />
-          {tiposFiltrados.length === 0 && <SinCoincidencias busqueda={busquedaTipo} />}
+          <FiltroEstadoStock valor={estadoFiltro} onCambio={setEstadoFiltro} items={tipos} />
+          {tiposFiltrados.length === 0 && (
+            <SinCoincidencias busqueda={busquedaTipo} estado={estadoFiltro} />
+          )}
           <div className={GRID_TARJETAS}>
             {tiposFiltrados.map((t) => (
               <TarjetaTipo

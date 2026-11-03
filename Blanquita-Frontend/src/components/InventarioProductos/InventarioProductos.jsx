@@ -21,17 +21,10 @@ import { descargarReporteInventarioProducto } from "@/services/Inventario/Report
 import { VeComoLider, EsEncargado } from "@/utils/validators";
 import Header from "@/components/layout/Header";
 import { BotonDescarga } from "@/components/layout/BotonDescarga";
-import { estadoStock, ESTILO_STOCK } from "@/utils/stock";
+import { estadoStock, ESTILO_STOCK, FILTROS_STOCK } from "@/utils/stock";
 import { BadgeInactivo } from "@/components/Inventario/comunes";
+import { MedidorStock } from "@/components/layout/MedidorStock";
 import { descripcionContenido, AvisoBloqueo } from "./comunes";
-
-const FILTROS = [
-  { id: "todos", texto: "Todos" },
-  { id: "disponible", texto: "Con stock" },
-  { id: "bajo", texto: "Stock bajo" },
-  { id: "critico", texto: "Stock crítico" },
-  { id: "agotado", texto: "Sin stock" },
-];
 
 function TarjetaResumen({ icono: Icono, valor, etiqueta, tono }) {
   return (
@@ -218,7 +211,7 @@ export default function InventarioProductoTerminado({ usuario }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {FILTROS.map((f) => (
+              {FILTROS_STOCK.map((f) => (
                 <button
                   key={f.id}
                   onClick={() => setEstadoFiltro(f.id)}
@@ -262,7 +255,7 @@ export default function InventarioProductoTerminado({ usuario }) {
           {!loading && !error && filtradas.length > 0 && (
             <>
               <div className="hidden overflow-x-auto md:block">
-                <Table className="min-w-[760px]">
+                <Table className="min-w-[960px]">
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
                       <TableHead className="pl-5">Código</TableHead>
@@ -270,7 +263,8 @@ export default function InventarioProductoTerminado({ usuario }) {
                       <TableHead>Contenedor</TableHead>
                       <TableHead>Contenido</TableHead>
                       <TableHead>Estado</TableHead>
-                      <TableHead className="text-right">Stock</TableHead>
+                      <TableHead className="w-56">Nivel</TableHead>
+                      <TableHead className="pr-5 text-right">Stock</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -304,9 +298,16 @@ export default function InventarioProductoTerminado({ usuario }) {
                               {ESTILO_STOCK[estado].texto}
                             </Badge>
                           </TableCell>
+                          <TableCell className="w-56">
+                            <MedidorStock
+                              cantidad={p.CantidadActual}
+                              StockMinimo={p.StockMinimo}
+                              StockPreventivo={p.StockPreventivo}
+                            />
+                          </TableCell>
                           <TableCell
                             className={cn(
-                              "text-right text-[15px] font-extrabold tabular-nums",
+                              "pr-5 text-right text-[15px] font-extrabold tabular-nums",
                               ESTILO_STOCK[estado].numero,
                             )}
                           >
@@ -360,6 +361,11 @@ export default function InventarioProductoTerminado({ usuario }) {
                           </Badge>
                         </div>
                       </div>
+                      <MedidorStock
+                        cantidad={p.CantidadActual}
+                        StockMinimo={p.StockMinimo}
+                        StockPreventivo={p.StockPreventivo}
+                      />
                     </div>
                   );
                 })}
