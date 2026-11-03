@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { X, Search, Boxes, Layers, AlertTriangle } from "lucide-react";
+import { X, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -25,24 +25,6 @@ import { estadoStock, ESTILO_STOCK, FILTROS_STOCK } from "@/utils/stock";
 import { BadgeInactivo } from "@/components/Inventario/comunes";
 import { MedidorStock } from "@/components/layout/MedidorStock";
 import { descripcionContenido, AvisoBloqueo } from "./comunes";
-
-function TarjetaResumen({ icono: Icono, valor, etiqueta, tono }) {
-  return (
-    <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl", tono)}>
-        <Icono size={22} strokeWidth={2.5} />
-      </div>
-      <div className="flex flex-col">
-        <div className="text-3xl font-extrabold tabular-nums text-slate-900">
-          {valor}
-        </div>
-        <div className="text-[12.5px] font-semibold text-slate-500">
-          {etiqueta}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function InventarioProductoTerminado({ usuario }) {
   const esEncargado = VeComoLider(usuario?.IdRol);
@@ -98,14 +80,6 @@ export default function InventarioProductoTerminado({ usuario }) {
     });
   }, [inventario, busqueda, productoFiltro, estadoFiltro]);
 
-  const totalUnidades = inventario.reduce(
-    (s, p) => s + Number(p.CantidadActual || 0),
-    0,
-  );
-  const totalAgotadas = inventario.filter(
-    (p) => Number(p.CantidadActual || 0) === 0,
-  ).length;
-
   return (
     <div className="contenido-con-sidebar pt-20 md:pt-0 flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
       <TooltipProvider>
@@ -135,28 +109,7 @@ export default function InventarioProductoTerminado({ usuario }) {
               : null
           }
         />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <TarjetaResumen
-            icono={Boxes}
-            valor={totalUnidades}
-            etiqueta="Unidades en almacén"
-            tono="bg-c4/10 text-c3"
-          />
-          <TarjetaResumen
-            icono={Layers}
-            valor={inventario.length}
-            etiqueta="Presentaciones registradas"
-            tono="bg-slate-100 text-slate-700"
-          />
-          <TarjetaResumen
-            icono={AlertTriangle}
-            valor={totalAgotadas}
-            etiqueta="Presentaciones sin stock"
-            tono="bg-amber-50 text-amber-700"
-          />
-        </div>
-
-        <div className="mt-6 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
           <div className="flex flex-col gap-3.5 border-b border-slate-100 px-5 py-4">
             <div className="flex flex-wrap items-center gap-2.5">
               <div className="relative min-w-[220px] flex-1">
