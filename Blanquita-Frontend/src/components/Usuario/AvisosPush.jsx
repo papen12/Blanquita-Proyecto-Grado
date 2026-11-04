@@ -35,7 +35,7 @@ export default function AvisosPush() {
             className="shrink-0"
           >
             {activo ? <BellOff size={16} /> : <BellRing size={16} />}
-            {activo ? "Desactivar" : "Activar"}
+            {procesando ? "Procesando..." : activo ? "Desactivar" : "Activar"}
           </Button>
         )}
       </div>

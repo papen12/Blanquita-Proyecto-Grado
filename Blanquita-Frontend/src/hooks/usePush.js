@@ -7,6 +7,8 @@ import {
 } from "@/services/Notificacion/Push";
 
 const RUTA_SERVICE_WORKER = "/sw.js";
+const LIMITE_PERMISO_MS = 60000;
+const LIMITE_PASO_MS = 20000;
 
 export const ESTADOS_PUSH = {
   CARGANDO: "cargando",
@@ -37,6 +39,17 @@ const claveABytes = (clave) => {
 const textoError = (e, respaldo) => {
   const detalle = [e?.name, e?.message].filter(Boolean).join(": ");
   return detalle ? `${respaldo}. ${detalle}` : respaldo;
+};
+
+const conLimite = (promesa, limiteMs, mensaje) => {
+  let temporizador;
+  const limite = new Promise((_, rechazar) => {
+    temporizador = setTimeout(
+      () => rechazar(Object.assign(new Error(mensaje), { name: "" })),
+      limiteMs,
+    );
+  });
+  return Promise.race([promesa, limite]).finally(() => clearTimeout(temporizador));
 };
 
 const estadoSinSuscripcion = () => {
@@ -77,9 +90,19 @@ export function usePush() {
     setProcesando(true);
     setError("");
     try {
-      const permiso = await Notification.requestPermission();
+      const permiso = await conLimite(
+        Notification.requestPermission(),
+        LIMITE_PERMISO_MS,
+        "El navegador no respondió al pedir el permiso",
+      );
+      if (permiso === "denied") {
+        setEstado(ESTADOS_PUSH.BLOQUEADO);
+        return;
+      }
       if (permiso !== "granted") {
-        setEstado(permiso === "denied" ? ESTADOS_PUSH.BLOQUEADO : ESTADOS_PUSH.INACTIVO);
+        setError(
+          "No se concedió el permiso. Revisa las notificaciones del navegador en los ajustes del teléfono y del sitio",
+        );
         return;
       }
       const clave = await verClavePublicaPush();
@@ -87,14 +110,30 @@ export function usePush() {
         setError("Las notificaciones todavía no están configuradas en el servidor");
         return;
       }
-      await navigator.serviceWorker.register(RUTA_SERVICE_WORKER);
-      const registro = await navigator.serviceWorker.ready;
-      const suscripcion =
-        (await registro.pushManager.getSubscription()) ??
-        (await registro.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: claveABytes(clave),
-        }));
+      await conLimite(
+        navigator.serviceWorker.register(RUTA_SERVICE_WORKER),
+        LIMITE_PASO_MS,
+        "El navegador no respondió al registrar el servicio de avisos",
+      );
+      const registro = await conLimite(
+        navigator.serviceWorker.ready,
+        LIMITE_PASO_MS,
+        "El servicio de avisos no terminó de iniciar en este navegador",
+      );
+      const suscripcion = await conLimite(
+        registro.pushManager
+          .getSubscription()
+          .then(
+            (existente) =>
+              existente ??
+              registro.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: claveABytes(clave),
+              }),
+          ),
+        LIMITE_PASO_MS,
+        "Este dispositivo o navegador no pudo conectarse al servicio de notificaciones. Puede que no sea compatible",
+      );
       await suscribirPush(suscripcion);
       setEstado(ESTADOS_PUSH.ACTIVO);
     } catch (e) {
