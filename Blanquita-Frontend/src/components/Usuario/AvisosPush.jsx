@@ -14,7 +14,7 @@ const MENSAJES = {
 };
 
 export default function AvisosPush() {
-  const { estado, procesando, activar, desactivar } = usePush();
+  const { estado, procesando, error, activar, desactivar } = usePush();
 
   if (estado === ESTADOS_PUSH.CARGANDO) {
     return <Skeleton className="my-3 h-10 w-full" />;
@@ -24,18 +24,25 @@ export default function AvisosPush() {
   const disponible = activo || estado === ESTADOS_PUSH.INACTIVO;
 
   return (
-    <div className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm font-medium text-slate-600">{MENSAJES[estado]}</p>
-      {disponible && (
-        <Button
-          variant={activo ? "outline" : "default"}
-          disabled={procesando}
-          onClick={activo ? desactivar : activar}
-          className="shrink-0"
-        >
-          {activo ? <BellOff size={16} /> : <BellRing size={16} />}
-          {activo ? "Desactivar" : "Activar"}
-        </Button>
+    <div className="flex flex-col gap-3 py-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm font-medium text-slate-600">{MENSAJES[estado]}</p>
+        {disponible && (
+          <Button
+            variant={activo ? "outline" : "default"}
+            disabled={procesando}
+            onClick={activo ? desactivar : activar}
+            className="shrink-0"
+          >
+            {activo ? <BellOff size={16} /> : <BellRing size={16} />}
+            {activo ? "Desactivar" : "Activar"}
+          </Button>
+        )}
+      </div>
+      {error && (
+        <p role="alert" className="break-words rounded-lg bg-red-50 p-3 text-sm font-semibold text-red-600">
+          {error}
+        </p>
       )}
     </div>
   );
