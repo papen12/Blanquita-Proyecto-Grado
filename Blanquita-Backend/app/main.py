@@ -54,6 +54,7 @@ from app.Routes.Insumo.InicioRouter import InicioInsumoRouter
 from app.Routes.AlertaStock.AlertaStock import AlertaStockRouter
 
 from app.Routes.Notificacion.NotificacionRouter import NotificacionRouter
+from app.Routes.Notificacion.PushRouter import PushRouter
 
 from app.Routes.Inicio.GerenteRouter import InicioGerenteRouter
 
@@ -166,6 +167,7 @@ app.include_router(AlertaStockRouter)
 
 #ROUTERS NOTIFICACIONES
 app.include_router(NotificacionRouter)
+app.include_router(PushRouter)
 
 #ROUTERS INICIO GERENTE
 app.include_router(InicioGerenteRouter)

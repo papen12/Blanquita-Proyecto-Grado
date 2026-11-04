@@ -7,10 +7,13 @@ export const soloEntero = (texto) => String(texto ?? "").replace(/\D/g, "").slic
 export function errorStock(stockMinimo, stockPreventivo) {
   const minimo = numeroONulo(stockMinimo);
   const preventivo = numeroONulo(stockPreventivo);
-  if ((minimo === null) !== (preventivo === null)) return "Completa ambos valores o deja los dos vacíos";
-  if (minimo !== null && preventivo <= minimo) return "El preventivo debe ser mayor al mínimo";
+  if (minimo === null && preventivo !== null) return "El preventivo requiere un stock mínimo";
+  if (minimo !== null && preventivo !== null && preventivo <= minimo)
+    return "El preventivo debe ser mayor al mínimo";
   if (preventivo !== null && preventivo > STOCK_UMBRAL_MAXIMO)
     return `El preventivo no puede superar ${STOCK_UMBRAL_MAXIMO}`;
+  if (minimo !== null && minimo > STOCK_UMBRAL_MAXIMO)
+    return `El mínimo no puede superar ${STOCK_UMBRAL_MAXIMO}`;
   return null;
 }
 
@@ -31,7 +34,7 @@ export function CamposStock({
         <div className="text-[14px] font-extrabold text-slate-900">{titulo}</div>
         <div className="text-[12.5px] text-slate-500">
           {ayuda ??
-            `En ${unidad}. Rojo en el mínimo o menos, amarillo hasta el preventivo. Déjalos vacíos para no alertar.`}
+            `En ${unidad}. Rojo en el mínimo o menos, amarillo hasta el preventivo (opcional). Déjalos vacíos para no alertar.`}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">

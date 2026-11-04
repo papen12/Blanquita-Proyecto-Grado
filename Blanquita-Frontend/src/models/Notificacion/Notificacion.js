@@ -18,6 +18,7 @@ export const ProduccionBobinaPapelResponse = (data) => ({
   MotivoPosposicion: data.MotivoPosposicion ?? null,
   CantidadLogsActual: Number(data.CantidadLogsActual ?? 0),
   Atrasada: Boolean(data.Atrasada),
+  Larga: Boolean(data.Larga),
 });
 
 export const ProduccionBobinaServilletaResponse = (data) => ({
@@ -62,6 +63,7 @@ export const NotificacionesResponse = (data) => ({
   BobinaPapel: ProduccionResponse(data.BobinaPapel, ProduccionBobinaPapelResponse),
   BobinaServilleta: ProduccionResponse(data.BobinaServilleta, ProduccionBobinaServilletaResponse),
   HorasAlertaPausa: Number(data.HorasAlertaPausa ?? 0),
+  HorasAlertaProduccionLarga: Number(data.HorasAlertaProduccionLarga ?? 0),
   Atrasadas: Number(data.Atrasadas ?? 0),
   Total: Number(data.Total ?? 0),
 });

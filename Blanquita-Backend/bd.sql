@@ -55,7 +55,7 @@ CREATE TABLE "TipoBobina" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_tipobobina_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_tipobobina_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_tipobobina_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_tipobobina_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -96,7 +96,7 @@ CREATE TABLE "TipoBobinaServilleta" (
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_tipobobinaservilleta_unidades" CHECK ("CantidadUnidades" > 0),
   CONSTRAINT "ck_tipobobinaservilleta_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_tipobobinaservilleta_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_tipobobinaservilleta_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_tipobobinaservilleta_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -117,7 +117,7 @@ CREATE TABLE "TipoMedidaSubBobina" (
   CONSTRAINT "uq_tipomedidasubbobina_medida" UNIQUE ("MedidaMm"),
   CONSTRAINT "ck_tipomedidasubbobina_medida" CHECK ("MedidaMm" > 0),
   CONSTRAINT "ck_tipomedidasubbobina_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_tipomedidasubbobina_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_tipomedidasubbobina_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_tipomedidasubbobina_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -188,7 +188,7 @@ CREATE TABLE "TipoEmpaque" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_tipoempaque_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_tipoempaque_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_tipoempaque_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_tipoempaque_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -217,7 +217,7 @@ CREATE TABLE "TipoRodela" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_tiporodela_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_tiporodela_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_tiporodela_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_tiporodela_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -404,7 +404,7 @@ CREATE TABLE "InventarioProductoTerminado" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_invpt_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_invpt_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_invpt_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_invpt_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -486,7 +486,7 @@ CREATE TABLE "InventarioInsumo" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_invinsumo_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_invinsumo_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_invinsumo_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_invinsumo_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -521,7 +521,7 @@ CREATE TABLE "InventarioEmpaqueBolsa" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_invempaquebolsa_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_invempaquebolsa_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_invempaquebolsa_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_invempaquebolsa_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -556,7 +556,7 @@ CREATE TABLE "InventarioBolsaJava" (
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,
   CONSTRAINT "ck_invbolsajava_stockminimo" CHECK ("StockMinimo" IS NULL OR "StockMinimo" >= 0),
-  CONSTRAINT "ck_invbolsajava_umbrales_completos" CHECK (num_nonnulls("StockMinimo", "StockPreventivo") IN (0, 2)),
+  CONSTRAINT "ck_invbolsajava_preventivo_con_minimo" CHECK ("StockPreventivo" IS NULL OR "StockMinimo" IS NOT NULL),
   CONSTRAINT "ck_invbolsajava_umbrales_orden" CHECK ("StockPreventivo" IS NULL OR "StockPreventivo" > "StockMinimo")
 );
 
@@ -618,3 +618,26 @@ CREATE TABLE "RegistroIngreso" (
 );
 CREATE INDEX "idx_registroingreso_usuario_fecha" ON "RegistroIngreso"("IdUsuario", "FechaRegistro" DESC);
 CREATE INDEX "idx_registroingreso_fecha" ON "RegistroIngreso"("FechaRegistro" DESC);
+
+CREATE TABLE "SuscripcionPush" (
+  "IdSuscripcionPush" SERIAL PRIMARY KEY,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "Endpoint" TEXT NOT NULL UNIQUE,
+  "Claves" JSONB NOT NULL,
+  "FechaRegistro" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT "ck_suscripcionpush_claves" CHECK ("Claves" ? 'p256dh' AND "Claves" ? 'auth')
+);
+CREATE INDEX "idx_suscripcionpush_usuario" ON "SuscripcionPush"("IdUsuario");
+
+CREATE TABLE "AlertaPushEnviada" (
+  "IdAlertaPushEnviada" SERIAL PRIMARY KEY,
+  "Clave" TEXT NOT NULL,
+  "Datos" JSONB NOT NULL,
+  "FechaEnvio" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "FechaResuelta" TIMESTAMPTZ,
+  CONSTRAINT "ck_alertapush_orden" CHECK ("FechaResuelta" IS NULL OR "FechaResuelta" >= "FechaEnvio")
+);
+CREATE UNIQUE INDEX "uq_alertapush_activa" ON "AlertaPushEnviada"("Clave") WHERE "FechaResuelta" IS NULL;
+
+ALTER TABLE "SuscripcionPush" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "AlertaPushEnviada" ENABLE ROW LEVEL SECURITY;

@@ -17,12 +17,12 @@ INSERT INTO "EstadoUsuario" ("NombreEstadoUsuario", "DescripcionEstadoUsuario") 
 
 
 INSERT INTO "TipoBobina" ("NombreTipoBobina", "DiametroMm", "Formato", "TaraKg", "StockMinimo", "StockPreventivo") VALUES
-('Higiénico', 1210, 2760, 38, 6, 12),
-('Toalla', 1210, 2760, 38, 2, 4),
-('Económico', 1210, 2760, 38, 2, 4);
+('Higiénico', 1210, 2760, 38, 20, 30),
+('Toalla', 1210, 2760, 38, NULL, NULL),
+('Económico', 1210, 2760, 38, NULL, NULL);
 
 INSERT INTO "TipoBobinaServilleta" ("NombreTipoBobinaServilleta", "DiametroMm", "CrepadoPorcentaje", "ResistenciaKgf", "CantidadUnidades", "StockMinimo", "StockPreventivo") VALUES
-('G-18 CR-14%', 1210, 14, 1.35, 2, 2, 4);
+('G-18 CR-14%', 1210, 14, 1.35, 2, 6, 10);
 
 
 
@@ -36,12 +36,12 @@ INSERT INTO "EstadoMateriaPrima" ("TipoEstado") VALUES
 ('Terminada');
 
 INSERT INTO "TipoEmpaque" ("NombreTipoEmpaque", "StockMinimo", "StockPreventivo") VALUES
-('Luxury 24', 1, 2),
-('Luxury 12', 1, 2),
-('Luxury 6', 1, 2),
-('EcoPack 12', 1, 2),
-('EcoPack 6', 1, 2),
-('EcoPack 4', 1, 2);
+('Luxury 24', 4, 8),
+('Luxury 12', 2, 5),
+('Luxury 6', 3, 6),
+('EcoPack 12', 4, 8),
+('EcoPack 6', 4, 8),
+('EcoPack 4', 2, 6);
 
 INSERT INTO "TipoMovimientoMateriaPrima" ("NombreMovimiento", "AplicaA", "DescripcionTipoMovimientoMateriaPrima") VALUES
 ('Ingreso a almacén', 'Todos', 'Registro de ingreso inicial de materia prima al almacén'),
@@ -74,18 +74,18 @@ INSERT INTO "Producto" ("NombreProducto", "SiglasProducto", "IdTipoBobina", "IdT
 ('Toalla', 'TOA', (SELECT "IdTipoBobina" FROM "TipoBobina" WHERE "NombreTipoBobina" = 'Toalla'), NULL);
 
 INSERT INTO "PresentacionProducto" ("IdProducto", "TipoContenedor", "CantidadRollosUnidades", "CantidadPorUnidadTerminada", "CodigoPresentacion") VALUES
-((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Luxury'), 'Jaba', 6, 6, 'LUX-J06'),
-((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Luxury'), 'Jaba', 12, 12, 'LUX-J12'),
-((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Luxury'), 'Jaba', 24, 24, 'LUX-J24'),
-((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'EcoPack'), 'Jaba', 4, 4, 'ECO-J04'),
-((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'EcoPack'), 'Jaba', 6, 6, 'ECO-J06'),
-((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'EcoPack'), 'Jaba', 12, 12, 'ECO-J12'),
+((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Luxury'), 'Jaba', 6, 8, 'LUX-J06'),
+((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Luxury'), 'Jaba', 12, 4, 'LUX-J12'),
+((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Luxury'), 'Jaba', 24, 2, 'LUX-J24'),
+((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'EcoPack'), 'Jaba', 4, 8, 'ECO-J04'),
+((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'EcoPack'), 'Jaba', 6, 8, 'ECO-J06'),
+((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'EcoPack'), 'Jaba', 12, 4, 'ECO-J12'),
 ((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Servilleta'), 'Jaba', 50, 28, 'SRV-J50'),
-((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Servilleta'), 'Jaba', 200, 12, 'SRV-J200'),
+((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Servilleta'), 'Jaba', 200, 6, 'SRV-J200'),
 ((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Servilleta'), 'Jaba', 500, 6, 'SRV-J500'),
 ((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Mega Rollo'), 'Plancha', 12, 1, 'MRO-P12'),
 ((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Economico'), 'Plancha', 20, 1, 'ECN-P20'),
-((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Toalla'), 'Jaba', 2, 12, 'TOA-J06'),
+((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Toalla'), 'Jaba', 2, 8, 'TOA-J06'),
 ((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Merma'), 'Plancha', 1, 1, 'MER-P01'),
 ((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Merma'), 'Jaba', 1, 1, 'MER-S01'),
 ((SELECT "IdProducto" FROM "Producto" WHERE "NombreProducto" = 'Merma'), 'Jaba', 1, 1, 'MER-T01');
@@ -105,18 +105,17 @@ INSERT INTO "InventarioProductoTerminado" ("IdPresentacion", "CantidadActual", "
 SELECT pp."IdPresentacion", 0, u."StockMinimo", u."StockPreventivo"
 FROM "PresentacionProducto" AS pp
 LEFT JOIN (VALUES
-  ('LUX-J06', 15, 30),
-  ('LUX-J12', 20, 40),
-  ('LUX-J24', 10, 20),
-  ('ECO-J04', 15, 30),
-  ('ECO-J06', 20, 40),
-  ('ECO-J12', 10, 20),
-  ('SRV-J50', 10, 20),
-  ('SRV-J200', 10, 20),
-  ('SRV-J500', 5, 10),
-  ('MRO-P12', 20, 40),
-  ('ECN-P20', 20, 40),
-  ('TOA-J06', 10, 20)
+  ('LUX-J06', 150, 250),
+  ('LUX-J12', 150, 250),
+  ('LUX-J24', 400, 1500),
+  ('ECO-J04', 100, 300),
+  ('ECO-J06', 300, 500),
+  ('ECO-J12', 200, 300),
+  ('SRV-J50', 50, 80),
+  ('SRV-J200', 50, 200),
+  ('SRV-J500', 200, 500),
+  ('MRO-P12', 1500, 4800),
+  ('TOA-J06', 100, 300)
 ) AS u("CodigoPresentacion", "StockMinimo", "StockPreventivo")
   ON u."CodigoPresentacion" = pp."CodigoPresentacion";
 
@@ -136,8 +135,15 @@ INSERT INTO "TipoEmpaqueBolsa" ("NombreEmpaqueBolsa", "DescripcionEmpaqueBolsa")
 ('Servilleta 500', 'Bolsa, servilleta 500 unidades');
 
 INSERT INTO "InventarioEmpaqueBolsa" ("IdTipoEmpaqueBolsa", "CantidadActual", "StockMinimo", "StockPreventivo")
-SELECT "IdTipoEmpaqueBolsa", 0, 10, 20
-FROM "TipoEmpaqueBolsa";
+SELECT te."IdTipoEmpaqueBolsa", 0, u."StockMinimo", u."StockPreventivo"
+FROM "TipoEmpaqueBolsa" AS te
+LEFT JOIN (VALUES
+  ('MegaRollo', 20, 40),
+  ('Servilleta 50', 4, 10),
+  ('Servilleta 200', 5, 10),
+  ('Servilleta 500', 10, 20)
+) AS u("NombreEmpaqueBolsa", "StockMinimo", "StockPreventivo")
+  ON u."NombreEmpaqueBolsa" = te."NombreEmpaqueBolsa";
 
 INSERT INTO "TipoBolsaJava" ("NombreBolsaJava", "DescripcionBolsaJava") VALUES
 ('Luxury 24', 'Ancho plegado 49 cm, fuelle 12 cm por lado, ancho total 73 cm, largo 77 cm, 40 g'),
@@ -154,8 +160,23 @@ INSERT INTO "TipoBolsaJava" ("NombreBolsaJava", "DescripcionBolsaJava") VALUES
 ('EcoPack 12', 'Ancho plegado 41 cm, fuelle 9 cm por lado, ancho total 59 cm, largo 82 cm, 40 g');
 
 INSERT INTO "InventarioBolsaJava" ("IdTipoBolsaJava", "CantidadActual", "StockMinimo", "StockPreventivo")
-SELECT "IdTipoBolsaJava", 0, 10, 20
-FROM "TipoBolsaJava";
+SELECT tb."IdTipoBolsaJava", 0, u."StockMinimo", u."StockPreventivo"
+FROM "TipoBolsaJava" AS tb
+LEFT JOIN (VALUES
+  ('Luxury 24', 15, 30),
+  ('Luxury 12', 10, 20),
+  ('Luxury 6', 15, 30),
+  ('EcoPack 12', 5, 10),
+  ('EcoPack 6', 10, 20),
+  ('EcoPack 4', 10, 20),
+  ('Servilleta 50', 10, 20),
+  ('Servilleta 200', 10, 20),
+  ('Servilleta 500', 15, 30),
+  ('Plancha servilletas', 8, 16),
+  ('Papel Toalla', 10, 20),
+  ('Mega 20', 15, 30)
+) AS u("NombreBolsaJava", "StockMinimo", "StockPreventivo")
+  ON u."NombreBolsaJava" = tb."NombreBolsaJava";
 
 
 
@@ -172,21 +193,19 @@ INSERT INTO "InventarioInsumo" ("IdTipoInsumo", "CantidadActual", "StockMinimo",
 SELECT ti."IdTipoInsumo", 0, u."StockMinimo", u."StockPreventivo"
 FROM "TipoInsumo" AS ti
 LEFT JOIN (VALUES
-  ('Pegamento de tubos', 1, 2),
-  ('Pegamento de laminado', 1, 2),
-  ('Pegamento de Turril', 1, 2),
-  ('Vaselina', 1, 2),
-  ('Maicena', 2, 4),
-  ('Talco', 2, 4),
-  ('Ligas', 1, 2)
+  ('Pegamento de tubos', 2, 3),
+  ('Pegamento de laminado', 1, NULL),
+  ('Pegamento de Turril', 2, 3),
+  ('Vaselina', 1, 3),
+  ('Ligas', 1, NULL)
 ) AS u("NombreInsumo", "StockMinimo", "StockPreventivo")
   ON u."NombreInsumo" = ti."NombreInsumo";
 
 
 
 INSERT INTO "TipoMedidaSubBobina" ("MedidaMm", "Descripcion", "StockMinimo", "StockPreventivo") VALUES
-(435, 'Sub-bobina 435mm', 4, 8),
-(220, 'Sub-bobina 220mm', 2, 4);
+(435, 'Sub-bobina 435mm', NULL, NULL),
+(220, 'Sub-bobina 220mm', NULL, NULL);
 
 INSERT INTO "FormatoSubBobina" ("DescripcionFormato") VALUES
 ('435x3'),

@@ -23,17 +23,27 @@ def _item(fila: dict) -> UmbralStockItem:
 def mostrar_umbral(stock_minimo: int | None, stock_preventivo: int | None) -> str:
     if stock_minimo is None:
         return "sin umbral"
+    if stock_preventivo is None:
+        return f"mínimo {stock_minimo}, sin preventivo"
     return f"mínimo {stock_minimo}, preventivo {stock_preventivo}"
 
 
 def validar_umbral_stock(stock_minimo: int | None, stock_preventivo: int | None) -> None:
-    if (stock_minimo is None) != (stock_preventivo is None):
+    if stock_minimo is None and stock_preventivo is not None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="El stock mínimo y el preventivo se registran juntos o se quitan juntos",
+            detail="El stock preventivo requiere un stock mínimo",
         )
 
     if stock_minimo is None:
+        return
+
+    if stock_preventivo is None:
+        if stock_minimo > STOCK_UMBRAL_MAXIMO:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"El stock mínimo no puede superar {STOCK_UMBRAL_MAXIMO}",
+            )
         return
 
     if stock_preventivo <= stock_minimo:

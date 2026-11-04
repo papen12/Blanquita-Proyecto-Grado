@@ -1,6 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
+from app.Services.Notificacion.Push import avisar_push
+from app.Services.Notificacion.Avisos import (
+    aviso_edicion,
+    RUTA_INVENTARIO_BOBINA_SERVILLETA,
+)
 
 from app.Services.BobinaServilleta.InventarioBobinaServilletaService import InventarioBobinaServilletaService
 
@@ -109,7 +114,10 @@ def VerSubBobinaFueraInventario(
 )
 def EditarBobinaServilleta(
     data: EditarBobinaServilletaRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: InventarioBobinaServilletaService = Depends(inventario_bobina_servilleta_service)
 ):
-    return service.EditarBobinaServilleta(data, usuario_actual["IdUsuario"])
+    resultado = service.EditarBobinaServilleta(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_edicion("una bobina servilleta", "Se corrigieron sus datos", RUTA_INVENTARIO_BOBINA_SERVILLETA), usuario_actual["IdUsuario"])
+    return resultado

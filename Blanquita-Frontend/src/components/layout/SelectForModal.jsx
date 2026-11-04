@@ -49,6 +49,7 @@ export default function SelectForModal({
         value={valor === null || valor === undefined ? "" : String(valor)}
         onValueChange={onCambio}
         disabled={deshabilitado}
+        modal={false}
       >
         <SelectTrigger id={id} className={cn("h-11 w-full", className)}>
           <SelectValue placeholder={placeholder}>
@@ -57,9 +58,10 @@ export default function SelectForModal({
         </SelectTrigger>
 
         <SelectContent
-          position="popper"
+          alignItemWithTrigger={false}
+          align="start"
           className={cn(
-            "w-(--radix-select-trigger-width) max-w-none",
+            "max-h-[min(18rem,var(--available-height))] max-w-none overscroll-contain",
             classNameContenido,
           )}
         >

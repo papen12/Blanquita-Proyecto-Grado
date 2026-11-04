@@ -1,6 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
+from app.Services.Notificacion.Push import avisar_push
+from app.Services.Notificacion.Avisos import (
+    aviso_cancelacion,
+    aviso_posposicion,
+    RUTA_PRODUCCION_BOBINA_SERVILLETA,
+)
 
 from app.Services.BobinaServilleta.ProduccionBobinaServilletaService import ProduccionBobinaServilletaService
 
@@ -94,10 +100,13 @@ def ReanudadProduccionSubBobina(
 )
 def PosponerProduccionSubBobina(
     data: PosponerProduccionServilletaRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
 ):
-    return service.PosponerProduccionServilleta(data, usuario_actual["IdUsuario"])
+    resultado = service.PosponerProduccionServilleta(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_posposicion("servilleta", data.MotivoPosposicion, RUTA_PRODUCCION_BOBINA_SERVILLETA), usuario_actual["IdUsuario"])
+    return resultado
 
 @ProduccionBobinaServilletaRouter.post(
     "/retomar",
@@ -130,10 +139,13 @@ def FinalizarProduccionServilelta(
 )
 def CancelarProduccionServilleta(
     data: CancelarProduccionServilletaRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
 ):
-    return service.CancelarProduccionServilleta(data, usuario_actual["IdUsuario"])
+    resultado = service.CancelarProduccionServilleta(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_cancelacion("servilleta", data.MotivoCancelacion, RUTA_PRODUCCION_BOBINA_SERVILLETA), usuario_actual["IdUsuario"])
+    return resultado
 @ProduccionBobinaServilletaRouter.get(
     "/activas",
     response_model=list[VerProduccionServilletaActivasResponse],

@@ -13,6 +13,9 @@ RUTAS_PERMITIDAS_SOLO_CONSULTA = {
     "/auth/logout",
     "/auth/logout-todos",
     "/Usuario/estado",
+    "/notificaciones/push/suscribir",
+    "/notificaciones/push/desuscribir",
+    "/notificaciones/push/evaluar",
 }
 
 MENSAJE_SOLO_CONSULTA = (

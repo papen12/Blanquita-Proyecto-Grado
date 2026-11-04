@@ -48,5 +48,6 @@ class NotificacionesResponse(BaseModel):
     BobinaPapel: ProduccionBobinaPapelNotificaciones
     BobinaServilleta: ProduccionBobinaServilletaNotificaciones
     HorasAlertaPausa: int
+    HorasAlertaProduccionLarga: int
     Atrasadas: int
     Total: int

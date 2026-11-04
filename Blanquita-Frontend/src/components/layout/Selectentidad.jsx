@@ -38,6 +38,7 @@ export function SelectEntidad({
       value={valorActual}
       onValueChange={(v) => onCambio(v ?? "")}
       disabled={disabled || opciones.length === 0}
+      modal={false}
     >
       <SelectTrigger
         className={cn(
@@ -48,7 +49,11 @@ export function SelectEntidad({
       >
         <SelectValue>{(v) => etiquetaDe(v)}</SelectValue>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent
+        alignItemWithTrigger={false}
+        align="start"
+        className="max-h-[min(18rem,var(--available-height))] overscroll-contain"
+      >
         {opciones.map((o) => (
           <SelectItem key={o[campoValor]} value={String(o[campoValor])}>
             {o[campoEtiqueta]}

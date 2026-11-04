@@ -24,8 +24,10 @@ import {
   EstadoCatalogo,
   PanelDetalle,
   BuscadorNombre,
+  FiltroEstadoStock,
   SinCoincidencias,
 } from "@/components/Inventario/comunes";
+import { coincideEstadoStock } from "@/utils/stock";
 import { ControlCantidad, ResumenStock } from "@/components/InventarioProductos/comunes";
 import Header from "@/components/layout/Header";
 import { BotonDescarga } from "@/components/layout/BotonDescarga";
@@ -331,9 +333,14 @@ export default function InventarioInsumos({ usuario }) {
   const catalogo = useCatalogo(verCatalogoInsumo);
   const [sel, setSel] = useState(null);
   const [busqueda, setBusqueda] = useState("");
+  const [estadoFiltro, setEstadoFiltro] = useState("todos");
 
   const insumos = conAcentos(catalogo.datos, { cantidadDe: (i) => Number(i.CantidadActual || 0) });
-  const filtrados = insumos.filter((i) => coincide(busqueda, i.NombreInsumo, i.DescripcionInsumo));
+  const filtrados = insumos.filter(
+    (i) =>
+      coincide(busqueda, i.NombreInsumo, i.DescripcionInsumo) &&
+      coincideEstadoStock(estadoFiltro, i.stock),
+  );
   const insumoSel = sel === null ? null : insumos.find((i) => i.IdTipoInsumo === sel) ?? null;
 
   const seleccionar = (id) => setSel((actual) => (actual === id ? null : id));
@@ -379,7 +386,8 @@ export default function InventarioInsumos({ usuario }) {
             onCambio={setBusqueda}
             placeholder="Buscar insumo por nombre..."
           />
-          {filtrados.length === 0 && <SinCoincidencias busqueda={busqueda} />}
+          <FiltroEstadoStock valor={estadoFiltro} onCambio={setEstadoFiltro} items={insumos} />
+          {filtrados.length === 0 && <SinCoincidencias busqueda={busqueda} estado={estadoFiltro} />}
           <div className={GRID_TARJETAS}>
             {filtrados.map((i) => (
               <TarjetaTipo
