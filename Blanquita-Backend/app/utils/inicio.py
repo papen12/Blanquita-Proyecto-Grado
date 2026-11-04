@@ -2,7 +2,11 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from app.Constants.Cantidades import HORAS_ALERTA_PAUSA_ABIERTA, MOTIVOS_PAUSA_INICIO
+from app.Constants.Cantidades import (
+    HORAS_ALERTA_PAUSA_ABIERTA,
+    HORAS_ALERTA_PRODUCCION_LARGA,
+    MOTIVOS_PAUSA_INICIO,
+)
 from app.Repository.Consultas import ZONA_HORARIA
 
 MOTIVO_SIN_DETALLE = "Sin motivo"
@@ -55,6 +59,14 @@ class SemanaInicio:
                 }
             ]
         return ordenados
+
+
+def produccion_larga(inicio: datetime, pausas: list[dict], ahora: datetime) -> bool:
+    pausado = sum(
+        (((pausa["FechaHoraReanudacion"] or ahora) - pausa["FechaHoraPausa"]) for pausa in pausas),
+        timedelta(),
+    )
+    return ahora - inicio - pausado >= timedelta(hours=HORAS_ALERTA_PRODUCCION_LARGA)
 
 
 def semana_inicio() -> SemanaInicio:

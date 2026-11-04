@@ -56,7 +56,7 @@ const itemBobinaPapel = (item) => ({
   valor: `${numero(item.CantidadLogsActual)} logs`,
   motivo: item.MotivoPosposicion ?? item.MotivoPausaProduccion,
   desde: item.FechaHoraPosposicion ?? item.FechaHoraPausa ?? item.FechaInicioProduccion,
-  atrasada: item.Atrasada,
+  atrasada: item.Atrasada || item.Larga,
   detalles: item.FechaHoraPausa ? [`Pausó ${item.Operador}`] : [`Turno ${item.NombreTurno}`, item.Operador],
 });
 
@@ -246,16 +246,17 @@ function Seccion({ valor, titulo, icono: Icono, cantidad, urgente, children }) {
   );
 }
 
-function SeccionProduccion({ valor, titulo, icono, produccion, aItem, href, horasAlerta, ahora }) {
+function SeccionProduccion({ valor, titulo, icono, produccion, aItem, href, horasAlerta, horasLarga, ahora }) {
   const { Activas, Pausadas, Pospuestas } = produccion;
-  const urgente = [...Activas, ...Pausadas].some((item) => item.Atrasada);
+  const urgente = [...Activas, ...Pausadas].some((item) => item.Atrasada || item.Larga);
   const cantidad = Activas.length + Pausadas.length + Pospuestas.length;
   return (
     <Seccion valor={valor} titulo={titulo} icono={icono} cantidad={cantidad} urgente={urgente}>
       <Subgrupo titulo="En producción" icono={Factory} cantidad={Activas.length} vacio="No hay máquinas corriendo en este momento.">
         {Activas.map((item) => {
           const datos = aItem(item);
-          return <ItemProduccion key={datos.id} {...datos} href={href} ahora={ahora} aviso="Abierta desde otro día" />;
+          const aviso = item.Atrasada ? "Abierta desde otro día" : `Más de ${horasLarga} h en producción`;
+          return <ItemProduccion key={datos.id} {...datos} href={href} ahora={ahora} aviso={aviso} />;
         })}
       </Subgrupo>
       <Separator />
@@ -432,6 +433,7 @@ function Contenido({ datos, prefijo, ahora }) {
           aItem={itemBobinaPapel}
           href={`/${prefijo}/bobina-papel/produccion`}
           horasAlerta={datos.HorasAlertaPausa}
+          horasLarga={datos.HorasAlertaProduccionLarga}
           ahora={ahora}
         />
       ),

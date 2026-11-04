@@ -143,6 +143,23 @@ class InicioBobinaServilletaRepository:
         )
         return self.caller.Consultar(consulta)
 
+    def ProduccionesSinCerrar(self) -> list[dict]:
+        ps = ProduccionServilleta
+        consulta = (
+            select(
+                ps.IdProduccionServilleta,
+                ps.FechaInicioProduccion,
+                TipoMedidaSubBobina.MedidaMm,
+            )
+            .join(SubBobinaServilleta, SubBobinaServilleta.IdSubBobinaServilleta == ps.IdSubBobina)
+            .join(
+                TipoMedidaSubBobina,
+                TipoMedidaSubBobina.IdTipoMedidaSubBobina == SubBobinaServilleta.IdTipoMedidaSubBobina,
+            )
+            .where(ps.IdEstadoProduccion.in_((ESTADO_PRODUCCION_EN_PRODUCCION, ESTADO_PRODUCCION_PAUSA)))
+        )
+        return self.caller.Consultar(consulta)
+
     def PausasAbiertas(self) -> list[dict]:
         return self._PausasAbiertas(ESTADO_PRODUCCION_PAUSA)
 

@@ -3,7 +3,7 @@ from datetime import time
 HORA_INICIO_SOLO_CONSULTA = time(0, 0, 0)
 HORA_FIN_SOLO_CONSULTA = time(5, 59, 59)
 
-HORA_LIMITE_INICIO_CONTEO = time(0, 0, 0)
+HORA_LIMITE_INICIO_CONTEO = time(22, 0, 0)
 
 METODOS_LECTURA = {"GET", "HEAD", "OPTIONS"}
 
@@ -13,6 +13,9 @@ RUTAS_PERMITIDAS_SOLO_CONSULTA = {
     "/auth/logout",
     "/auth/logout-todos",
     "/Usuario/estado",
+    "/notificaciones/push/suscribir",
+    "/notificaciones/push/desuscribir",
+    "/notificaciones/push/evaluar",
 }
 
 MENSAJE_SOLO_CONSULTA = (

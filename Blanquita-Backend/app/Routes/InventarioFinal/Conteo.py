@@ -1,10 +1,16 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app.Auth.Dependencies import get_generado_por, require_role
 from app.Config.supabase import get_db
+from app.Services.Notificacion.Push import avisar_push
+from app.Services.Notificacion.Avisos import (
+    aviso_anulacion_conteo,
+    aviso_cierre_conteo,
+    aviso_inicio_conteo,
+)
 from app.Constants.Roles import ROL_GERENTE_GENERAL, ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR
 from app.Models.InventarioFinal.Conteo import (
     AnularConteoProductoTerminadoRequest,
@@ -158,10 +164,13 @@ def ActaConteo(
 )
 def IniciarConteo(
     data: IniciarConteoProductoTerminadoRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ConteoProductoTerminadoService = Depends(conteo_producto_terminado_service),
 ):
-    return service.Iniciar(data, usuario_actual["IdUsuario"])
+    resultado = service.Iniciar(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_inicio_conteo(data.Motivo), usuario_actual["IdUsuario"])
+    return resultado
 
 
 @ConteoProductoTerminadoRouter.put(
@@ -186,10 +195,13 @@ def RegistrarCantidadesConteo(
 def CerrarConteo(
     id_conteo: int,
     data: CerrarConteoProductoTerminadoRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ConteoProductoTerminadoService = Depends(conteo_producto_terminado_service),
 ):
-    return service.Cerrar(id_conteo, data, usuario_actual["IdUsuario"])
+    resultado = service.Cerrar(id_conteo, data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_cierre_conteo(), usuario_actual["IdUsuario"])
+    return resultado
 
 
 @ConteoProductoTerminadoRouter.post(
@@ -200,7 +212,10 @@ def CerrarConteo(
 def AnularConteo(
     id_conteo: int,
     data: AnularConteoProductoTerminadoRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ConteoProductoTerminadoService = Depends(conteo_producto_terminado_service),
 ):
-    return service.Anular(id_conteo, data, usuario_actual["IdUsuario"])
+    resultado = service.Anular(id_conteo, data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_anulacion_conteo(data.Motivo), usuario_actual["IdUsuario"])
+    return resultado

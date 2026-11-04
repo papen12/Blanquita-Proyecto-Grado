@@ -1,6 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
+from app.Services.Notificacion.Push import avisar_push
+from app.Services.Notificacion.Avisos import (
+    aviso_edicion,
+    aviso_ingreso_lote,
+    RUTA_INVENTARIO_BOBINA_PAPEL,
+)
 
 from app.Services.BobinaPapel.BobinaPapelService import BobinaPapelService
 
@@ -33,10 +39,13 @@ BobinaPapelRouter = APIRouter(
 )
 def CargarLoteBobinaPapel(
     data: IngresoModelo,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: BobinaPapelService = Depends(bobina_papel_service),
 ):
-    return service.InsertarBobinasPapel(data, usuario_actual["IdUsuario"])
+    resultado = service.InsertarBobinasPapel(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_ingreso_lote("bobina papel", resultado.CantidadBobinas, RUTA_INVENTARIO_BOBINA_PAPEL), usuario_actual["IdUsuario"])
+    return resultado
 
 @BobinaPapelRouter.get(
     "/obtenertipos",
@@ -56,7 +65,10 @@ def ObtenerTiposBobina(
 )
 def EditarBobinaPapel(
     data: EditarBobinaPapelRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: BobinaPapelService = Depends(bobina_papel_service),
 ):
-    return service.EditarBobinaPapel(data, usuario_actual["IdUsuario"])
+    resultado = service.EditarBobinaPapel(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_edicion("una bobina papel", f"Código {resultado.CodigoBobina}", RUTA_INVENTARIO_BOBINA_PAPEL), usuario_actual["IdUsuario"])
+    return resultado

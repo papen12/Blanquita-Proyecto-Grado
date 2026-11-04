@@ -618,3 +618,26 @@ CREATE TABLE "RegistroIngreso" (
 );
 CREATE INDEX "idx_registroingreso_usuario_fecha" ON "RegistroIngreso"("IdUsuario", "FechaRegistro" DESC);
 CREATE INDEX "idx_registroingreso_fecha" ON "RegistroIngreso"("FechaRegistro" DESC);
+
+CREATE TABLE "SuscripcionPush" (
+  "IdSuscripcionPush" SERIAL PRIMARY KEY,
+  "IdUsuario" INTEGER NOT NULL REFERENCES "Usuario"("IdUsuario") ON DELETE CASCADE,
+  "Endpoint" TEXT NOT NULL UNIQUE,
+  "Claves" JSONB NOT NULL,
+  "FechaRegistro" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT "ck_suscripcionpush_claves" CHECK ("Claves" ? 'p256dh' AND "Claves" ? 'auth')
+);
+CREATE INDEX "idx_suscripcionpush_usuario" ON "SuscripcionPush"("IdUsuario");
+
+CREATE TABLE "AlertaPushEnviada" (
+  "IdAlertaPushEnviada" SERIAL PRIMARY KEY,
+  "Clave" TEXT NOT NULL,
+  "Datos" JSONB NOT NULL,
+  "FechaEnvio" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "FechaResuelta" TIMESTAMPTZ,
+  CONSTRAINT "ck_alertapush_orden" CHECK ("FechaResuelta" IS NULL OR "FechaResuelta" >= "FechaEnvio")
+);
+CREATE UNIQUE INDEX "uq_alertapush_activa" ON "AlertaPushEnviada"("Clave") WHERE "FechaResuelta" IS NULL;
+
+ALTER TABLE "SuscripcionPush" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "AlertaPushEnviada" ENABLE ROW LEVEL SECURITY;

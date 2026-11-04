@@ -10,6 +10,7 @@ from app.Constants.Estados import (
     ESTADO_PRODUCCION_FINALIZADO,
     ESTADO_PRODUCCION_PAUSA,
     ESTADO_PRODUCCION_POSPUESTA,
+    ESTADOS_PRODUCCION_EN_CURSO,
     MOVIMIENTO_LOGS_DESCUENTO,
     MOVIMIENTO_LOGS_INGRESO,
 )
@@ -142,6 +143,34 @@ class InicioBobinaPapelRepository:
             .order_by(pb.FechaInicioProduccion)
         )
         return self.caller.Consultar(consulta)
+
+    def ProduccionesEnCurso(self) -> list[dict]:
+        pb = ProduccionBobinaTubo
+        consulta = (
+            select(
+                pb.IdProduccionBobinaTubo,
+                pb.IdEstadoProduccion,
+                pb.FechaInicioProduccion,
+                Producto.NombreProducto,
+            )
+            .join(Producto, Producto.IdProducto == pb.IdProducto)
+            .where(pb.IdEstadoProduccion.in_(ESTADOS_PRODUCCION_EN_CURSO))
+        )
+        return self.caller.Consultar(consulta)
+
+    def PausasPorProduccion(self, ids_produccion: list[int]) -> dict[int, list[dict]]:
+        if not ids_produccion:
+            return {}
+        pausa = PausaProduccionBobinaTubo
+        consulta = select(
+            pausa.IdProduccionBobinaTubo,
+            pausa.FechaHoraPausa,
+            pausa.FechaHoraReanudacion,
+        ).where(pausa.IdProduccionBobinaTubo.in_(ids_produccion))
+        pausas: dict[int, list[dict]] = {}
+        for fila in self.caller.Consultar(consulta):
+            pausas.setdefault(fila["IdProduccionBobinaTubo"], []).append(fila)
+        return pausas
 
     def PausasAbiertas(self) -> list[dict]:
         return self._PausasAbiertas(ESTADO_PRODUCCION_PAUSA)

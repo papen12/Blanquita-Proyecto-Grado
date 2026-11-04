@@ -1,6 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
+from app.Services.Notificacion.Push import avisar_push
+from app.Services.Notificacion.Avisos import (
+    aviso_cancelacion,
+    aviso_posposicion,
+    RUTA_PRODUCCION_BOBINA_PAPEL,
+)
 
 from app.Services.BobinaPapel.ProduccionBobinaPapelService import (
     ProduccionBobinaPapelService,
@@ -121,10 +127,13 @@ def ReanudarProduccion(
 )
 def PosponerProduccion(
     data: PosponerProduccionBobinaTuboRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
-    return service.PosponerProduccion(data, usuario_actual["IdUsuario"])
+    resultado = service.PosponerProduccion(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_posposicion("bobina papel", data.MotivoPosposicion, RUTA_PRODUCCION_BOBINA_PAPEL), usuario_actual["IdUsuario"])
+    return resultado
 
 
 @ProduccionBobinaPapelRouter.post(
@@ -147,10 +156,13 @@ def RetomarProduccion(
 )
 def CancelarProduccion(
     data: CancelarProduccionBobinaTuboRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
-    return service.CancelarProduccion(data, usuario_actual["IdUsuario"])
+    resultado = service.CancelarProduccion(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_cancelacion("bobina papel", data.MotivoCancelacion, RUTA_PRODUCCION_BOBINA_PAPEL), usuario_actual["IdUsuario"])
+    return resultado
 
 
 @ProduccionBobinaPapelRouter.post(

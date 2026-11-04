@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import {
+  Bell,
   UserRound,
   UserRoundKey,
   IdCard,
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import AvisosPush from "@/components/Usuario/AvisosPush";
 import { obtenerPerfil } from "../../services/Usuario/Perfil";
 import { dateFormatter } from "@/utils/dates";
 
@@ -230,6 +232,10 @@ export default function Perfil() {
                   />
                 </>
               )}
+            </TarjetaPerfil>
+
+            <TarjetaPerfil titulo="Notificaciones" icono={Bell}>
+              <AvisosPush />
             </TarjetaPerfil>
 
             <TarjetaPerfil titulo="Cuenta">

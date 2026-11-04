@@ -1,6 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
+from app.Services.Notificacion.Push import avisar_push
+from app.Services.Notificacion.Avisos import (
+    aviso_edicion,
+    RUTA_INVENTARIO_RODELA,
+)
 
 
 from app.Services.Rodela.InventarioRodelaService import InventarioRodelaService
@@ -132,7 +137,10 @@ def DeshacerTrasladoRodela(
 )
 def EditarRodela(
     data: EditarRodelaRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: InventarioRodelaService = Depends(inventario_rodela_service)
 ):
-    return service.EditarRodela(data, usuario_actual["IdUsuario"])
+    resultado = service.EditarRodela(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_edicion("una rodela", "Se corrigieron sus datos", RUTA_INVENTARIO_RODELA), usuario_actual["IdUsuario"])
+    return resultado

@@ -1,6 +1,13 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
+from app.Services.Notificacion.Push import avisar_push
+from app.Services.Notificacion.Avisos import (
+    aviso_ajuste,
+    aviso_bloqueo,
+    aviso_desbloqueo,
+    aviso_salida,
+)
 
 from app.Services.InventarioFinal.ProductoFinal import ProductoFinalService
 from app.Models.InventarioFinal.ProductoFinal import(
@@ -49,10 +56,13 @@ def InsertarIngresoProductoTerminado(
 )
 def InsertarSalidaInventario(
     data: SalidaProductoTerminadoRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProductoFinalService = Depends(producto_terminado_service)
 ):
-    return service.InsertarSalidaProductoTerminado(data, usuario_actual["IdUsuario"])
+    resultado = service.InsertarSalidaProductoTerminado(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_salida(resultado.CantidadTotal, resultado.Observacion), usuario_actual["IdUsuario"])
+    return resultado
 
 @ProductoFinalRouter.post(
     "/ajuste/positivo",
@@ -61,10 +71,13 @@ def InsertarSalidaInventario(
 )
 def AjustePositivoInventarioProductoTerminado(
     data: CorreccionProductoTerminadoRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProductoFinalService = Depends(producto_terminado_service)
 ):
-    return service.AjustePositivoInventarioProductoTerminado(data, usuario_actual["IdUsuario"])
+    resultado = service.AjustePositivoInventarioProductoTerminado(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_ajuste("positivo", data.Cantidad, data.Observacion), usuario_actual["IdUsuario"])
+    return resultado
 
 
 @ProductoFinalRouter.post(
@@ -74,10 +87,13 @@ def AjustePositivoInventarioProductoTerminado(
 )
 def AjusteNegativoInventarioProductoTerminado(
     data: CorreccionProductoTerminadoRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProductoFinalService = Depends(producto_terminado_service)
 ):
-    return service.AjusteNegativoInventarioProductoTerminado(data, usuario_actual["IdUsuario"])
+    resultado = service.AjusteNegativoInventarioProductoTerminado(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_ajuste("negativo", data.Cantidad, data.Observacion), usuario_actual["IdUsuario"])
+    return resultado
 
 @ProductoFinalRouter.post(
     "/correccion",
@@ -144,10 +160,13 @@ def VerBloqueoProductoTerminado(
 )
 def BloquearMovimientosProductoTerminado(
     data: BloqueoProductoTerminadoRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProductoFinalService = Depends(producto_terminado_service)
 ):
-    return service.BloquearMovimientos(data, usuario_actual["IdUsuario"])
+    resultado = service.BloquearMovimientos(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_bloqueo(data.Motivo), usuario_actual["IdUsuario"])
+    return resultado
 
 @ProductoFinalRouter.post(
     "/desbloqueo",
@@ -155,7 +174,10 @@ def BloquearMovimientosProductoTerminado(
     status_code=200
 )
 def DesbloquearMovimientosProductoTerminado(
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProductoFinalService = Depends(producto_terminado_service)
 ):
-    return service.DesbloquearMovimientos(usuario_actual["IdUsuario"])
+    resultado = service.DesbloquearMovimientos(usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_desbloqueo(), usuario_actual["IdUsuario"])
+    return resultado

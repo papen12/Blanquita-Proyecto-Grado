@@ -46,6 +46,7 @@ class ProduccionActivaInicioBobinaPapel(BaseModel):
     FechaInicioProduccion: datetime
     CantidadLogsActual: int
     Atrasada: bool
+    Larga: bool = False
 
 
 class PausaAbiertaInicioBobinaPapel(BaseModel):

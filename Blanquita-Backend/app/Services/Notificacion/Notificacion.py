@@ -1,7 +1,11 @@
 from sqlalchemy.orm import Session
 
 from app.Constants.AlertaStock import DOMINIOS_STOCK_NOTIFICACION, NIVEL_STOCK_CRITICO
-from app.Constants.Cantidades import HORAS_ALERTA_CONTEO_ABIERTO, HORAS_ALERTA_PAUSA_ABIERTA
+from app.Constants.Cantidades import (
+    HORAS_ALERTA_CONTEO_ABIERTO,
+    HORAS_ALERTA_PAUSA_ABIERTA,
+    HORAS_ALERTA_PRODUCCION_LARGA,
+)
 from app.Constants.Horario import HORA_FIN_SOLO_CONSULTA, HORA_INICIO_SOLO_CONSULTA
 from app.Constants.Roles import ROL_LIDER_INVENTARIO_PRODUCCION, ROL_GERENTE_GENERAL
 from app.Models.BobinaPapel.Inicio import (
@@ -30,7 +34,7 @@ from app.Services.AlertaStock.AlertaStock import _item
 from app.Services.InventarioFinal.Conteo import resumen_conteo
 from app.Services.InventarioFinal.ProductoFinal import estado_bloqueo
 from app.utils.horario import en_modo_consulta
-from app.utils.inicio import SemanaInicio, semana_inicio
+from app.utils.inicio import SemanaInicio, produccion_larga, semana_inicio
 
 
 class NotificacionService:
@@ -56,12 +60,22 @@ class NotificacionService:
     def Producciones(
         self, semana: SemanaInicio
     ) -> tuple[ProduccionBobinaPapelNotificaciones, ProduccionBobinaServilletaNotificaciones]:
+        activas_papel = self.bobina_papel.Activas()
+        pausas_papel = self.bobina_papel.PausasPorProduccion(
+            [fila["IdProduccionBobinaTubo"] for fila in activas_papel]
+        )
         bobina_papel = ProduccionBobinaPapelNotificaciones(
             Activas=[
                 ProduccionActivaInicioBobinaPapel(
-                    **fila, Atrasada=semana.produccion_atrasada(fila["FechaInicioProduccion"])
+                    **fila,
+                    Atrasada=semana.produccion_atrasada(fila["FechaInicioProduccion"]),
+                    Larga=produccion_larga(
+                        fila["FechaInicioProduccion"],
+                        pausas_papel.get(fila["IdProduccionBobinaTubo"], []),
+                        semana.ahora,
+                    ),
                 )
-                for fila in self.bobina_papel.Activas()
+                for fila in activas_papel
             ],
             Pausadas=[
                 PausaAbiertaInicioBobinaPapel(**fila, Atrasada=semana.pausa_atrasada(fila["FechaHoraPausa"]))
@@ -123,6 +137,7 @@ class NotificacionService:
             BobinaPapel=bobina_papel,
             BobinaServilleta=bobina_servilleta,
             HorasAlertaPausa=HORAS_ALERTA_PAUSA_ABIERTA,
+            HorasAlertaProduccionLarga=HORAS_ALERTA_PRODUCCION_LARGA,
             Atrasadas=sum(1 for produccion in producciones if produccion.Atrasada),
             Total=(1 if modo_consulta else 0)
             + (1 if conteo else 0)
