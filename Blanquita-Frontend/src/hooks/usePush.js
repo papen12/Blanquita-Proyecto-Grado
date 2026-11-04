@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import {
   desuscribirPush,
   suscribirPush,
@@ -35,6 +34,11 @@ const claveABytes = (clave) => {
   return Uint8Array.from(atob(base64), (caracter) => caracter.charCodeAt(0));
 };
 
+const textoError = (e, respaldo) => {
+  const detalle = [e?.name, e?.message].filter(Boolean).join(": ");
+  return detalle ? `${respaldo}. ${detalle}` : respaldo;
+};
+
 const estadoSinSuscripcion = () => {
   if (esIos() && !esAppInstalada()) return ESTADOS_PUSH.REQUIERE_INSTALAR;
   if (!soportaPush()) return ESTADOS_PUSH.NO_SOPORTADO;
@@ -45,6 +49,7 @@ const estadoSinSuscripcion = () => {
 export function usePush() {
   const [estado, setEstado] = useState(ESTADOS_PUSH.CARGANDO);
   const [procesando, setProcesando] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let vigente = true;
@@ -70,6 +75,7 @@ export function usePush() {
 
   const activar = async () => {
     setProcesando(true);
+    setError("");
     try {
       const permiso = await Notification.requestPermission();
       if (permiso !== "granted") {
@@ -78,7 +84,7 @@ export function usePush() {
       }
       const clave = await verClavePublicaPush();
       if (!clave) {
-        toast.error("Las notificaciones todavía no están configuradas en el servidor");
+        setError("Las notificaciones todavía no están configuradas en el servidor");
         return;
       }
       await navigator.serviceWorker.register(RUTA_SERVICE_WORKER);
@@ -91,9 +97,8 @@ export function usePush() {
         }));
       await suscribirPush(suscripcion);
       setEstado(ESTADOS_PUSH.ACTIVO);
-      toast.success("Notificaciones activadas en este dispositivo");
     } catch (e) {
-      toast.error(e.message || "No se pudieron activar las notificaciones");
+      setError(textoError(e, "No se pudieron activar las notificaciones"));
     } finally {
       setProcesando(false);
     }
@@ -101,6 +106,7 @@ export function usePush() {
 
   const desactivar = async () => {
     setProcesando(true);
+    setError("");
     try {
       const registro = await navigator.serviceWorker.getRegistration();
       const suscripcion = await registro?.pushManager.getSubscription();
@@ -109,13 +115,12 @@ export function usePush() {
         await suscripcion.unsubscribe();
       }
       setEstado(ESTADOS_PUSH.INACTIVO);
-      toast.success("Notificaciones desactivadas en este dispositivo");
     } catch (e) {
-      toast.error(e.message || "No se pudieron desactivar las notificaciones");
+      setError(textoError(e, "No se pudieron desactivar las notificaciones"));
     } finally {
       setProcesando(false);
     }
   };
 
-  return { estado, procesando, activar, desactivar };
+  return { estado, procesando, error, activar, desactivar };
 }
