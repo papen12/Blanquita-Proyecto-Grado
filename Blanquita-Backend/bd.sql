@@ -184,6 +184,7 @@ CREATE TABLE "LoteEmpaque" (
 CREATE TABLE "TipoEmpaque" (
   "IdTipoEmpaque" SERIAL PRIMARY KEY,
   "NombreTipoEmpaque" TEXT NOT NULL,
+  "DescripcionTipoEmpaque" TEXT,
   "Activo" BOOLEAN NOT NULL DEFAULT true,
   "StockMinimo" INTEGER,
   "StockPreventivo" INTEGER,

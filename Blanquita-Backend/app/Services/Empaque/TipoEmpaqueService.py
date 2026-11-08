@@ -33,7 +33,6 @@ class TipoEmpaqueService:
         self.clase = clase
         self.etiqueta = ETIQUETAS[clase]
         self.repository = TipoEmpaqueRepository(db, clase)
-        self.con_descripcion = self.repository.clase["descripcion"] is not None
         self.con_inventario = self.repository.clase["inventario"] is not None
 
     def ListarTipos(self, id_tipo: int | None = None) -> list[TipoEmpaqueAdminItem]:
@@ -50,12 +49,14 @@ class TipoEmpaqueService:
 
     def CrearTipo(self, data: CrearTipoEmpaqueRequest, id_admin: int) -> TipoEmpaqueAdminItem:
         nombre = validar_nombre(self.repository, data.Nombre, self.etiqueta)
-        descripcion = validar_descripcion(data.Descripcion) if self.con_descripcion else None
+        descripcion = validar_descripcion(data.Descripcion)
         validar_umbral_stock(data.StockMinimo, data.StockPreventivo)
 
-        valores = {self.repository.clase["nombre"].key: nombre, "Activo": True}
-        if self.con_descripcion:
-            valores[self.repository.clase["descripcion"].key] = descripcion
+        valores = {
+            self.repository.clase["nombre"].key: nombre,
+            self.repository.clase["descripcion"].key: descripcion,
+            "Activo": True,
+        }
         if not self.con_inventario:
             valores["StockMinimo"] = data.StockMinimo
             valores["StockPreventivo"] = data.StockPreventivo
@@ -71,13 +72,12 @@ class TipoEmpaqueService:
                 )
             ]
 
-        texto_descripcion = f"descripción: {mostrar(descripcion)}, " if self.con_descripcion else ""
         creado = self.repository.CrearTipo(
             self.repository.modelo(**valores),
             inventario,
             lambda t: (
                 f"Crear {self.etiqueta} · #{getattr(t, self.repository.clase['id'].key)} {nombre} "
-                f"({texto_descripcion}stock: {mostrar_umbral(data.StockMinimo, data.StockPreventivo)})"
+                f"(descripción: {mostrar(descripcion)}, stock: {mostrar_umbral(data.StockMinimo, data.StockPreventivo)})"
             ),
             id_admin,
             f"No se pudo crear el {self.etiqueta}",
@@ -99,14 +99,13 @@ class TipoEmpaqueService:
         nombre = getattr(tipo, self.repository.clase["nombre"].key)
         detalle = []
 
-        if self.con_descripcion:
-            campo = self.repository.clase["descripcion"].key
-            anterior = getattr(tipo, campo)
-            descripcion = limpiar(data.Descripcion)
-            if descripcion != limpiar(anterior):
-                descripcion = validar_descripcion(descripcion)
-                detalle.append(f"descripción: {mostrar(anterior)} → {mostrar(descripcion)}")
-                setattr(tipo, campo, descripcion)
+        campo = self.repository.clase["descripcion"].key
+        anterior = getattr(tipo, campo)
+        descripcion = limpiar(data.Descripcion)
+        if descripcion != limpiar(anterior):
+            descripcion = validar_descripcion(descripcion)
+            detalle.append(f"descripción: {mostrar(anterior)} → {mostrar(descripcion)}")
+            setattr(tipo, campo, descripcion)
 
         destino_stock = inventario if self.con_inventario else tipo
         stock_anterior = (destino_stock.StockMinimo, destino_stock.StockPreventivo)

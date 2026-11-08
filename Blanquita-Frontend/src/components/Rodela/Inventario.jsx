@@ -43,12 +43,12 @@ import { useCatalogo } from "@/hooks/useCatalogo";
 import { useDetalleInventario } from "@/hooks/useDetalleInventario";
 import { useEjecutar } from "@/hooks/useEjecutar";
 import { BotonDescarga } from "@/components/layout/BotonDescarga";
+import { MedidorStock } from "@/components/layout/MedidorStock";
 import {
   GRID_TARJETAS,
   conAcentos,
   coincide,
   TarjetaTipo,
-  DatoTarjeta,
   EncabezadoCatalogo,
   EstadoCatalogo,
   PanelDetalle,
@@ -65,11 +65,6 @@ import {
 
 const ESTADO_ALMACEN = "En almacén";
 const REQUERIDAS = 1;
-
-const etiquetaRodelas = (n) => {
-  const cantidad = Number(n || 0);
-  return `${cantidad} ${cantidad === 1 ? "rodela" : "rodelas"}`;
-};
 
 const cargarRodelasEnAlmacen = async (idTipoRodela) => {
   const data = await verDetalleInventarioRodela(idTipoRodela);
@@ -330,9 +325,11 @@ export default function InventarioRodelas({ usuario }) {
                 unidad="rodelas en almacén"
                 textoVer="Ver rodelas"
               >
-                <DatoTarjeta etiqueta="Abiertas en producción">
-                  {etiquetaRodelas(t.CantidadAbiertas)}
-                </DatoTarjeta>
+                <MedidorStock
+                  cantidad={t.CantidadEnAlmacen}
+                  StockMinimo={t.StockMinimo}
+                  StockPreventivo={t.StockPreventivo}
+                />
                 {t.Descripcion && (
                   <div className="text-[12.5px] leading-snug text-slate-500">{t.Descripcion}</div>
                 )}

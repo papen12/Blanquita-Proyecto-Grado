@@ -19,12 +19,12 @@ import { useCatalogo } from "@/hooks/useCatalogo";
 import { useDetalleInventario } from "@/hooks/useDetalleInventario";
 import { useEjecutar } from "@/hooks/useEjecutar";
 import { BotonDescarga } from "@/components/layout/BotonDescarga";
+import { MedidorStock } from "@/components/layout/MedidorStock";
 import {
   GRID_TARJETAS,
   conAcentos,
   coincide,
   TarjetaTipo,
-  DatoTarjeta,
   TarjetaFueraInventario,
   EncabezadoCatalogo,
   EstadoCatalogo,
@@ -89,7 +89,6 @@ export default function InventarioBobinasPapel({ usuario }) {
   }, [detalle.sel]);
 
   const totalBobinas = tipos.reduce((s, t) => s + t.CantidadBobinas, 0);
-  const totalPesoFmt = fmt(tipos.reduce((s, t) => s + Number(t.PesoNetoTotalKg || 0), 0));
 
   const bobinasFiltradas = detalle.datos.filter((b) =>
     coincide(detalle.busqueda, b.CodigoBobina),
@@ -203,7 +202,7 @@ export default function InventarioBobinasPapel({ usuario }) {
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-6">
         <EncabezadoCatalogo titulo="Catálogo por tipo de bobina">
           Solo bobinas <strong className="text-slate-700">en almacén</strong>{" "}
-          · {totalBobinas} bobinas · {totalPesoFmt} kg netos
+          · {totalBobinas} bobinas
         </EncabezadoCatalogo>
 
         <EstadoCatalogo cargando={resumen.cargando} error={resumen.error} altoSkeleton="h-52">
@@ -222,14 +221,11 @@ export default function InventarioBobinasPapel({ usuario }) {
                 unidad="bobinas en almacén"
                 textoVer="Ver bobinas"
               >
-                <div className="grid grid-cols-2 gap-2">
-                  <DatoTarjeta etiqueta="Peso neto" tabular>
-                    {fmt(t.PesoNetoTotalKg)} kg
-                  </DatoTarjeta>
-                  <DatoTarjeta etiqueta="Gramaje prom." tabular>
-                    {fmt(t.GramajePromedio)} g/m²
-                  </DatoTarjeta>
-                </div>
+                <MedidorStock
+                  cantidad={t.CantidadBobinas}
+                  StockMinimo={t.StockMinimo}
+                  StockPreventivo={t.StockPreventivo}
+                />
               </TarjetaTipo>
             ))}
             {esLider && (

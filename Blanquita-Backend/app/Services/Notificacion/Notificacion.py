@@ -107,7 +107,7 @@ class NotificacionService:
         bobina_papel, bobina_servilleta = self.Producciones(semana)
         ve_alertas = id_rol in (ROL_LIDER_INVENTARIO_PRODUCCION, ROL_GERENTE_GENERAL)
         stock = self._Stock() if ve_alertas else None
-        bloqueo = estado_bloqueo(self.producto_final.ObtenerBloqueoActivo()) if ve_alertas else None
+        bloqueo = estado_bloqueo(self.producto_final.ObtenerBloqueoActivo())
         fila_conteo = self.conteo.ObtenerConteoAbierto()
         conteo = resumen_conteo(fila_conteo) if fila_conteo else None
 

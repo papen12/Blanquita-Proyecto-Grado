@@ -29,7 +29,6 @@ const DATOS_CLASE = {
     singular: "tipo de empaque en bobina",
     ejemploNombre: "Ej. Luxury 24",
     unidadStock: "bobinas de empaque en almacén",
-    sinDescripcion: true,
     descripcionCrear:
       "El tipo queda disponible para registrar lotes de empaque en bobina (código y peso por bobina).",
     ayuda: (
@@ -98,19 +97,16 @@ const configDe = (clase) => ({
   cambiarEstado: (id, activo, motivo) => cambiarEstadoTipoEmpaque(clase, id, activo, motivo),
 });
 
-const columnasDe = (clase) => [
+const COLUMNAS = [
   {
     titulo: "Nombre",
     clase: "font-semibold text-slate-900",
-    valor: (t) =>
-      DATOS_CLASE[clase].sinDescripcion ? (
-        t.Nombre
-      ) : (
-        <div className="flex flex-col">
-          <span>{t.Nombre}</span>
-          <span className="text-[12px] font-normal text-slate-500">{t.Descripcion ?? "Sin descripción"}</span>
-        </div>
-      ),
+    valor: (t) => (
+      <div className="flex flex-col">
+        <span>{t.Nombre}</span>
+        <span className="text-[12px] font-normal text-slate-500">{t.Descripcion ?? "Sin descripción"}</span>
+      </div>
+    ),
   },
   columnaStock((t) => t.CantidadActual),
   columnaEstado,
@@ -134,7 +130,7 @@ export default function TiposEmpaque({ claseInicial }) {
     <PaginaTipos
       key={clase}
       config={configDe(clase)}
-      columnas={columnasDe(clase)}
+      columnas={COLUMNAS}
       datosTarjeta={(t) => (
         <>
           <Dato etiqueta="Stock">{t.CantidadActual}</Dato>

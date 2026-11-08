@@ -31,6 +31,7 @@ import { coincideEstadoStock } from "@/utils/stock";
 import { ControlCantidad, ResumenStock } from "@/components/InventarioProductos/comunes";
 import Header from "@/components/layout/Header";
 import { BotonDescarga } from "@/components/layout/BotonDescarga";
+import { MedidorStock } from "@/components/layout/MedidorStock";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { descargarReporteInventarioInsumo } from "@/services/Insumo/Reporte";
 import { ObservacionMovimientosInsumo } from "@/constants/OperadorConfig";
@@ -408,6 +409,11 @@ export default function InventarioInsumos({ usuario }) {
                 {i.DescripcionInsumo && (
                   <DatoTarjeta etiqueta="Descripción">{i.DescripcionInsumo}</DatoTarjeta>
                 )}
+                <MedidorStock
+                  cantidad={i.CantidadActual}
+                  StockMinimo={i.StockMinimo}
+                  StockPreventivo={i.StockPreventivo}
+                />
               </TarjetaTipo>
             ))}
           </div>

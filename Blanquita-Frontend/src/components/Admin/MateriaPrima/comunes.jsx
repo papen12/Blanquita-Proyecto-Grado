@@ -637,29 +637,27 @@ export function PaginaFormularioTipo({ config, id = null }) {
               </div>
             )}
 
-            {!config.sinDescripcion && (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="tipo-descripcion" className={ETIQUETA}>
-                  Descripción <span className="font-semibold normal-case text-slate-400">(opcional)</span>
-                </Label>
-                <Textarea
-                  id="tipo-descripcion"
-                  value={datos.Descripcion}
-                  onChange={(e) => cambiar("Descripcion")(limpiarObservacion(e.target.value))}
-                  placeholder="Ej. Papel de mezcla para Luxury y EcoPack"
-                  className="min-h-20"
-                  maxLength={DESCRIPCION_MAX}
-                  aria-invalid={Boolean(errores.Descripcion)}
-                />
-                <span
-                  className={
-                    errores.Descripcion ? "text-xs font-semibold text-red-600" : "text-xs text-slate-500"
-                  }
-                >
-                  {errores.Descripcion ?? `${largoDescripcion}/${DESCRIPCION_MAX}`}
-                </span>
-              </div>
-            )}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="tipo-descripcion" className={ETIQUETA}>
+                Descripción <span className="font-semibold normal-case text-slate-400">(opcional)</span>
+              </Label>
+              <Textarea
+                id="tipo-descripcion"
+                value={datos.Descripcion}
+                onChange={(e) => cambiar("Descripcion")(limpiarObservacion(e.target.value))}
+                placeholder="Ej. Papel de mezcla para Luxury y EcoPack"
+                className="min-h-20"
+                maxLength={DESCRIPCION_MAX}
+                aria-invalid={Boolean(errores.Descripcion)}
+              />
+              <span
+                className={
+                  errores.Descripcion ? "text-xs font-semibold text-red-600" : "text-xs text-slate-500"
+                }
+              >
+                {errores.Descripcion ?? `${largoDescripcion}/${DESCRIPCION_MAX}`}
+              </span>
+            </div>
           </Seccion>
 
           <CamposStock

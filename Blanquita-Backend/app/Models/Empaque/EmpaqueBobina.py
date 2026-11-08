@@ -45,6 +45,7 @@ class TrasladarEmpaquesProduccionResponseItem(BaseModel):
 class ResumenInventarioEmpaqueResponse(NivelStockResponse):
     IdTipoEmpaque: int
     NombreTipoEmpaque: str
+    DescripcionTipoEmpaque: str | None = None
     Activo: bool
     CantidadEmpaques: int
 

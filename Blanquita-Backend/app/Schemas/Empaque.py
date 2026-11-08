@@ -22,6 +22,7 @@ class TipoEmpaque(Base):
 
     IdTipoEmpaque: Mapped[int] = mapped_column(primary_key=True)
     NombreTipoEmpaque: Mapped[str] = mapped_column(Text)
+    DescripcionTipoEmpaque: Mapped[str | None] = mapped_column(Text)
     Activo: Mapped[bool] = mapped_column(server_default=true())
     StockMinimo: Mapped[int | None]
     StockPreventivo: Mapped[int | None]

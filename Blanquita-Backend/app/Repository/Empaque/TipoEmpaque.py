@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import literal, select
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -24,7 +24,7 @@ CLASES_TIPO_EMPAQUE = {
         "modelo": TipoEmpaque,
         "id": TipoEmpaque.IdTipoEmpaque,
         "nombre": TipoEmpaque.NombreTipoEmpaque,
-        "descripcion": None,
+        "descripcion": TipoEmpaque.DescripcionTipoEmpaque,
         "inventario": None,
         "fk_inventario": None,
         "dominio": DOMINIO_STOCK_EMPAQUE_BOBINA,
@@ -57,11 +57,10 @@ class TipoEmpaqueRepository(TipoMateriaPrimaRepository):
         self.stock = AlertaStockRepository(db)
 
     def ListarTipos(self, id_tipo: int | None = None) -> list[dict]:
-        descripcion = self.clase["descripcion"]
         consulta = select(
             self.columna_id.label("Id"),
             self.columna_nombre.label("Nombre"),
-            (descripcion if descripcion is not None else literal(None)).label("Descripcion"),
+            self.clase["descripcion"].label("Descripcion"),
             self.modelo.Activo,
         ).order_by(self.columna_nombre)
         if id_tipo is not None:

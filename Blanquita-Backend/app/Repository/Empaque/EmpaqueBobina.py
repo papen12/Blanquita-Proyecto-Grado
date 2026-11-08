@@ -31,6 +31,7 @@ class EmpaqueBobinaRepository:
             select(
                 TipoEmpaque.IdTipoEmpaque,
                 TipoEmpaque.NombreTipoEmpaque,
+                TipoEmpaque.DescripcionTipoEmpaque,
                 TipoEmpaque.Activo,
                 cantidad.label("CantidadEmpaques"),
                 TipoEmpaque.StockMinimo,
@@ -47,6 +48,7 @@ class EmpaqueBobinaRepository:
             .group_by(
                 TipoEmpaque.IdTipoEmpaque,
                 TipoEmpaque.NombreTipoEmpaque,
+                TipoEmpaque.DescripcionTipoEmpaque,
                 TipoEmpaque.Activo,
                 TipoEmpaque.StockMinimo,
                 TipoEmpaque.StockPreventivo,

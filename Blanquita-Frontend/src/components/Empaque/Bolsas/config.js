@@ -1,4 +1,4 @@
-import { ShoppingBag, Package } from "lucide-react";
+import { Cuboid, Package } from "lucide-react";
 import {
   verInventarioEmpaqueBolsa,
   cargarLoteEmpaqueBolsa,
@@ -18,7 +18,7 @@ import {
 
 export const CONFIG_BOLSAS = {
   bolsa: {
-    icono: ShoppingBag,
+    icono: Cuboid,
     subtitulo: "Inventario de empaques en bolsa",
     subtituloIngreso: "Registrar ingreso de empaques en bolsa",
     catalogo: "Catálogo de empaques en bolsa",

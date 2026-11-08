@@ -15,6 +15,7 @@ import {
   Truck,
   Package,
   Cuboid,
+  Cylinder,
   PackagePlus,
   DoorClosedLocked,
   PackageCheck,
@@ -82,7 +83,7 @@ export const RutasNavBar = [
     subrutas: [
       {
         titulo: "Bobina",
-        icono: Database,
+        icono: Cylinder,
         ruta: "bobina-inventario",
       },
       {
