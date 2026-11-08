@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Package, Loader2, ArrowRight, History } from "lucide-react";
+import { Plus, Cylinder, Loader2, ArrowRight, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,7 @@ import {
   conAcentos,
   coincide,
   TarjetaTipo,
+  DatoTarjeta,
   EncabezadoCatalogo,
   EstadoCatalogo,
   PanelDetalle,
@@ -45,6 +46,7 @@ import {
 } from "@/components/Inventario/comunes";
 import Header from "@/components/layout/Header";
 import { BotonDescarga } from "@/components/layout/BotonDescarga";
+import { MedidorStock } from "@/components/layout/MedidorStock";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { descargarReporteInventarioEmpaque } from "@/services/Empaque/Reporte";
 import { MINUTOS_REINGRESO_EMPAQUE_BOBINA } from "@/constants/Values";
@@ -302,7 +304,7 @@ export default function EmpaqueBobinaInventario({ usuario }) {
                 activo={detalle.sel === t.IdTipoEmpaque}
                 inactivo={!t.Activo}
                 onClick={() => detalle.seleccionar(t.IdTipoEmpaque)}
-                icono={Package}
+                icono={Cylinder}
                 claseIcono="h-7 w-7"
                 grosorIcono={2.25}
                 nombre={t.NombreTipoEmpaque}
@@ -310,7 +312,16 @@ export default function EmpaqueBobinaInventario({ usuario }) {
                 cantidad={t.CantidadEmpaques}
                 unidad="empaques en almacén"
                 textoVer="Ver empaques"
-              />
+              >
+                {t.DescripcionTipoEmpaque && (
+                  <DatoTarjeta etiqueta="Descripción">{t.DescripcionTipoEmpaque}</DatoTarjeta>
+                )}
+                <MedidorStock
+                  cantidad={t.CantidadEmpaques}
+                  StockMinimo={t.StockMinimo}
+                  StockPreventivo={t.StockPreventivo}
+                />
+              </TarjetaTipo>
             ))}
           </div>
         </EstadoCatalogo>
@@ -318,7 +329,7 @@ export default function EmpaqueBobinaInventario({ usuario }) {
         {tipoSel && (
           <PanelDetalle
             acento={tipoSel}
-            icono={Package}
+            icono={Cylinder}
             claseIcono="h-6 w-6"
             grosorIcono={2.25}
             titulo={`Empaques · ${tipoSel.NombreTipoEmpaque}`}

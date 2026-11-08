@@ -37,6 +37,7 @@ export const TrasladarEmpaquesProduccionResponseItem = (data) => ({
 export const ResumenInventarioEmpaqueResponse = (data) => ({
   IdTipoEmpaque: data.IdTipoEmpaque,
   NombreTipoEmpaque: data.NombreTipoEmpaque,
+  DescripcionTipoEmpaque: data.DescripcionTipoEmpaque ?? null,
   CantidadEmpaques: data.CantidadEmpaques,
   Activo: data.Activo,
   ...NivelStockResponse(data)

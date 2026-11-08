@@ -30,6 +30,7 @@ import { coincideEstadoStock } from "@/utils/stock";
 import { ControlCantidad, ResumenStock } from "@/components/InventarioProductos/comunes";
 import Header from "@/components/layout/Header";
 import { BotonDescarga } from "@/components/layout/BotonDescarga";
+import { MedidorStock } from "@/components/layout/MedidorStock";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { descargarReporteInventarioEmpaque } from "@/services/Empaque/Reporte";
 import {
@@ -419,6 +420,11 @@ export default function InventarioBolsas({ tipo, usuario }) {
                 {i[config.campoDescripcion] && (
                   <DatoTarjeta etiqueta="Descripción">{i[config.campoDescripcion]}</DatoTarjeta>
                 )}
+                <MedidorStock
+                  cantidad={i.CantidadActual}
+                  StockMinimo={i.StockMinimo}
+                  StockPreventivo={i.StockPreventivo}
+                />
               </TarjetaTipo>
             ))}
           </div>

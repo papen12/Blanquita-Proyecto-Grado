@@ -56,6 +56,7 @@ import { useCatalogo } from "@/hooks/useCatalogo";
 import { useDetalleInventario } from "@/hooks/useDetalleInventario";
 import { useEjecutar } from "@/hooks/useEjecutar";
 import { BotonDescarga } from "@/components/layout/BotonDescarga";
+import { MedidorStock } from "@/components/layout/MedidorStock";
 import {
   GRID_TARJETAS,
   conAcentos,
@@ -600,7 +601,13 @@ export default function InventarioBobinaServilleta({ usuario }) {
                       cantidad={t.CantidadBobinaServilleta}
                       unidad="bobinas en almacén"
                       textoVer="Ver bobinas"
-                    />
+                    >
+                      <MedidorStock
+                        cantidad={t.CantidadBobinaServilleta}
+                        StockMinimo={t.StockMinimo}
+                        StockPreventivo={t.StockPreventivo}
+                      />
+                    </TarjetaTipo>
                   ))}
                 </div>
               )}
@@ -627,7 +634,13 @@ export default function InventarioBobinaServilleta({ usuario }) {
                     cantidad={t.CantidadSubBobinas}
                     unidad="sub-bobinas en almacén"
                     textoVer="Ver sub-bobinas"
-                  />
+                  >
+                    <MedidorStock
+                      cantidad={t.CantidadSubBobinas}
+                      StockMinimo={t.StockMinimo}
+                      StockPreventivo={t.StockPreventivo}
+                    />
+                  </TarjetaTipo>
                 ))}
                 {esEncargado && (
                   <TarjetaFueraInventario
