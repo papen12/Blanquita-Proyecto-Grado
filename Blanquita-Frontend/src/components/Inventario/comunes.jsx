@@ -75,18 +75,20 @@ export function TarjetaTipo({
       disabled={!onClick}
       className={cn(TARJETA, activo ? acento.border : "border-slate-200")}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
+      <div className="flex min-w-0 flex-col gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
           <Icono className={cn(claseIcono, "shrink-0", acento.text)} strokeWidth={grosorIcono} />
-          <div className="text-[17px] font-extrabold text-slate-900">{nombre}</div>
-          {inactivo && <BadgeInactivo />}
+          <div className="min-w-0 break-words text-[17px] font-extrabold text-slate-900">{nombre}</div>
         </div>
-        <Badge
-          variant="outline"
-          className={cn("border-0 font-bold", estilo ? estilo.clase : cn(acento.soft, acento.text))}
-        >
-          {estilo ? estilo.texto : etiqueta}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {inactivo && <BadgeInactivo />}
+          <Badge
+            variant="outline"
+            className={cn("border-0 font-bold", estilo ? estilo.clase : cn(acento.soft, acento.text))}
+          >
+            {estilo ? estilo.texto : etiqueta}
+          </Badge>
+        </div>
       </div>
 
       <div className="flex items-baseline gap-1.5">

@@ -347,13 +347,11 @@ function MateriaPrima({ areas, dominios = ORDEN_MATERIA_PRIMA }) {
             titulo={area.NombreDominio}
             descripcion={`${numero(area.Cantidad)} ${unidad} en almacén`}
             icono={Warehouse}
-            accion={
-              <div className="flex items-center gap-3">
-                <EstadoArea area={area} />
-                <EnlaceBloque href={`${RUTA}/${RUTA_INVENTARIO[area.Dominio]}`}>Inventario</EnlaceBloque>
-              </div>
-            }
           >
+            <div className="-mt-1 mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <EstadoArea area={area} />
+              <EnlaceBloque href={`${RUTA}/${RUTA_INVENTARIO[area.Dominio]}`}>Inventario</EnlaceBloque>
+            </div>
             <GrillaStock
               vacio="Sin tipos registrados"
               items={area.Items.map((item) => ({

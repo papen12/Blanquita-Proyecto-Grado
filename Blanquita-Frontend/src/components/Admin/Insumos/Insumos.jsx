@@ -30,6 +30,11 @@ const FILTROS_INICIALES = { Busqueda: "", Activo: "" };
 
 const stock = (i) => formatearNumero(i.CantidadActual, { decimales: 0 });
 
+const MAX_DESCRIPCION = 40;
+
+const descripcionCorta = (texto) =>
+  texto.length > MAX_DESCRIPCION ? `${texto.slice(0, MAX_DESCRIPCION).trimEnd()}...` : texto;
+
 const CONFIG_ESTADO = {
   idDe: (i) => i.IdTipoInsumo,
   nombreDe: (i) => i.NombreInsumo,
@@ -45,7 +50,7 @@ const COLUMNAS = [
     clase: "font-semibold text-slate-900",
     valor: (i) => i.NombreInsumo,
   },
-  { titulo: "Descripción", clase: "text-slate-600", valor: (i) => i.DescripcionInsumo ?? "-" },
+  { titulo: "Descripción", clase: "text-slate-600", valor: (i) => (i.DescripcionInsumo ? descripcionCorta(i.DescripcionInsumo) : "-") },
   columnaStock((i) => Number(i.CantidadActual || 0)),
   columnaEstado,
 ];
@@ -149,7 +154,7 @@ export default function Insumos() {
               <TarjetaReporte
                 titulo={i.NombreInsumo}
                 tamanoTitulo="text-[14px] font-sans"
-                subtitulo={i.DescripcionInsumo ?? "Sin descripción"}
+                subtitulo={i.DescripcionInsumo ? descripcionCorta(i.DescripcionInsumo) : "Sin descripción"}
                 estado={i.NombreEstado}
                 estilos={ESTILOS_ESTADO_TIPO}
               >

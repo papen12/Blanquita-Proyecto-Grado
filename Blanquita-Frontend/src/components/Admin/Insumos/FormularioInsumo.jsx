@@ -21,7 +21,7 @@ const RUTA_LISTA = "/admin/insumos";
 const NOMBRE_MIN = 3;
 const NOMBRE_MAX = 60;
 const DESCRIPCION_MIN = 10;
-const DESCRIPCION_MAX = 50;
+const DESCRIPCION_MAX = 100;
 const PATRON_NOMBRE = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .,()/-]+$/;
 
 const VALORES_POR_DEFECTO = {
