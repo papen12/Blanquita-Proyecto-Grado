@@ -41,7 +41,10 @@ const MESES = [
 const capitalizar = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function turnoActual(fecha) {
-  return fecha.getHours() < 15 ? "Mañana" : "Tarde";
+  const hora = fecha.getHours();
+  if (hora >= 6 && hora < 12) return "Mañana";
+  if (hora >= 12 && hora < 18) return "Tarde";
+  return "Horas Extra";
 }
 
 function fechaLarga(fecha) {

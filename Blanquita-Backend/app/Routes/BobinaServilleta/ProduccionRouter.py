@@ -4,7 +4,12 @@ from app.Config.supabase import get_db
 from app.Services.Notificacion.Push import avisar_push
 from app.Services.Notificacion.Avisos import (
     aviso_cancelacion,
+    aviso_finalizacion,
+    aviso_inicio_produccion,
+    aviso_pausa,
     aviso_posposicion,
+    aviso_reanudacion,
+    aviso_retomada,
     RUTA_PRODUCCION_BOBINA_SERVILLETA,
 )
 
@@ -64,10 +69,13 @@ def AbrirBobinaServilleta(
 )
 def IniciarProduccionSubBobina(
     data: IniciarProduccionServilletaRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
 ):
-    return service.IniciarProduccionServilleta(data, usuario_actual["IdUsuario"])
+    resultado = service.IniciarProduccionServilleta(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_inicio_produccion("servilleta", f"Turno {resultado.NombreTurno}.", RUTA_PRODUCCION_BOBINA_SERVILLETA), usuario_actual["IdUsuario"])
+    return resultado
 
 @ProduccionBobinaServilletaRouter.post(
     "/pausar",
@@ -76,10 +84,13 @@ def IniciarProduccionSubBobina(
 )
 def PausarProduccionSubBobina(
     data: PausaProduccionServilletaRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
 ):
-    return service.PausaProduccionServilleta(data, usuario_actual["IdUsuario"])
+    resultado = service.PausaProduccionServilleta(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_pausa("servilleta", resultado.MotivoPausaProduccion, RUTA_PRODUCCION_BOBINA_SERVILLETA), usuario_actual["IdUsuario"])
+    return resultado
 
 @ProduccionBobinaServilletaRouter.post(
     "/reanudar",
@@ -88,10 +99,13 @@ def PausarProduccionSubBobina(
 )
 def ReanudadProduccionSubBobina(
     data: ReanudarProduccionServilletaRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
 ):
-    return service.ReanudarProduccionServilleta(data, usuario_actual["IdUsuario"])
+    resultado = service.ReanudarProduccionServilleta(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_reanudacion("servilleta", resultado.MotivoReanudacion, RUTA_PRODUCCION_BOBINA_SERVILLETA), usuario_actual["IdUsuario"])
+    return resultado
 
 @ProduccionBobinaServilletaRouter.post(
     "/posponer",
@@ -115,10 +129,13 @@ def PosponerProduccionSubBobina(
 )
 def RetomarProduccionSubBobina(
     data: RetomarProduccionServilletaRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
 ):
-    return service.RetomarProduccionServilleta(data, usuario_actual["IdUsuario"])
+    resultado = service.RetomarProduccionServilleta(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_retomada("servilleta", resultado.MotivoReanudacion, RUTA_PRODUCCION_BOBINA_SERVILLETA), usuario_actual["IdUsuario"])
+    return resultado
 
 @ProduccionBobinaServilletaRouter.post(
     "/finalizar",
@@ -127,10 +144,13 @@ def RetomarProduccionSubBobina(
 )
 def FinalizarProduccionServilelta(
     data: FinalizarProduccionServilletaRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProduccionBobinaServilletaService = Depends(produccion_bobina_servilleta_service)
 ):
-    return service.FinalizarProduccionServilleta(data, usuario_actual["IdUsuario"])
+    resultado = service.FinalizarProduccionServilleta(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_finalizacion("servilleta", f"Producción N.° {resultado.IdProduccionServilleta} cerrada.", RUTA_PRODUCCION_BOBINA_SERVILLETA), usuario_actual["IdUsuario"])
+    return resultado
 
 @ProduccionBobinaServilletaRouter.post(
     "/cancelar",

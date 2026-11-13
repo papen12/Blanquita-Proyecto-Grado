@@ -104,6 +104,8 @@ class FinalizarProduccionBobinaTuboResponse(BaseModel):
     FechaFinProduccion: datetime
     IdEstadoProduccion: int
     NombreEstadoProduccion: str
+    NombreProducto: str
+    CantidadLogs: int
 
 
 class CancelarProduccionBobinaTuboRequest(BaseModel):

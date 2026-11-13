@@ -3,8 +3,14 @@ from sqlalchemy.orm import Session
 from app.Config.supabase import get_db
 from app.Services.Notificacion.Push import avisar_push
 from app.Services.Notificacion.Avisos import (
+    aviso_cambio_linea,
     aviso_cancelacion,
+    aviso_finalizacion,
+    aviso_inicio_produccion,
+    aviso_pausa,
     aviso_posposicion,
+    aviso_reanudacion,
+    aviso_retomada,
     RUTA_PRODUCCION_BOBINA_PAPEL,
 )
 
@@ -60,12 +66,15 @@ ProduccionBobinaPapelRouter = APIRouter(
 )
 def IniciarProduccion(
     data: IniciarProduccionBobinaTuboRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(
         require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])
     ),
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
-    return service.IniciarProduccionBobinaTubo(data, usuario_actual["IdUsuario"])
+    resultado = service.IniciarProduccionBobinaTubo(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_inicio_produccion("bobina papel", f"{resultado.NombreProducto}, turno {resultado.NombreTurno}.", RUTA_PRODUCCION_BOBINA_PAPEL), usuario_actual["IdUsuario"])
+    return resultado
 
 
 @ProduccionBobinaPapelRouter.post(
@@ -75,10 +84,13 @@ def IniciarProduccion(
 )
 def CambiarLineaProduccion(
     data: CambiarLineaProduccionBobinaTuboRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
-    return service.CambiarLineaProduccion(data, usuario_actual["IdUsuario"])
+    resultado = service.CambiarLineaProduccion(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_cambio_linea(resultado.NombreProducto, resultado.NombreTurno), usuario_actual["IdUsuario"])
+    return resultado
 
 
 @ProduccionBobinaPapelRouter.post(
@@ -88,10 +100,13 @@ def CambiarLineaProduccion(
 )
 def FinalizarProduccion(
     data: FinalizarProduccionBobinaTuboRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
-    return service.FinalizarProduccion(data, usuario_actual["IdUsuario"])
+    resultado = service.FinalizarProduccion(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_finalizacion("bobina papel", f"{resultado.NombreProducto}: {resultado.CantidadLogs} logs.", RUTA_PRODUCCION_BOBINA_PAPEL), usuario_actual["IdUsuario"])
+    return resultado
 
 
 @ProduccionBobinaPapelRouter.post(
@@ -101,10 +116,13 @@ def FinalizarProduccion(
 )
 def PausarProduccion(
     data: PausarProduccionBobinaTuboRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
-    return service.PausarProduccion(data, usuario_actual["IdUsuario"])
+    resultado = service.PausarProduccion(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_pausa("bobina papel", resultado.MotivoPausaProduccion, RUTA_PRODUCCION_BOBINA_PAPEL), usuario_actual["IdUsuario"])
+    return resultado
 
 
 @ProduccionBobinaPapelRouter.post(
@@ -114,10 +132,13 @@ def PausarProduccion(
 )
 def ReanudarProduccion(
     data: ReanudarProduccionBobinaTuboRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION, ROL_OPERADOR])),
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
-    return service.ReanudarProduccion(data, usuario_actual["IdUsuario"])
+    resultado = service.ReanudarProduccion(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_reanudacion("bobina papel", resultado.MotivoReanudacion, RUTA_PRODUCCION_BOBINA_PAPEL), usuario_actual["IdUsuario"])
+    return resultado
 
 
 @ProduccionBobinaPapelRouter.post(
@@ -143,10 +164,13 @@ def PosponerProduccion(
 )
 def RetomarProduccion(
     data: RetomarProduccionBobinaTuboRequest,
+    tareas: BackgroundTasks,
     usuario_actual: dict = Depends(require_role([ROL_LIDER_INVENTARIO_PRODUCCION])),
     service: ProduccionBobinaPapelService = Depends(produccion_bobina_papel_service),
 ):
-    return service.RetomarProduccion(data, usuario_actual["IdUsuario"])
+    resultado = service.RetomarProduccion(data, usuario_actual["IdUsuario"])
+    avisar_push(tareas, aviso_retomada("bobina papel", resultado.MotivoReanudacion, RUTA_PRODUCCION_BOBINA_PAPEL), usuario_actual["IdUsuario"])
+    return resultado
 
 
 @ProduccionBobinaPapelRouter.post(
