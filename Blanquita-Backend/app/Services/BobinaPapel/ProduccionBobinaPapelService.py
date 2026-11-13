@@ -254,6 +254,8 @@ class ProduccionBobinaPapelService:
             mensaje_error="No se pudo finalizar la producción de bobina tubo",
         )
 
+        producto = self.repository.ObtenerProducto(produccion.IdProducto)
+
         return FinalizarProduccionBobinaTuboResponse(
             IdProduccionBobinaTubo=produccion.IdProduccionBobinaTubo,
             FechaFinProduccion=produccion.FechaFinProduccion,
@@ -261,6 +263,8 @@ class ProduccionBobinaPapelService:
             NombreEstadoProduccion=self.repository.NombreEstadoProduccion(
                 ESTADO_PRODUCCION_FINALIZADO
             ),
+            NombreProducto=producto["NombreProducto"] if producto else "",
+            CantidadLogs=produccion.CantidadLogsActual,
         )
 
     def PausarProduccion(

@@ -26,8 +26,8 @@ def _gerente_lider(titulo: str, cuerpo: str, ruta: str) -> AvisoPush:
     return AvisoPush(titulo, _recortar(cuerpo), ruta, DESTINO_GERENTE_LIDER)
 
 
-def _planta(titulo: str, cuerpo: str) -> AvisoPush:
-    return AvisoPush(titulo, _recortar(cuerpo), RUTA_INVENTARIO_PRODUCTO, DESTINO_PLANTA)
+def _planta(titulo: str, cuerpo: str, ruta: str = RUTA_INVENTARIO_PRODUCTO) -> AvisoPush:
+    return AvisoPush(titulo, _recortar(cuerpo), ruta, DESTINO_PLANTA)
 
 
 def _lider(titulo: str, cuerpo: str, ruta: str) -> AvisoPush:
@@ -40,6 +40,34 @@ def aviso_ingreso_lote(materia: str, cantidad: int, ruta: str) -> AvisoPush:
 
 def aviso_edicion(materia: str, detalle: str, ruta: str) -> AvisoPush:
     return _gerente_lider(f"Se editó {materia}", detalle, ruta)
+
+
+def aviso_inicio_produccion(materia: str, detalle: str, ruta: str) -> AvisoPush:
+    return _planta(f"Producción de {materia} iniciada", detalle, ruta)
+
+
+def aviso_pausa(materia: str, motivo: str | None, ruta: str) -> AvisoPush:
+    return _planta(f"Producción de {materia} en pausa", motivo or "Sin motivo", ruta)
+
+
+def aviso_reanudacion(materia: str, motivo: str | None, ruta: str) -> AvisoPush:
+    return _planta(f"Producción de {materia} reanudada", motivo or "Sin motivo", ruta)
+
+
+def aviso_cambio_linea(producto: str, turno: str) -> AvisoPush:
+    return _planta(
+        "Cambio de línea en bobina papel",
+        f"Ahora se produce {producto}, turno {turno}. El contador de logs empieza en 0.",
+        RUTA_PRODUCCION_BOBINA_PAPEL,
+    )
+
+
+def aviso_finalizacion(materia: str, detalle: str, ruta: str) -> AvisoPush:
+    return _gerente_lider(f"Producción de {materia} finalizada", detalle, ruta)
+
+
+def aviso_retomada(materia: str, motivo: str | None, ruta: str) -> AvisoPush:
+    return _gerente_lider(f"Producción de {materia} retomada", motivo or "Sin motivo", ruta)
 
 
 def aviso_cancelacion(materia: str, motivo: str | None, ruta: str) -> AvisoPush:
