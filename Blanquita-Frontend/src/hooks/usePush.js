@@ -134,6 +134,12 @@ export function usePush() {
         LIMITE_PASO_MS,
         "Este dispositivo o navegador no pudo conectarse al servicio de notificaciones. Puede que no sea compatible",
       );
+      if (!suscripcion) {
+        setError(
+          "Este navegador no entregó una suscripción. Puede que este dispositivo no sea compatible con las notificaciones",
+        );
+        return;
+      }
       await suscribirPush(suscripcion);
       setEstado(ESTADOS_PUSH.ACTIVO);
     } catch (e) {

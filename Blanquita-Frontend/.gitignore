@@ -24,6 +24,8 @@ pnpm-debug.log*
 .idea/
 
 
+# vercel
+.vercel/
 # wrangler
 .wrangler/
 .dev.vars*
