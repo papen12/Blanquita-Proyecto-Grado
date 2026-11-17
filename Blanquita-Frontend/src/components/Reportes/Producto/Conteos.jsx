@@ -22,6 +22,10 @@ import {
   fechaHora,
   textoDiferencia,
   claseDiferencia,
+  BadgeVariacion,
+  ordenarPorGravedad,
+  BadgeNivelUso,
+  IndicadorUso,
 } from "@/components/ConteoFisico/comunes";
 import { useReporte } from "@/hooks/useReporte";
 import { useDescarga } from "@/hooks/useDescarga";
@@ -83,6 +87,11 @@ const COLUMNAS_DETALLE = [
       </span>
     ),
   },
+  {
+    titulo: "Variación",
+    ...DERECHA,
+    valor: (d) => <BadgeVariacion sistema={d.CantidadSistema} fisico={d.CantidadFisica} />,
+  },
   { titulo: "Motivo", valor: (d) => d.MotivoDiferencia ?? "-" },
 ];
 
@@ -92,8 +101,11 @@ function tarjetaDetalle(d) {
       nombre={`${d.CodigoPresentacion} · ${d.NombrePresentacion}`}
       detalle={`Sistema ${d.CantidadSistema} · Físico ${d.CantidadFisica ?? "-"}${d.MotivoDiferencia ? ` · ${d.MotivoDiferencia}` : ""}`}
     >
-      <span className={cn("rounded-full px-2 py-0.5 font-extrabold", claseDiferencia(d.Diferencia))}>
-        {textoDiferencia(d.Diferencia)}
+      <span className="flex flex-col items-end gap-1">
+        <span className={cn("rounded-full px-2 py-0.5 font-extrabold", claseDiferencia(d.Diferencia))}>
+          {textoDiferencia(d.Diferencia)}
+        </span>
+        <BadgeVariacion sistema={d.CantidadSistema} fisico={d.CantidadFisica} />
       </span>
     </TarjetaFila>
   );
@@ -149,7 +161,7 @@ function TarjetaConteo({ conteo }) {
 
   const filas = detalle
     ? soloDiferencias
-      ? detalle.Detalle.filter((d) => d.Diferencia)
+      ? ordenarPorGravedad(detalle.Detalle.filter((d) => d.Diferencia))
       : detalle.Detalle
     : [];
 
@@ -159,6 +171,12 @@ function TarjetaConteo({ conteo }) {
         <span className="flex items-center gap-2">
           Conteo N° {conteo.IdConteoProductoTerminado}
           <BadgeEstadoConteo estado={conteo.Estado} />
+          {conteo.Estado === ESTADO_CONTEO.Cerrado && conteo.Indicadores && (
+            <BadgeNivelUso
+              nivel={conteo.Indicadores.Nivel}
+              porcentaje={conteo.Indicadores.PorcentajeDiferencia}
+            />
+          )}
         </span>
       }
       extra={
@@ -200,6 +218,11 @@ function TarjetaConteo({ conteo }) {
           {error && <ErrorCarga error={error} recargar={cargarDetalle} />}
           {detalle && (
             <>
+              {!anulado && (
+                <div className="px-5 pt-3">
+                  <IndicadorUso indicadores={detalle.Indicadores} />
+                </div>
+              )}
               <div className="flex justify-end px-5 pt-3">
                 <ToggleGroup value={[soloDiferencias ? "diferencias" : "todas"]} className="flex gap-2">
                   <ToggleGroupItem

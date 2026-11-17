@@ -23,6 +23,7 @@ class MotivoDiferenciaItem(BaseModel):
 
 class CerrarConteoProductoTerminadoRequest(BaseModel):
     Motivos: list[MotivoDiferenciaItem] = []
+    Reconteos: list[int] = []
     Confirmado: bool = False
 
 
@@ -44,10 +45,37 @@ class DetalleConteoProductoTerminadoResponse(BaseModel):
     CantidadSistema: int
     CantidadFisica: int | None
     Diferencia: int | None
+    TipoDiferencia: str | None
+    PorcentajeDiferencia: float | None
+    Nivel: str | None
+    RequiereReconteo: bool
     MotivoDiferencia: str | None
     UsuarioConteo: str | None
     FechaHoraConteo: datetime | None
     IdMovimientoProductoTerminado: int | None
+
+
+class IndicadorLineaConteoResponse(BaseModel):
+    IdProducto: int
+    NombreProducto: str
+    Unidad: str
+    CantidadSistema: int
+    Faltante: int
+    Sobrante: int
+    PorcentajeDiferencia: float
+    PorcentajeFaltante: float
+    PorcentajeSobrante: float
+    Nivel: str
+
+
+class IndicadoresConteoResponse(BaseModel):
+    PorcentajeDiferencia: float
+    PorcentajeFaltante: float
+    PorcentajeSobrante: float
+    Nivel: str
+    PorcentajeAdecuado: int
+    PorcentajeAtencion: int
+    Lineas: list[IndicadorLineaConteoResponse]
 
 
 class ResumenConteoProductoTerminadoResponse(BaseModel):
@@ -65,6 +93,7 @@ class ResumenConteoProductoTerminadoResponse(BaseModel):
     Faltante: int
     Sobrante: int
     Atrasado: bool
+    Indicadores: IndicadoresConteoResponse | None = None
 
 
 class ConteoProductoTerminadoResponse(ResumenConteoProductoTerminadoResponse):

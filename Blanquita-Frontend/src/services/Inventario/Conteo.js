@@ -56,10 +56,10 @@ export async function registrarCantidadesConteo(idConteo, cantidades) {
   return ConteoResponse(data);
 }
 
-export async function cerrarConteo(idConteo, motivos, confirmado) {
+export async function cerrarConteo(idConteo, motivos, reconteos, confirmado) {
   const data = await pedirJson(`${BASE_URL}/${idConteo}/cerrar`, {
     method: "POST",
-    body: CerrarConteoRequest({ Motivos: motivos, Confirmado: confirmado })
+    body: CerrarConteoRequest({ Motivos: motivos, Reconteos: reconteos, Confirmado: confirmado })
   });
 
   return ConteoResponse(data);

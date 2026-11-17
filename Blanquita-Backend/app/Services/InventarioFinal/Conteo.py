@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
@@ -10,14 +11,25 @@ from app.Constants.Cantidades import (
     HORAS_ALERTA_CONTEO_ABIERTO,
     LONGITUD_MAXIMA_DESCRIPCION,
     LONGITUD_MINIMA_DESCRIPCION,
+    DIFERENCIA_CONTEO_UNIDADES_ADECUADO,
+    PORCENTAJE_DIFERENCIA_CONTEO_ADECUADO,
+    PORCENTAJE_DIFERENCIA_CONTEO_ATENCION,
 )
 from app.Constants.Estados import (
+    DIFERENCIA_CONTEO_EXACTA,
+    DIFERENCIA_CONTEO_FALTANTE,
+    DIFERENCIA_CONTEO_SIN_REGISTRO,
+    DIFERENCIA_CONTEO_SOBRANTE,
     ESTADO_CONTEO_ABIERTO,
     ESTADO_CONTEO_ANULADO,
     ESTADO_CONTEO_CERRADO,
     ESTADOS_CONTEO,
     MOVIMIENTO_PT_AJUSTE_NEGATIVO,
     MOVIMIENTO_PT_AJUSTE_POSITIVO,
+    NIVEL_USO_ADECUADO,
+    NIVEL_USO_ATENCION,
+    NIVEL_USO_DEFICIENTE,
+    TEXTO_RECONTEO_CONFIRMADO,
 )
 from app.Constants.Horario import HORA_LIMITE_INICIO_CONTEO
 from app.Models.InventarioFinal.Conteo import (
@@ -31,6 +43,8 @@ from app.Models.InventarioFinal.Conteo import (
     EstadoConteoProductoTerminadoResponse,
     HojaConteoPresentacionResponse,
     HojaConteoProductoTerminadoResponse,
+    IndicadoresConteoResponse,
+    IndicadorLineaConteoResponse,
     IniciarConteoProductoTerminadoRequest,
     RegistrarCantidadesConteoRequest,
     ReporteConteosProductoTerminadoResponse,
@@ -50,8 +64,120 @@ def conteo_atrasado(fila: dict) -> bool:
     ] > timedelta(hours=HORAS_ALERTA_CONTEO_ABIERTO)
 
 
-def resumen_conteo(fila: dict) -> ResumenConteoProductoTerminadoResponse:
-    return ResumenConteoProductoTerminadoResponse(**fila, Atrasado=conteo_atrasado(fila))
+def resumen_conteo(
+    fila: dict, indicadores: IndicadoresConteoResponse | None = None
+) -> ResumenConteoProductoTerminadoResponse:
+    return ResumenConteoProductoTerminadoResponse(
+        **fila, Atrasado=conteo_atrasado(fila), Indicadores=indicadores
+    )
+
+
+def _porcentaje(parte: int, total: int) -> float:
+    return parte * 100 / total if total else 0.0
+
+
+def nivel_uso(porcentaje: float) -> str:
+    if porcentaje <= PORCENTAJE_DIFERENCIA_CONTEO_ADECUADO:
+        return NIVEL_USO_ADECUADO
+    if porcentaje <= PORCENTAJE_DIFERENCIA_CONTEO_ATENCION:
+        return NIVEL_USO_ATENCION
+    return NIVEL_USO_DEFICIENTE
+
+
+def _tipo_diferencia(sistema: int, fisico: int | None) -> str | None:
+    if fisico is None:
+        return None
+    if fisico == sistema:
+        return DIFERENCIA_CONTEO_EXACTA
+    if sistema == 0:
+        return DIFERENCIA_CONTEO_SIN_REGISTRO
+    return DIFERENCIA_CONTEO_FALTANTE if fisico < sistema else DIFERENCIA_CONTEO_SOBRANTE
+
+
+def nivel_presentacion(sistema: int, fisico: int | None) -> str | None:
+    if fisico is None:
+        return None
+    if sistema == 0 and fisico != 0:
+        return NIVEL_USO_DEFICIENTE
+    if abs(fisico - sistema) <= DIFERENCIA_CONTEO_UNIDADES_ADECUADO:
+        return NIVEL_USO_ADECUADO
+    return nivel_uso(_porcentaje(abs(fisico - sistema), sistema))
+
+
+def requiere_reconteo(sistema: int, fisico: int | None) -> bool:
+    nivel = nivel_presentacion(sistema, fisico)
+    return nivel is not None and nivel != NIVEL_USO_ADECUADO
+
+
+def _porcentaje_presentacion(sistema: int, fisico: int | None) -> float | None:
+    if fisico is None or (sistema == 0 and fisico != 0):
+        return None
+    return round(_porcentaje(abs(fisico - sistema), sistema), 1)
+
+
+def _indicador_linea(linea: dict) -> IndicadorLineaConteoResponse:
+    sistema = int(linea["CantidadSistema"])
+    faltante = int(linea["Faltante"])
+    sobrante = int(linea["Sobrante"])
+    if sistema:
+        diferencia = _porcentaje(faltante + sobrante, sistema)
+        porcentaje_faltante = _porcentaje(faltante, sistema)
+        porcentaje_sobrante = _porcentaje(sobrante, sistema)
+    else:
+        diferencia = 100.0 if sobrante else 0.0
+        porcentaje_faltante = 0.0
+        porcentaje_sobrante = diferencia
+    return IndicadorLineaConteoResponse(
+        IdProducto=linea["IdProducto"],
+        NombreProducto=linea["NombreProducto"],
+        Unidad=_unidad_linea(linea["IdProducto"]),
+        CantidadSistema=sistema,
+        Faltante=faltante,
+        Sobrante=sobrante,
+        PorcentajeDiferencia=round(diferencia, 1),
+        PorcentajeFaltante=round(porcentaje_faltante, 1),
+        PorcentajeSobrante=round(porcentaje_sobrante, 1),
+        Nivel=nivel_uso(diferencia),
+    )
+
+
+def indicadores_conteo(lineas: list[dict]) -> IndicadoresConteoResponse | None:
+    if not lineas:
+        return None
+    indicadores = [_indicador_linea(linea) for linea in lineas]
+    total = len(indicadores)
+    diferencia = sum(i.PorcentajeDiferencia for i in indicadores) / total
+    return IndicadoresConteoResponse(
+        PorcentajeDiferencia=round(diferencia, 1),
+        PorcentajeFaltante=round(sum(i.PorcentajeFaltante for i in indicadores) / total, 1),
+        PorcentajeSobrante=round(sum(i.PorcentajeSobrante for i in indicadores) / total, 1),
+        Nivel=nivel_uso(diferencia),
+        PorcentajeAdecuado=PORCENTAJE_DIFERENCIA_CONTEO_ADECUADO,
+        PorcentajeAtencion=PORCENTAJE_DIFERENCIA_CONTEO_ATENCION,
+        Lineas=indicadores,
+    )
+
+
+def _lineas_detalle(detalle: list[dict]) -> list[dict]:
+    lineas: dict[int, dict] = {}
+    for item in detalle:
+        if item["CantidadFisica"] is None:
+            continue
+        linea = lineas.setdefault(
+            item["IdProducto"],
+            {
+                "IdProducto": item["IdProducto"],
+                "NombreProducto": item["NombreProducto"],
+                "CantidadSistema": 0,
+                "Faltante": 0,
+                "Sobrante": 0,
+            },
+        )
+        diferencia = int(item["CantidadFisica"]) - int(item["CantidadSistema"])
+        linea["CantidadSistema"] += int(item["CantidadSistema"])
+        linea["Faltante"] += -diferencia if diferencia < 0 else 0
+        linea["Sobrante"] += diferencia if diferencia > 0 else 0
+    return list(lineas.values())
 
 
 def _datos_presentacion(fila: dict) -> dict:
@@ -120,9 +246,15 @@ class ConteoProductoTerminadoService:
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=f"Estados de conteo no válidos: {', '.join(invalidos)}",
             )
+        filas = self.repository.ListarConteos(fecha_inicio, fecha_fin, estados)
+        lineas: dict[int, list[dict]] = defaultdict(list)
+        for linea in self.repository.TotalesPorLinea(
+            [fila["IdConteoProductoTerminado"] for fila in filas]
+        ):
+            lineas[linea["IdConteoProductoTerminado"]].append(linea)
         return [
-            resumen_conteo(fila)
-            for fila in self.repository.ListarConteos(fecha_inicio, fecha_fin, estados)
+            resumen_conteo(fila, indicadores_conteo(lineas[fila["IdConteoProductoTerminado"]]))
+            for fila in filas
         ]
 
     def Reporte(
@@ -163,7 +295,10 @@ class ConteoProductoTerminadoService:
     ) -> ConteoProductoTerminadoResponse:
         motivo = _validar_motivo(data.Motivo, "El motivo")
 
-        if datetime.now(ZONA_BOLIVIA).time() >= HORA_LIMITE_INICIO_CONTEO:
+        if (
+            HORA_LIMITE_INICIO_CONTEO is not None
+            and datetime.now(ZONA_BOLIVIA).time() >= HORA_LIMITE_INICIO_CONTEO
+        ):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"No se puede iniciar un conteo físico después de las {HORA_LIMITE_INICIO_CONTEO:%H:%M}",
@@ -278,6 +413,24 @@ class ConteoProductoTerminadoService:
                 detail=f"El motivo de la diferencia es obligatorio, debe tener entre {LONGITUD_MINIMA_DESCRIPCION} y {LONGITUD_MAXIMA_DESCRIPCION} caracteres, {REGLA_CARACTERES_OBSERVACION}. Revise: {', '.join(sin_motivo)}",
             )
 
+        recontadas = set(data.Reconteos)
+        requieren_reconteo = [
+            d
+            for d in con_diferencia
+            if requiere_reconteo(int(d.CantidadSistema), int(d.CantidadFisica))
+        ]
+        sin_reconteo = [
+            codigos[d.IdPresentacion] for d in requieren_reconteo if d.IdPresentacion not in recontadas
+        ]
+        if sin_reconteo:
+            self.repository.Revertir()
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"Las diferencias fuera del rango aceptable deben recontarse y confirmarse antes de cerrar. Revise: {', '.join(sin_reconteo)}",
+            )
+        for d in requieren_reconteo:
+            motivos[d.IdPresentacion] = f"{motivos[d.IdPresentacion]} · {TEXTO_RECONTEO_CONFIRMADO}"
+
         inventarios = self.repository.InventariosBloqueados(list(detalles))
         cambiadas = [
             codigos[d.IdPresentacion]
@@ -388,6 +541,7 @@ class ConteoProductoTerminadoService:
         )
 
     def _Conteo(self, fila: dict) -> ConteoProductoTerminadoResponse:
+        filas_detalle = self.repository.ObtenerDetalle(fila["IdConteoProductoTerminado"])
         detalle = [
             DetalleConteoProductoTerminadoResponse(
                 **_datos_presentacion(item),
@@ -396,12 +550,17 @@ class ConteoProductoTerminadoService:
                     if item["CantidadFisica"] is not None
                     else None
                 ),
+                TipoDiferencia=_tipo_diferencia(int(item["CantidadSistema"]), item["CantidadFisica"]),
+                PorcentajeDiferencia=_porcentaje_presentacion(
+                    int(item["CantidadSistema"]), item["CantidadFisica"]
+                ),
+                Nivel=nivel_presentacion(int(item["CantidadSistema"]), item["CantidadFisica"]),
+                RequiereReconteo=requiere_reconteo(int(item["CantidadSistema"]), item["CantidadFisica"]),
             )
-            for item in self.repository.ObtenerDetalle(fila["IdConteoProductoTerminado"])
+            for item in filas_detalle
         ]
-        return ConteoProductoTerminadoResponse(
-            **resumen_conteo(fila).model_dump(), Detalle=detalle
-        )
+        resumen = resumen_conteo(fila, indicadores_conteo(_lineas_detalle(filas_detalle)))
+        return ConteoProductoTerminadoResponse(**resumen.model_dump(), Detalle=detalle)
 
     def _BloquearConteoAbierto(self, id_conteo: int):
         conteo = self.repository.BloquearConteo(id_conteo)

@@ -13,7 +13,7 @@ from reportlab.lib.units import cm
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from app.utils.dates import date_formatter
 Columna = tuple[str, str | Callable]
@@ -140,6 +140,23 @@ class Reporte:
         self._contenido.append(Spacer(1, alto))
         return self
 
+    def salto_pagina(self) -> "Reporte":
+        self._contenido.append(PageBreak())
+        return self
+
+    def vinetas(self, items: list[tuple[str, colors.Color | None]]) -> "Reporte":
+        for texto, color in items:
+            estilo = ParagraphStyle(
+                "ReporteVineta",
+                parent=self._estilo_parrafo,
+                leftIndent=14,
+                bulletIndent=3,
+                bulletFontSize=11,
+                bulletColor=color or colors.black,
+            )
+            self._contenido.append(Paragraph(escape(texto), estilo, bulletText="•"))
+        return self
+
     def celda_multilinea(self, lineas: list[str]) -> Paragraph:
         """Arma una celda de tabla con varias líneas (una por elemento de
         `lineas`, vacíos se omiten), para usar como valor de retorno de un
@@ -153,6 +170,7 @@ class Reporte:
         filas: list,
         fila_total: list | None = None,
         anchos: list[float] | None = None,
+        fondos: Callable[[object], dict[int, colors.Color]] | None = None,
     ) -> "Reporte":
         encabezados = [
             Paragraph(escape(str(titulo)), self._estilo_celda_encabezado)
@@ -182,6 +200,10 @@ class Reporte:
         if fila_total is not None:
             estilo.append(("BACKGROUND", (0, -1), (-1, -1), self.COLOR_TOTAL))
             estilo.append(("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"))
+        if fondos is not None:
+            for numero_fila, fila in enumerate(filas, start=1):
+                for columna, color in fondos(fila).items():
+                    estilo.append(("BACKGROUND", (columna, numero_fila), (columna, numero_fila), color))
         tabla.setStyle(TableStyle(estilo))
 
         self._contenido.append(tabla)

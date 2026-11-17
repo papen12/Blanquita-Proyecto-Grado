@@ -1,12 +1,23 @@
 from collections import Counter, defaultdict
 from datetime import date, datetime
 
+from reportlab.lib import colors
 from reportlab.lib.units import cm
 
-from app.Constants.Estados import ESTADO_CONTEO_ANULADO, ESTADO_CONTEO_CERRADO
+from app.Constants.Estados import (
+    DIFERENCIA_CONTEO_SIN_REGISTRO,
+    ESTADO_CONTEO_ANULADO,
+    ESTADO_CONTEO_CERRADO,
+    NIVEL_USO_ADECUADO,
+    NIVEL_USO_ATENCION,
+    NIVEL_USO_DEFICIENTE,
+    TEXTO_RECONTEO_CONFIRMADO,
+)
+from app.Constants.Cantidades import DIFERENCIA_CONTEO_UNIDADES_ADECUADO
 from app.Models.InventarioFinal.Conteo import (
     ActaConteoProductoTerminadoResponse,
     HojaConteoProductoTerminadoResponse,
+    IndicadoresConteoResponse,
     ReporteConteosProductoTerminadoResponse,
 )
 from app.Reportes.reporte import Reporte
@@ -37,6 +48,92 @@ def _texto_diferencia(diferencia: int | None) -> str | None:
     if diferencia is None:
         return None
     return f"{diferencia:+d}" if diferencia else "0"
+
+
+COLOR_NIVEL_USO = {
+    NIVEL_USO_ADECUADO: colors.HexColor("#d1fae5"),
+    NIVEL_USO_ATENCION: colors.HexColor("#fef3c7"),
+    NIVEL_USO_DEFICIENTE: colors.HexColor("#fee2e2"),
+}
+
+
+COLOR_VINETA_NIVEL = {
+    NIVEL_USO_ADECUADO: colors.HexColor("#059669"),
+    NIVEL_USO_ATENCION: colors.HexColor("#d97706"),
+    NIVEL_USO_DEFICIENTE: colors.HexColor("#dc2626"),
+}
+
+
+def _fondo_nivel(nivel: str, *columnas: int) -> dict:
+    return {columna: COLOR_NIVEL_USO[nivel] for columna in columnas}
+
+
+def _fondo_variacion(item) -> dict:
+    return _fondo_nivel(item.Nivel, 5) if item.Nivel else {}
+
+
+def _texto_porcentaje(porcentaje: float | None) -> str | None:
+    if porcentaje is None:
+        return None
+    return f"{porcentaje:.1f} %".replace(".", ",")
+
+
+def _texto_variacion(item) -> str | None:
+    if item.TipoDiferencia == DIFERENCIA_CONTEO_SIN_REGISTRO:
+        return item.TipoDiferencia
+    return _texto_porcentaje(item.PorcentajeDiferencia)
+
+
+def _explicar_criterio(reporte: Reporte, indicadores: IndicadoresConteoResponse) -> None:
+    reporte.parrafo("La diferencia % indica qué parte del stock contado no coincidió con el sistema.")
+    reporte.vinetas(
+        [
+            (f"Verde (hasta {indicadores.PorcentajeAdecuado} %): el sistema se usa bien.", COLOR_VINETA_NIVEL[NIVEL_USO_ADECUADO]),
+            (f"Ámbar (hasta {indicadores.PorcentajeAtencion} %): revisar.", COLOR_VINETA_NIVEL[NIVEL_USO_ATENCION]),
+            ("Rojo (más): hay movimientos que no se registraron.", COLOR_VINETA_NIVEL[NIVEL_USO_DEFICIENTE]),
+        ]
+    )
+    reporte.parrafo("Faltante: salió producto sin registrarse. Sobrante: entró producto sin registrarse.")
+
+
+def _indicador_total(reporte: Reporte, indicadores: IndicadoresConteoResponse | None) -> None:
+    reporte.titulo_seccion("Indicador de uso del sistema")
+    if indicadores is None:
+        reporte.parrafo("No hay presentaciones contadas para calcular el indicador.")
+        return
+    reporte.tabla(
+        columnas=[
+            ("Faltante %", lambda i: _texto_porcentaje(i.PorcentajeFaltante)),
+            ("Sobrante %", lambda i: _texto_porcentaje(i.PorcentajeSobrante)),
+            ("Diferencia %", lambda i: _texto_porcentaje(i.PorcentajeDiferencia)),
+            ("Estado", "Nivel"),
+        ],
+        filas=[indicadores],
+        fondos=lambda i: _fondo_nivel(i.Nivel, 2, 3),
+    )
+    reporte.salto()
+    _explicar_criterio(reporte, indicadores)
+
+
+def _indicadores_lineas(reporte: Reporte, indicadores: IndicadoresConteoResponse | None) -> None:
+    if indicadores is None:
+        return
+    reporte.titulo_seccion("Indicador por línea")
+    reporte.tabla(
+        columnas=[
+            ("Línea", lambda i: i.NombreProducto),
+            ("Unidad", lambda i: i.Unidad.capitalize()),
+            ("Sistema", "CantidadSistema"),
+            ("Faltante", "Faltante"),
+            ("Sobrante", "Sobrante"),
+            ("Faltante %", lambda i: _texto_porcentaje(i.PorcentajeFaltante)),
+            ("Sobrante %", lambda i: _texto_porcentaje(i.PorcentajeSobrante)),
+            ("Diferencia %", lambda i: _texto_porcentaje(i.PorcentajeDiferencia)),
+            ("Estado", "Nivel"),
+        ],
+        filas=indicadores.Lineas,
+        fondos=lambda i: _fondo_nivel(i.Nivel, 7, 8),
+    )
 
 
 def _agrupar_por_linea(items: list) -> list[tuple[str, str, list]]:
@@ -140,6 +237,16 @@ def construir_acta_conteo_producto_terminado(
         filas=[data],
     )
 
+    _indicador_total(reporte, data.Indicadores)
+    _indicadores_lineas(reporte, data.Indicadores)
+
+    reporte.salto_pagina()
+    reporte.parrafo(
+        "Cada producto usa los mismos colores; una diferencia de hasta "
+        f"{DIFERENCIA_CONTEO_UNIDADES_ADECUADO} unidad se acepta. Los productos en ámbar o rojo "
+        f"se volvieron a contar antes de ajustar el stock (su motivo dice «{TEXTO_RECONTEO_CONFIRMADO}»)."
+    )
+
     for nombre_linea, unidad, detalle in _agrupar_por_linea(data.Detalle):
         reporte.titulo_seccion(f"{nombre_linea} (en {unidad})")
         reporte.tabla(
@@ -149,10 +256,12 @@ def construir_acta_conteo_producto_terminado(
                 ("Sistema", "CantidadSistema"),
                 ("Físico", "CantidadFisica"),
                 ("Diferencia", lambda d: _texto_diferencia(d.Diferencia)),
+                ("Variación", _texto_variacion),
                 ("Motivo", "MotivoDiferencia"),
             ],
             filas=detalle,
-            anchos=[2.6 * cm, 3.6 * cm, 1.8 * cm, 1.8 * cm, 2.0 * cm, 5.7 * cm],
+            anchos=[2.3 * cm, 3.1 * cm, 1.6 * cm, 1.6 * cm, 1.8 * cm, 2.4 * cm, 4.7 * cm],
+            fondos=_fondo_variacion,
         )
 
     desde = (
@@ -244,6 +353,39 @@ def construir_reporte_conteos_producto_terminado(
         filas=data.Conteos,
         anchos=[0.9 * cm, 1.6 * cm, 2.7 * cm, 2.7 * cm, 3.1 * cm, 1.6 * cm, 1.0 * cm, 1.7 * cm, 1.7 * cm],
     )
+
+    medidos = sorted(
+        (conteo for conteo in cerrados if conteo.Indicadores),
+        key=lambda conteo: conteo.FechaHoraInicio,
+    )
+    if medidos:
+        reporte.titulo_seccion("Evolución del uso del sistema en conteos cerrados")
+        _explicar_criterio(reporte, medidos[0].Indicadores)
+        reporte.tabla(
+            columnas=[
+                ("N°", "IdConteoProductoTerminado"),
+                ("Cierre", lambda c: _texto_fecha_corta(c.FechaHoraCierre)),
+                ("Faltante %", lambda c: _texto_porcentaje(c.Indicadores.PorcentajeFaltante)),
+                ("Sobrante %", lambda c: _texto_porcentaje(c.Indicadores.PorcentajeSobrante)),
+                ("Diferencia %", lambda c: _texto_porcentaje(c.Indicadores.PorcentajeDiferencia)),
+                ("Estado", lambda c: c.Indicadores.Nivel),
+            ],
+            filas=medidos,
+            fondos=lambda c: _fondo_nivel(c.Indicadores.Nivel, 4, 5),
+        )
+        reporte.titulo_seccion("Diferencia por línea en conteos cerrados")
+        reporte.tabla(
+            columnas=[
+                ("N°", lambda fila: fila[0].IdConteoProductoTerminado),
+                ("Línea", lambda fila: fila[1].NombreProducto),
+                ("Faltante %", lambda fila: _texto_porcentaje(fila[1].PorcentajeFaltante)),
+                ("Sobrante %", lambda fila: _texto_porcentaje(fila[1].PorcentajeSobrante)),
+                ("Diferencia %", lambda fila: _texto_porcentaje(fila[1].PorcentajeDiferencia)),
+                ("Estado", lambda fila: fila[1].Nivel),
+            ],
+            filas=[(conteo, linea) for conteo in medidos for linea in conteo.Indicadores.Lineas],
+            fondos=lambda fila: _fondo_nivel(fila[1].Nivel, 4, 5),
+        )
 
     if data.Presentaciones:
         reporte.titulo_seccion("Presentaciones con diferencias en conteos cerrados")

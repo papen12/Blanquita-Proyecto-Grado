@@ -100,6 +100,30 @@ class ConteoProductoTerminadoRepository:
             consulta = consulta.where(ConteoProductoTerminado.Estado.in_(estados))
         return self.caller.Consultar(consulta)
 
+    def TotalesPorLinea(self, ids_conteo: list[int]) -> list[dict]:
+        if not ids_conteo:
+            return []
+        detalle = ConteoProductoTerminadoDetalle
+        diferencia = detalle.CantidadFisica - detalle.CantidadSistema
+        return self.caller.Consultar(
+            select(
+                detalle.IdConteoProductoTerminado,
+                Producto.IdProducto,
+                Producto.NombreProducto,
+                func.sum(detalle.CantidadSistema).label("CantidadSistema"),
+                func.coalesce(func.sum(-diferencia).filter(diferencia < 0), 0).label("Faltante"),
+                func.coalesce(func.sum(diferencia).filter(diferencia > 0), 0).label("Sobrante"),
+            )
+            .join(PresentacionProducto, PresentacionProducto.IdPresentacion == detalle.IdPresentacion)
+            .join(Producto, Producto.IdProducto == PresentacionProducto.IdProducto)
+            .where(
+                detalle.IdConteoProductoTerminado.in_(ids_conteo),
+                detalle.CantidadFisica.is_not(None),
+            )
+            .group_by(detalle.IdConteoProductoTerminado, Producto.IdProducto, Producto.NombreProducto)
+            .order_by(detalle.IdConteoProductoTerminado, Producto.IdProducto)
+        )
+
     def DiferenciasPorPresentacion(self, fecha_inicio: date, fecha_fin: date) -> list[dict]:
         detalle = ConteoProductoTerminadoDetalle
         diferencia = detalle.CantidadFisica - detalle.CantidadSistema

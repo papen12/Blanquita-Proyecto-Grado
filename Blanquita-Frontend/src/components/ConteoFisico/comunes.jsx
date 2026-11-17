@@ -14,7 +14,13 @@ import {
 } from "@/components/ui/dialog";
 import { useDescarga } from "@/hooks/useDescarga";
 import { limpiarObservacion } from "@/utils/validators";
-import { MOTIVO_CORRECCION_MIN, MOTIVO_CORRECCION_MAX } from "@/constants/Values";
+import {
+  MOTIVO_CORRECCION_MIN,
+  MOTIVO_CORRECCION_MAX,
+  PORCENTAJE_DIFERENCIA_CONTEO_ADECUADO,
+  PORCENTAJE_DIFERENCIA_CONTEO_ATENCION,
+  DIFERENCIA_CONTEO_UNIDADES_ADECUADO,
+} from "@/constants/Values";
 import { descargarActaConteo } from "@/services/Inventario/Conteo";
 
 export const ESTADO_CONTEO = {
@@ -47,6 +53,138 @@ export const claseDiferencia = (diferencia) =>
       : diferencia > 0
         ? "bg-sky-100 text-sky-700"
         : "bg-emerald-100 text-emerald-700";
+
+export const NIVEL_USO = {
+  Adecuado: "Uso adecuado",
+  Atencion: "Atención",
+  Deficiente: "Uso deficiente",
+};
+
+const ESTILO_NIVEL_USO = {
+  [NIVEL_USO.Adecuado]: "bg-emerald-100 text-emerald-800",
+  [NIVEL_USO.Atencion]: "bg-amber-100 text-amber-800",
+  [NIVEL_USO.Deficiente]: "bg-red-100 text-red-700",
+};
+
+export const TIPO_SIN_REGISTRO = "Sin registro en sistema";
+
+export const textoPorcentaje = (valor) =>
+  valor === null || valor === undefined ? "-" : `${valor.toFixed(1).replace(".", ",")} %`;
+
+export const nivelUso = (porcentaje) =>
+  porcentaje <= PORCENTAJE_DIFERENCIA_CONTEO_ADECUADO
+    ? NIVEL_USO.Adecuado
+    : porcentaje <= PORCENTAJE_DIFERENCIA_CONTEO_ATENCION
+      ? NIVEL_USO.Atencion
+      : NIVEL_USO.Deficiente;
+
+export const claseNivelUso = (nivel) => ESTILO_NIVEL_USO[nivel] ?? "bg-slate-100 text-slate-400";
+
+const porcentajePresentacion = (sistema, fisico) =>
+  sistema === 0 ? (fisico === 0 ? 0 : null) : (Math.abs(fisico - sistema) * 100) / sistema;
+
+export const nivelPresentacion = (sistema, fisico) => {
+  if (fisico === null || fisico === undefined) return null;
+  const porcentaje = porcentajePresentacion(sistema, fisico);
+  if (porcentaje === null) return NIVEL_USO.Deficiente;
+  if (Math.abs(fisico - sistema) <= DIFERENCIA_CONTEO_UNIDADES_ADECUADO) return NIVEL_USO.Adecuado;
+  return nivelUso(porcentaje);
+};
+
+const GRAVEDAD_NIVEL = {
+  [NIVEL_USO.Deficiente]: 0,
+  [NIVEL_USO.Atencion]: 1,
+  [NIVEL_USO.Adecuado]: 2,
+};
+
+export const ordenarPorGravedad = (items) =>
+  [...items].sort(
+    (a, b) =>
+      (GRAVEDAD_NIVEL[a.Nivel] ?? 3) - (GRAVEDAD_NIVEL[b.Nivel] ?? 3) ||
+      Math.abs(b.Diferencia ?? 0) - Math.abs(a.Diferencia ?? 0),
+  );
+
+export const variacionPresentacion = (sistema, fisico) => {
+  if (fisico === null || fisico === undefined) return null;
+  const porcentaje = porcentajePresentacion(sistema, fisico);
+  return {
+    texto: porcentaje === null ? TIPO_SIN_REGISTRO : textoPorcentaje(porcentaje),
+    nivel: nivelPresentacion(sistema, fisico),
+  };
+};
+
+export function BadgeVariacion({ sistema, fisico }) {
+  const variacion = variacionPresentacion(sistema, fisico);
+  if (!variacion) return <span className="text-slate-400">-</span>;
+  return (
+    <span
+      className={cn(
+        "rounded-full px-2 py-0.5 text-[11px] font-bold leading-tight tabular-nums",
+        claseNivelUso(variacion.nivel),
+      )}
+    >
+      {variacion.texto}
+    </span>
+  );
+}
+
+export function BadgeNivelUso({ nivel, porcentaje }) {
+  return (
+    <Badge variant="outline" className={cn("border-0 text-[11px] font-bold", ESTILO_NIVEL_USO[nivel])}>
+      {porcentaje !== undefined ? `${textoPorcentaje(porcentaje)} · ${nivel}` : nivel}
+    </Badge>
+  );
+}
+
+export function IndicadorUso({ indicadores, nota }) {
+  if (!indicadores) return null;
+  return (
+    <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-[14px] font-extrabold text-slate-800">Indicador de uso del sistema</span>
+          <span className="text-[12px] text-slate-500">
+            Qué parte del stock contado no coincidió con el sistema. Verde hasta{" "}
+            {indicadores.PorcentajeAdecuado} %, ámbar hasta {indicadores.PorcentajeAtencion} %, rojo más.
+            {nota ? ` ${nota}` : ""}
+          </span>
+        </div>
+        <BadgeNivelUso nivel={indicadores.Nivel} porcentaje={indicadores.PorcentajeDiferencia} />
+      </div>
+      <div className="grid grid-cols-2 gap-3 px-4 py-3 sm:grid-cols-3">
+        <Dato etiqueta="Diferencia" valor={textoPorcentaje(indicadores.PorcentajeDiferencia)} />
+        <Dato
+          etiqueta="Faltante (salidas sin registrar)"
+          valor={textoPorcentaje(indicadores.PorcentajeFaltante)}
+          clase={indicadores.PorcentajeFaltante ? "text-red-600" : ""}
+        />
+        <Dato
+          etiqueta="Sobrante (ingresos sin registrar)"
+          valor={textoPorcentaje(indicadores.PorcentajeSobrante)}
+          clase={indicadores.PorcentajeSobrante ? "text-sky-600" : ""}
+        />
+      </div>
+      <div className="flex flex-col border-t border-slate-100">
+        {indicadores.Lineas.map((linea) => (
+          <div
+            key={linea.IdProducto}
+            className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-4 py-2.5 first:border-t-0"
+          >
+            <div className="flex min-w-0 flex-col">
+              <span className="text-[13.5px] font-extrabold text-slate-800">{linea.NombreProducto}</span>
+              <span className="text-[12px] text-slate-500">
+                Sistema {linea.CantidadSistema} {linea.Unidad} ·{" "}
+                <span className="font-bold text-red-600">−{linea.Faltante}</span> ({textoPorcentaje(linea.PorcentajeFaltante)}) ·{" "}
+                <span className="font-bold text-sky-600">+{linea.Sobrante}</span> ({textoPorcentaje(linea.PorcentajeSobrante)})
+              </span>
+            </div>
+            <BadgeNivelUso nivel={linea.Nivel} porcentaje={linea.PorcentajeDiferencia} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export function BadgeEstadoConteo({ estado }) {
   return (
@@ -122,7 +260,7 @@ export function DialogoConfirmacion({
 }) {
   return (
     <Dialog open={abierto} onOpenChange={(valor) => !enviando && onCambio(valor)}>
-      <DialogContent className={cn("max-h-[90svh] overflow-y-auto", anchoGrande ? "sm:max-w-2xl" : "sm:max-w-md")}>
+      <DialogContent className={cn("max-h-[90svh] overflow-y-auto", anchoGrande ? "sm:max-w-2xl lg:max-w-6xl xl:max-w-7xl" : "sm:max-w-md")}>
         <DialogHeader>
           <DialogTitle className="text-lg font-extrabold">{titulo}</DialogTitle>
           <DialogDescription>{descripcion}</DialogDescription>
@@ -213,6 +351,12 @@ export function HistorialConteos({ conteos }) {
                 Conteo N° {conteo.IdConteoProductoTerminado}
               </span>
               <BadgeEstadoConteo estado={conteo.Estado} />
+              {conteo.Estado === ESTADO_CONTEO.Cerrado && conteo.Indicadores && (
+                <BadgeNivelUso
+                  nivel={conteo.Indicadores.Nivel}
+                  porcentaje={conteo.Indicadores.PorcentajeDiferencia}
+                />
+              )}
             </div>
             <span className="text-[12.5px] text-slate-600">
               {fechaHora(conteo.FechaHoraInicio)} → {fechaHora(conteo.FechaHoraCierre)} · {conteo.UsuarioInicio}

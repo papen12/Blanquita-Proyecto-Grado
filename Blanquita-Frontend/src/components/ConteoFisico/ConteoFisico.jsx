@@ -6,9 +6,12 @@ import {
   Ban,
   Loader2,
   Lock,
+  LockOpen,
   TriangleAlert,
   ClipboardCheck,
   History,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -29,6 +32,10 @@ import {
   anularConteo,
   descargarHojaConteo,
 } from "@/services/Inventario/Conteo";
+import {
+  verBloqueoProductoTerminado,
+  desbloquearMovimientosProductoTerminado,
+} from "@/services/Inventario/Inventario";
 import { EsGerente } from "@/utils/validators";
 import {
   CANTIDAD_MAXIMA_CONTEO_PRODUCTO_TERMINADO,
@@ -46,10 +53,13 @@ import {
   fechaHora,
   textoDiferencia,
   claseDiferencia,
+  BadgeVariacion,
+  ordenarPorGravedad,
   BadgeEstadoConteo,
   CampoMotivo,
   DialogoConfirmacion,
   HistorialConteos,
+  IndicadorUso,
 } from "./comunes";
 
 const MENSAJE_MOTIVO = `El motivo debe tener entre ${MOTIVO_CORRECCION_MIN} y ${MOTIVO_CORRECCION_MAX} caracteres`;
@@ -57,8 +67,10 @@ const MENSAJE_MOTIVO = `El motivo debe tener entre ${MOTIVO_CORRECCION_MIN} y ${
 const REGLAS_CONTEO = [
   "Se cuentan todas las presentaciones activas y las inactivas que todavía tienen stock.",
   "Mientras el conteo esté abierto se bloquean ingresos, correcciones, ajustes y salidas de producto terminado.",
-  "Al cerrar, cada diferencia genera su ajuste con el motivo que indiques.",
-  `Solo se puede iniciar antes de las ${HORA_LIMITE_INICIO_CONTEO}:00.`,
+  "Al cerrar, cada diferencia genera su ajuste con el motivo que indiques; las que estén en ámbar o rojo deben recontarse antes.",
+  ...(HORA_LIMITE_INICIO_CONTEO === null
+    ? []
+    : [`Solo se puede iniciar antes de las ${HORA_LIMITE_INICIO_CONTEO}:00.`]),
 ];
 
 const textoCantidad = (valor) => (valor === null || valor === undefined ? "" : String(valor));
@@ -67,20 +79,85 @@ function agruparPorLinea(detalle) {
   const lineas = new Map();
   for (const item of detalle) {
     if (!lineas.has(item.IdProducto)) {
-      lineas.set(item.IdProducto, { nombre: item.NombreProducto, unidad: item.Unidad, items: [] });
+      lineas.set(item.IdProducto, {
+        id: String(item.IdProducto),
+        nombre: item.NombreProducto,
+        unidad: item.Unidad,
+        items: [],
+      });
     }
     lineas.get(item.IdProducto).items.push(item);
   }
   return [...lineas.values()];
 }
 
-function PanelIniciar({ onIniciar }) {
+function AvisoBloqueoManual({ bloqueo, onDesbloquear }) {
+  const [confirmando, setConfirmando] = useState(false);
+  const [confirmado, setConfirmado] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+
+  const confirmar = async () => {
+    setEnviando(true);
+    try {
+      await onDesbloquear();
+      setConfirmando(false);
+    } catch {
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-3 rounded-xl bg-amber-50 px-3.5 py-3 text-[12.5px] text-amber-900 ring-1 ring-amber-200 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start gap-2">
+        <Lock size={15} strokeWidth={2.5} className="mt-0.5 shrink-0" />
+        <span>
+          <span className="font-bold">Hay un bloqueo manual de movimientos activo</span>
+          {bloqueo.UsuarioBloqueo ? ` (por ${bloqueo.UsuarioBloqueo}` : ""}
+          {bloqueo.MotivoBloqueo ? `: ${bloqueo.MotivoBloqueo}` : ""}
+          {bloqueo.UsuarioBloqueo ? ")" : ""}. El conteo físico ya bloquea todos los movimientos mientras
+          dura, así que desbloquea primero para poder iniciarlo.
+        </span>
+      </div>
+      <Button
+        variant="outline"
+        onClick={() => {
+          setConfirmado(false);
+          setConfirmando(true);
+        }}
+        className="h-10 shrink-0 gap-2 border-amber-300 bg-white font-bold text-amber-900 hover:bg-amber-100"
+      >
+        <LockOpen size={15} strokeWidth={2.5} />
+        Desbloquear movimientos
+      </Button>
+
+      <DialogoConfirmacion
+        abierto={confirmando}
+        onCambio={setConfirmando}
+        titulo="Desbloquear movimientos"
+        descripcion="Se levanta el bloqueo manual de producto terminado. Después podrás iniciar el conteo, que vuelve a bloquear todos los movimientos."
+        textoConfirmacion="Estoy seguro de desbloquear los movimientos"
+        confirmado={confirmado}
+        onConfirmado={setConfirmado}
+        enviando={enviando}
+        onConfirmar={confirmar}
+        textoBoton="Desbloquear"
+        icono={LockOpen}
+        claseBoton="bg-amber-600 hover:bg-amber-700"
+      />
+    </div>
+  );
+}
+
+function PanelIniciar({ onIniciar, bloqueo, onDesbloquear }) {
   const [motivo, setMotivo] = useState("");
   const [tocado, setTocado] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
   const [confirmado, setConfirmado] = useState(false);
   const [enviando, setEnviando] = useState(false);
-  const fueraDeHora = new Date().getHours() >= HORA_LIMITE_INICIO_CONTEO;
+  const fueraDeHora =
+    HORA_LIMITE_INICIO_CONTEO !== null && new Date().getHours() >= HORA_LIMITE_INICIO_CONTEO;
+  const bloqueado = Boolean(bloqueo?.Bloqueado);
 
   const solicitar = () => {
     setTocado(true);
@@ -96,6 +173,8 @@ function PanelIniciar({ onIniciar }) {
     setEnviando(true);
     try {
       await onIniciar(motivo.trim());
+      setConfirmando(false);
+    } catch {
       setConfirmando(false);
     } finally {
       setEnviando(false);
@@ -143,10 +222,12 @@ function PanelIniciar({ onIniciar }) {
         </div>
       )}
 
+      {bloqueado && <AvisoBloqueoManual bloqueo={bloqueo} onDesbloquear={onDesbloquear} />}
+
       <div className="flex justify-end">
         <Button
           onClick={solicitar}
-          disabled={fueraDeHora}
+          disabled={fueraDeHora || bloqueado}
           className="h-11 gap-2 bg-c3 font-extrabold text-white hover:bg-c3/90"
         >
           <NotebookPen size={16} strokeWidth={2.75} />
@@ -220,14 +301,17 @@ function FilaConteo({ item, valor, soloLectura, onCambio }) {
           )}
         />
       )}
-      <span
-        className={cn(
-          "justify-self-end rounded-full px-2.5 py-1 text-center text-[13px] font-extrabold tabular-nums sm:justify-self-center",
-          claseDiferencia(diferencia),
-        )}
-      >
-        {textoDiferencia(diferencia)}
-      </span>
+      <div className="flex flex-col items-end gap-0.5 sm:items-center">
+        <span
+          className={cn(
+            "rounded-full px-2.5 py-1 text-center text-[13px] font-extrabold tabular-nums",
+            claseDiferencia(diferencia),
+          )}
+        >
+          {textoDiferencia(diferencia)}
+        </span>
+        {diferencia !== null && <BadgeVariacion sistema={item.CantidadSistema} fisico={fisico} />}
+      </div>
     </div>
   );
 }
@@ -237,6 +321,7 @@ function PanelConteo({ conteo, horasAlerta, soloLectura, onActualizado, onFinali
   const [guardando, setGuardando] = useState(false);
   const [dialogo, setDialogo] = useState(null);
   const [motivos, setMotivos] = useState({});
+  const [reconteos, setReconteos] = useState({});
   const [motivoAnulacion, setMotivoAnulacion] = useState("");
   const [tocado, setTocado] = useState(false);
   const [confirmado, setConfirmado] = useState(false);
@@ -255,7 +340,19 @@ function PanelConteo({ conteo, horasAlerta, soloLectura, onActualizado, onFinali
   );
   const contadas = conteo.Detalle.filter((item) => valorDe(item) !== "").length;
   const lineas = useMemo(() => agruparPorLinea(conteo.Detalle), [conteo.Detalle]);
+  const [idLinea, setIdLinea] = useState(null);
+  const [idLineaCierre, setIdLineaCierre] = useState(null);
+  const indiceLinea = Math.max(0, lineas.findIndex((linea) => linea.id === idLinea));
+  const linea = lineas[indiceLinea];
+  const irALinea = (indice) => {
+    setIdLinea(lineas[indice].id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const diferencias = conteo.Detalle.filter((item) => item.Diferencia);
+  const lineasCierre = agruparPorLinea(ordenarPorGravedad(diferencias));
+  const diferenciaLista = (item) =>
+    esMotivoValido(motivos[item.IdPresentacion]) && (!item.RequiereReconteo || reconteos[item.IdPresentacion]);
+  const lineaCierre = lineasCierre.find((linea) => linea.id === idLineaCierre) ?? lineasCierre[0];
   const porcentaje = conteo.TotalPresentaciones
     ? Math.round((contadas / conteo.TotalPresentaciones) * 100)
     : 0;
@@ -296,6 +393,8 @@ function PanelConteo({ conteo, horasAlerta, soloLectura, onActualizado, onFinali
   const abrirDialogo = (tipo) => {
     setTocado(false);
     setConfirmado(false);
+    setIdLineaCierre(null);
+    setReconteos({});
     setDialogo(tipo);
   };
 
@@ -312,8 +411,16 @@ function PanelConteo({ conteo, horasAlerta, soloLectura, onActualizado, onFinali
 
   const confirmarCierre = async () => {
     setTocado(true);
-    if (diferencias.some((item) => !esMotivoValido(motivos[item.IdPresentacion]))) {
+    const sinMotivo = diferencias.find((item) => !esMotivoValido(motivos[item.IdPresentacion]));
+    if (sinMotivo) {
+      setIdLineaCierre(String(sinMotivo.IdProducto));
       toast.error(`Indica el motivo de cada diferencia. ${MENSAJE_MOTIVO}`);
+      return;
+    }
+    const sinReconteo = diferencias.find((item) => item.RequiereReconteo && !reconteos[item.IdPresentacion]);
+    if (sinReconteo) {
+      setIdLineaCierre(String(sinReconteo.IdProducto));
+      toast.error("Confirma el reconteo de las diferencias marcadas en ámbar o rojo");
       return;
     }
     setEnviando(true);
@@ -321,7 +428,10 @@ function PanelConteo({ conteo, horasAlerta, soloLectura, onActualizado, onFinali
       const motivosLimpios = Object.fromEntries(
         diferencias.map((item) => [item.IdPresentacion, motivos[item.IdPresentacion].trim()]),
       );
-      await cerrarConteo(conteo.IdConteoProductoTerminado, motivosLimpios, confirmado);
+      const recontadas = diferencias
+        .filter((item) => item.RequiereReconteo)
+        .map((item) => item.IdPresentacion);
+      await cerrarConteo(conteo.IdConteoProductoTerminado, motivosLimpios, recontadas, confirmado);
       toast.success(
         diferencias.length
           ? `Conteo cerrado con ${diferencias.length} ajustes`
@@ -420,8 +530,47 @@ function PanelConteo({ conteo, horasAlerta, soloLectura, onActualizado, onFinali
         </div>
       </section>
 
-      {lineas.map((linea) => (
-        <section key={linea.nombre} className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+      <IndicadorUso
+        indicadores={conteo.Indicadores}
+        nota="Calculado con las cantidades guardadas."
+      />
+
+      <div role="tablist" aria-label="Líneas de producto" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] lg:flex-wrap lg:overflow-visible [&::-webkit-scrollbar]:hidden">
+        {lineas.map((item, indice) => {
+          const contadasLinea = item.items.filter((detalle) => valorDe(detalle) !== "").length;
+          const completa = contadasLinea === item.items.length;
+          const activa = indice === indiceLinea;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={activa}
+              onClick={() => irALinea(indice)}
+              className={cn(
+                "flex shrink-0 items-center gap-2 rounded-full border-2 px-3.5 py-2 text-[12.5px] font-bold transition-colors",
+                activa
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+              )}
+            >
+              {completa && <CircleCheck size={14} strokeWidth={2.75} className={activa ? "text-emerald-300" : "text-emerald-600"} />}
+              {item.nombre}
+              <span
+                className={cn(
+                  "rounded-full px-1.5 text-[11px] font-extrabold tabular-nums",
+                  activa ? "bg-white/20 text-white" : completa ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800",
+                )}
+              >
+                {contadasLinea}/{item.items.length}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {linea && (
+        <section role="tabpanel" className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3">
             <span className="text-[14px] font-extrabold text-slate-800">{linea.nombre}</span>
             <span className="text-[12px] font-bold uppercase tracking-wide text-slate-400">en {linea.unidad}</span>
@@ -442,7 +591,35 @@ function PanelConteo({ conteo, horasAlerta, soloLectura, onActualizado, onFinali
             />
           ))}
         </section>
-      ))}
+      )}
+
+      {lineas.length > 1 && (
+        <div className="flex items-center justify-between gap-3">
+          <Button
+            variant="outline"
+            onClick={() => irALinea(indiceLinea - 1)}
+            disabled={indiceLinea === 0}
+            className="h-11 gap-1.5 font-bold text-slate-700"
+          >
+            <ChevronLeft size={16} strokeWidth={2.75} />
+            <span className="max-w-32 truncate">{indiceLinea > 0 ? lineas[indiceLinea - 1].nombre : "Anterior"}</span>
+          </Button>
+          <span className="text-[12px] font-bold text-slate-400 tabular-nums">
+            {indiceLinea + 1} de {lineas.length}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => irALinea(indiceLinea + 1)}
+            disabled={indiceLinea === lineas.length - 1}
+            className="h-11 gap-1.5 font-bold text-slate-700"
+          >
+            <span className="max-w-32 truncate">
+              {indiceLinea < lineas.length - 1 ? lineas[indiceLinea + 1].nombre : "Siguiente"}
+            </span>
+            <ChevronRight size={16} strokeWidth={2.75} />
+          </Button>
+        </div>
+      )}
 
       {!soloLectura && (
         <div className="flex justify-end">
@@ -476,17 +653,65 @@ function PanelConteo({ conteo, horasAlerta, soloLectura, onActualizado, onFinali
         claseBoton="bg-emerald-600 hover:bg-emerald-700"
         anchoGrande={diferencias.length > 0}
       >
-        {diferencias.length > 0 && (
+        {lineaCierre && (
           <div className="flex flex-col gap-3">
-            {diferencias.map((item) => (
+            <div
+              role="tablist"
+              aria-label="Líneas con diferencias"
+              className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] lg:flex-wrap lg:overflow-visible [&::-webkit-scrollbar]:hidden"
+            >
+              {lineasCierre.map((linea) => {
+                const completas = linea.items.filter(diferenciaLista).length;
+                const lista = completas === linea.items.length;
+                const activa = linea.id === lineaCierre.id;
+                return (
+                  <button
+                    key={linea.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activa}
+                    onClick={() => setIdLineaCierre(linea.id)}
+                    className={cn(
+                      "flex shrink-0 items-center gap-2 rounded-full border-2 px-3.5 py-2 text-[12.5px] font-bold transition-colors",
+                      activa
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : tocado && !lista
+                          ? "border-red-300 bg-red-50 text-red-700"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+                    )}
+                  >
+                    {lista && (
+                      <CircleCheck size={14} strokeWidth={2.75} className={activa ? "text-emerald-300" : "text-emerald-600"} />
+                    )}
+                    {linea.nombre}
+                    <span
+                      className={cn(
+                        "rounded-full px-1.5 text-[11px] font-extrabold tabular-nums",
+                        activa ? "bg-white/20 text-white" : lista ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800",
+                      )}
+                    >
+                      {completas}/{linea.items.length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <span className="text-[12px] text-slate-500">
+              {lineaCierre.nombre}: {lineaCierre.items.length}{" "}
+              {lineaCierre.items.length === 1 ? "presentación con diferencia" : "presentaciones con diferencia"} (en{" "}
+              {lineaCierre.unidad}). El contador indica cuántas ya están listas: con motivo y, si están en ámbar o rojo, recontadas.
+            </span>
+          <div role="tabpanel" className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+            {lineaCierre.items.map((item) => (
               <div key={item.IdPresentacion} className="flex flex-col gap-2 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-mono text-[14px] font-extrabold text-c3">{item.CodigoPresentacion}</span>
-                  <span className="text-[12.5px] font-semibold text-slate-600">
-                    Sistema {item.CantidadSistema} · Físico {item.CantidadFisica}{" "}
-                    <span className={cn("ml-1 rounded-full px-2 py-0.5 font-extrabold", claseDiferencia(item.Diferencia))}>
+                  <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-slate-600">
+                    Sistema {item.CantidadSistema} · Físico {item.CantidadFisica}
+                    <span className={cn("rounded-full px-2 py-0.5 font-extrabold", claseDiferencia(item.Diferencia))}>
                       {textoDiferencia(item.Diferencia)}
                     </span>
+                    <BadgeVariacion sistema={item.CantidadSistema} fisico={item.CantidadFisica} />
                   </span>
                 </div>
                 <CampoMotivo
@@ -497,8 +722,36 @@ function PanelConteo({ conteo, horasAlerta, soloLectura, onActualizado, onFinali
                   tocado={tocado}
                   placeholder="Motivo de la diferencia"
                 />
+                {item.RequiereReconteo && (
+                  <label
+                    className={cn(
+                      "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5",
+                      tocado && !reconteos[item.IdPresentacion]
+                        ? "border-red-300 bg-red-50"
+                        : "border-slate-200 bg-white",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={Boolean(reconteos[item.IdPresentacion])}
+                      onChange={(e) =>
+                        setReconteos((prev) => ({ ...prev, [item.IdPresentacion]: e.target.checked }))
+                      }
+                      className="mt-0.5 h-4 w-4 accent-slate-900"
+                    />
+                    <span className="flex flex-col gap-0.5">
+                      <span className="text-[13px] font-bold text-slate-900">
+                        Volví a contar y la cantidad se confirma
+                      </span>
+                      <span className="text-[12px] text-slate-500">
+                        Si el reconteo dio otra cantidad, cierra esta ventana y corrígela antes de cerrar el conteo.
+                      </span>
+                    </span>
+                  </label>
+                )}
               </div>
             ))}
+          </div>
           </div>
         )}
       </DialogoConfirmacion>
@@ -536,6 +789,7 @@ export default function ConteoFisico({ usuario }) {
   const [historial, setHistorial] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [bloqueo, setBloqueo] = useState(null);
   const [vista, setVista] = useState("conteo");
 
   useEffect(() => {
@@ -546,8 +800,13 @@ export default function ConteoFisico({ usuario }) {
     setLoading(true);
     setError("");
     try {
-      const [activo, conteos] = await Promise.all([verConteoActivo(), listarConteos()]);
+      const [activo, conteos, estadoBloqueo] = await Promise.all([
+        verConteoActivo(),
+        listarConteos(),
+        verBloqueoProductoTerminado(),
+      ]);
       setEstado(activo);
+      setBloqueo(estadoBloqueo);
       setHistorial(conteos.filter((c) => c.Estado !== ESTADO_CONTEO.Abierto));
     } catch (e) {
       setError(e.message);
@@ -561,6 +820,20 @@ export default function ConteoFisico({ usuario }) {
       const conteo = await iniciarConteo(motivo);
       setEstado((prev) => ({ ...prev, Abierto: true, Conteo: conteo }));
       toast.success(`Conteo N° ${conteo.IdConteoProductoTerminado} iniciado`);
+    } catch (e) {
+      toast.error(e.message);
+      try {
+        setBloqueo(await verBloqueoProductoTerminado());
+      } catch {
+      }
+      throw e;
+    }
+  };
+
+  const desbloquear = async () => {
+    try {
+      setBloqueo(await desbloquearMovimientosProductoTerminado());
+      toast.success("Movimientos desbloqueados, ya puedes iniciar el conteo");
     } catch (e) {
       toast.error(e.message);
       throw e;
@@ -585,7 +858,7 @@ export default function ConteoFisico({ usuario }) {
         </Header>
       </TooltipProvider>
 
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-5 sm:px-6">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-5 sm:px-6">
         <Tabs value={vista} onValueChange={setVista} className="mb-5">
           <TabsList className="grid w-full grid-cols-2 sm:w-96">
             <TabsTrigger value="conteo" className="gap-1.5 font-bold">
@@ -640,7 +913,7 @@ export default function ConteoFisico({ usuario }) {
                   No hay un conteo físico en curso.
                 </div>
               ) : (
-                <PanelIniciar onIniciar={iniciar} />
+                <PanelIniciar onIniciar={iniciar} bloqueo={bloqueo} onDesbloquear={desbloquear} />
               )}
             </div>
             <div hidden={vista !== "anteriores"}>
